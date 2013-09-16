@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+
+#    pixi-tools: a set of software to interface with the Raspberry Pi
+#    and PiXi-200 hardware
+#    Copyright (C) 2013 Simon Cantrill
+#
+#    pixi-tools is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU Lesser General Public
+#    License as published by the Free Software Foundation; either
+#    version 2.1 of the License, or (at your option) any later version.
+#
+#    This library is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public
+#    License along with this library; if not, write to the Free Software
+#    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+from __future__ import print_function
+
+import pixitools.pi
+from pixitools import basicLogging
+from pixitools.httpd import Server
+from os import chdir, getcwd
+from os.path import dirname, join
+import sys
+
+port = 8080
+
+if '-h' in sys.argv or '--help' in sys.argv:
+	print ('usage: %s [DIRECTORY] [PORT]')
+	sys.exit (0)
+
+if len (sys.argv) > 1:
+	dname = sys.argv[1]
+else:
+	dname = dirname (join (getcwd(), sys.argv[0]))
+	dname = join (dname, '../share/pixitools/html')
+if len (sys.argv) > 2:
+	port = int (sys.argv[2])
+
+basicLogging()
+
+pixitools.pi.initLib()
+
+print ("Changing directory to:", dname)
+chdir (dname)
+httpd = Server (port)
+print ("Starting PiXi web-server on port", port)
+httpd.serve_forever()

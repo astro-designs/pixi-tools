@@ -1,0 +1,60 @@
+pixi-tools
+==========
+
+pixi-tools: a set of software to interface with the Raspberry Pi and
+PiXi-200 hardware
+Copyright (C) 2013 Simon Cantrill
+
+pixi-tools is free software; you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free
+Software Foundation; either version 2.1 of the License, or (at your option)
+any later version.
+
+The following components are included:
+
+libpixi/
+    A low level c-library.  The library is written in C99, but the headers
+    are C89 compatible (except log.h, which is gnu89 compatible).
+
+pio/
+    A C program command-line interface that provides hardware access via
+    libpixi.
+
+swig/
+    Generated python bindings for libpixi. The following modules are available:
+    pixitools.pi
+        a wrapper of the generic and Raspberry Pi related parts of libpixi
+    pixitools.pixi
+        a wrapper of the PiXi-200 related parts of libpixi
+
+python/lib/
+    Some additional pure python modules.
+
+python/scripts/
+    A small selection of scripts that make use of and demonstrate the
+    pixitools python package:
+    pixi-server:
+        Provides access to Pi and PiXi hardware via a web-browser
+
+Python versions 2.7 and >=3.2 are supported.
+
+libpixi and pio have selectable log levels via environment variables.  Use
+LIBPIXI_LOG_LEVEL=? and/or PIO_LOG_LEVEL=? where ? is one of all, trace,
+debug, info, warn, error, fatal, off.  Example:
+
+root@raspberrypi:~# pio fpga-version
+210349040313
+root@raspberrypi:~# LIBPIXI_LOG_LEVEL=trace pio fpga-version
+pio: trace: libpixi initialised
+pio: trace: Found hardware [BCM2708]
+pio: trace: Found board revision [0002]
+pio: trace: Setting board version to 1
+pio: trace: 3 = pixi_open (filename="/dev/spidev0.0", flags=2, mode=0)
+pio: debug: Opened SPI name=/dev/spidev0.0 fd=3
+pio: trace: pixi_spiReadWrite of fd=3, bufferSize=4
+pio: trace: pixi_spiReadWrite of fd=3, bufferSize=4
+pio: trace: pixi_spiReadWrite of fd=3, bufferSize=4
+pio: debug: Got PiXi FPGA version 2103,4904,0313
+pio: debug: Closing SPI device fd=3
+210349040313
+

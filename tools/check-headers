@@ -1,0 +1,59 @@
+#!/bin/sh
+
+#    pixi-tools: a set of software to interface with the Raspberry Pi
+#    and PiXi-200 hardware
+#    Copyright (C) 2013 Simon Cantrill
+#
+#    pixi-tools is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU Lesser General Public
+#    License as published by the Free Software Foundation; either
+#    version 2.1 of the License, or (at your option) any later version.
+#
+#    This library is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public
+#    License along with this library; if not, write to the Free Software
+#    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+
+compilers=gcc
+
+if test "$1" = "full"; then
+	compilers="$compilers $(which clang)"
+fi
+
+errors=no
+common_flags="-Wfatal-errors -Wall -Wextra -I. -fsyntax-only"
+source=syntax.c
+
+check_syntax()
+{
+	for CC in $compilers; do
+		for file in $(find */ -name \*.h); do
+   			echo "#include <$file>" > $source
+			printf "$CC $1 $flags $common_flags: " ; cat $source
+			if ! $CC $1 $common_flags $source; then
+				errors=yes
+			fi
+		done
+	done
+}
+
+check_syntax '-std=gnu89'
+check_syntax '-std=c99 -pedantic'
+check_syntax '-xc++ -std=gnu++98'
+
+if test "$1" = "full"; then
+	check_syntax '-std=c11 -pedantic'
+	check_syntax '-xc++ -std=c++11 -pedantic'
+fi
+
+rm $source
+
+if test $errors = yes; then
+	echo "Errors in syntax check" >&2
+	exit 255
+fi

@@ -1,0 +1,141 @@
+#    pixi-tools: a set of software to interface with the Raspberry Pi
+#    and PiXi-200 hardware
+#    Copyright (C) 2013 Simon Cantrill
+#
+#    pixi-tools is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU Lesser General Public
+#    License as published by the Free Software Foundation; either
+#    version 2.1 of the License, or (at your option) any later version.
+#
+#    This library is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public
+#    License along with this library; if not, write to the Free Software
+#    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+ifeq ($(V),)
+    CMD   = @
+    ECHO  = @echo
+    QUIET = --quiet
+else
+    CMD   =
+    ECHO  = @\#
+    QUIET =
+endif
+ifeq ($(DEBUG),1)
+    OPT_FLAGS   = -O0
+    DEBUG_FLAGS = -D_DEBUG -g3
+else
+    OPT_FLAGS   = -Ofast
+    DEBUG_FLAGS = -DNDEBUG
+endif
+
+WARN_FLAGS = -Wall -Wno-long-long -Wmissing-declarations -Wmissing-prototypes -fmessage-length=0
+
+DEPDIR = .deps
+LIBDIR = .libs
+
+OBJECTS += $(wildcard *.o *.lo *.gch)
+DEPS     = $(addprefix $(DEPDIR)/, $(addsuffix .p, $(OBJECTS)))
+
+
+MK_CPPFLAGS  ?= $(build_CPPFLAGS) $(CPPFLAGS)
+MK_CFLAGS    ?= $(WARN_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) $(build_CFLAGS) $(CFLAGS)
+MK_CXXFLAGS  ?= $(WARN_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) $(build_CXXFLAGS) $(CXXFLAGS)
+MK_LDFLAGS   ?= $(LDFLAGS)
+
+#LIBTOOL      ?= libtool
+#LIBTOOL_LINK ?= $(LIBTOOL) $(QUIET) --mode=link
+#LIBTOOL_CXX  ?= $(LIBTOOL) $(QUIET) --mode=compile $(CXX) -shared
+
+sinclude $(DEPS)
+
+# TODO: try order only prerequisites to make all directories initially
+
+# gcc 3/4 dependency generation
+%.o: %.c # $(DEPDIR)/$(@D).directory
+	$(ECHO) "  CC      $@"
+	$(CMD)mkdir -p $(DEPDIR)/$(@D) $(@D)
+	$(CMD)$(CC) $(MK_CPPFLAGS) $(MK_CFLAGS) -c $< -o $@ -MD -MP -MF $(DEPDIR)/$@.p
+%.o: %.cpp # $(DEPDIR)/$(@D).directory
+	$(ECHO) "  CXX     $@"
+	$(CMD)mkdir -p $(DEPDIR)/$(@D) $(@D)
+	$(CMD)$(CXX) $(MK_CPPFLAGS) $(MK_CXXFLAGS) -c $< -o $@ -MD -MP -MF $(DEPDIR)/$@.p
+%.lo: %.cpp $(DEPDIR)/.directory
+	$(ECHO) "  CXX     $@"
+	$(CMD)mkdir -p $(DEPDIR)/$(@D) $(@D)
+	$(CMD)$(LIBTOOL_CXX) $(MK_CPPFLAGS) $(MK_CXXFLAGS) -c $< -o $@ -MD -MP -MF $(DEPDIR)/$@.p
+%.h.gch: %.h # $(DEPDIR)/.directory
+	$(ECHO) "  CXX     $@"
+	$(CMD)mkdir -p $(DEPDIR)/$(@D) $(@D)
+	$(CMD)rm -f $@
+	$(CMD)$(CXX) $(MK_CPPFLAGS) $(MK_CXXFLAGS) -c $< -o $@ -MD -MP -MF $(DEPDIR)/$@.p
+
+# .a archives cannot have duplicate filenames. This rule deals with that.
+%.a:
+	$(ECHO) "  AR      $@"
+	$(CMD)mkdir -p $(@D)
+	$(CMD)rm -rf $@.dir
+	$(CMD)mkdir -p $@.dir
+	$(CMD)for name in $^; do \
+		ln $$name $@.dir/$$(echo $$name | sed s,/,_,g); \
+	done
+	$(CMD)$(AR) cru $@ $@.dir/*
+	$(CMD)rm -rf $@.dir
+
+#%/.directory:
+#	$(CMD)mkdir -p $(@D)
+#	$(CMD)touch $@
+
+%.p: # prevent make-invoked creation of .p files
+
+%.so:
+	$(ECHO) "  CXXLD   $@"
+	$(CMD)mkdir -p $(@D)
+	$(CMD)$(LIBTOOL_LINK) $(CXX) -shared $(MK_CXXFLAGS) $(MK_LDFLAGS) -o $@ $^ $(LIBS) $(XLDFLAGS)
+
+%.la:
+	$(ECHO) 
+	$(CMD)$(LIBTOOL_LINK) $(CXX) -shared $(MK_CXXFLAGS) $(MK_LDFLAGS) -o $@ $^ $(LIBS) $(XLDFLAGS)
+
+.PHONY: clean distclean help help-general help-targets help-var help-value help-list
+
+clean:
+	rm -f $(TARGETS) $(OBJECTS) $(TEMPS) *.o *.lo *.la *~
+	rm -rf .deps .libs
+
+distclean: clean
+	rm -rf $(DEPDIR) $(LIBDIR)
+
+help: help-general
+
+help-general:
+	@echo "make help-targets              List targets"
+	@echo "make help-var                  List common variables"
+	@echo "make help-value variable=VAR   Print value of VAR (eg. variable=OBJECTS)"
+	@echo "make help-list  variable=VAR   List values of VAR"
+	@echo "make V=1                       Verbose mode"
+
+help-targets:
+	@list="$(TARGETS)"; for T in $$list; do echo $$T; done
+
+help-var:
+	@echo "MK_CPPFLAGS = $(MK_CPPFLAGS)"
+	@echo "MK_CFLAGS   = $(MK_CFLAGS)"
+	@echo "MK_CXXFLAGS = $(MK_CXXFLAGS)"
+	@echo "MK_LDFLAGS  = $(MK_LDFLAGS)"
+
+help-value:
+	@echo "$(variable) = $($(variable))"
+
+help-list:
+	@list="$($(variable))"; for T in $$list; do echo $$T; done
+
+# Must be the final rule: build executables
+%:
+	$(ECHO) "  CXXLD   $@"
+	$(CMD)mkdir -p $(@D)
+	$(CMD)$(LIBTOOL_LINK) $(CXX) $(MK_CXXFLAGS) $(MK_LDFLAGS) -o $@ $^ $(LIBS)

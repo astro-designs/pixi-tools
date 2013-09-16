@@ -1,0 +1,44 @@
+<!DOCTYPE HTML>
+
+<html>
+	<head>
+${HEAD}
+		<script type="text/javascript" src="input.js"></script>
+		<title>PiXi Tools</title>
+	</head>
+
+	<body>
+${BANNER}
+		<h3>Panel</h3>
+		<textarea id="panel" rows="2" cols="40" placeholder="LCD panel text"></textarea>
+		<h3>Controller</h3>
+		<table>
+			<tr>
+				<td rowspan='3'>
+					<div class="controller">
+						<canvas id="canvas" width="200" height="200"/>
+					</div>
+				</td>
+				<th>Channel</th>
+				<th>Address</th>
+				<th>Mininmum</th>
+				<th>Maximum</th>
+				<th>Value</th>
+			</tr>
+			<tr>
+				<td valign="top"><input type="number" id="channelX"/></td>
+				<td valign="top"><input type="number" id="addressX"/></td>
+				<td valign="top"><input type="number" id="minX"/></td>
+				<td valign="top"><input type="number" id="maxX"/></td>
+				<td valign="top" id="valueX"/>
+			</tr>
+			<tr>
+				<td valign="top"><input type="number" id="channelY"/></td>
+				<td valign="top"><input type="number" id="addressY"/></td>
+				<td valign="top"><input type="number" id="minY"/></td>
+				<td valign="top"><input type="number" id="maxY"/></td>
+				<td valign="top" id="valueY"/>
+			</tr>
+		</table>
+	</body>
+</html>

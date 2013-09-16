@@ -1,0 +1,49 @@
+Building and installing pixi-tools
+==================================
+
+
+Dependencies
+------------
+
+GNU make is required.
+A C99 compatible C compiler (any recent gcc).
+swig is required for building the python bindings.
+doxygen is required for generating the API Reference.
+
+
+Building
+--------
+
+Invoke 'make help' for some help.
+
+Invoke 'make'.  This will create a simple Makefile in build/release and run
+the build from there.  Detected Python related build settings are hardcoded
+into the generated Makefile.
+
+You can do a debug build by instead invoking 'make BUILD_MODE=debug'.  The
+build directory will be build/debug.
+
+You can specify a python version by invoking e.g. 'make PYTHON_VERSION=3.3'.
+The generated build directory name will contain the python version.
+
+You can specify a build directory of your choice by invoking 'make
+builddir=some/where/else'.
+
+Invoke 'make doc' to run doxygen to generate the API reference html.
+
+
+Checking
+--------
+
+The beginnings of a test suite exist.  You can run the tests after building
+by invoking 'make check'.  Invoking 'make multi-check', will build and test
+debug/release and python 2/3 configurations.
+
+
+Installing
+----------
+
+If the tests pass, you can install to /usr/local by invoking 'make install'.
+You can install to a different directory by invoking
+'make install prefix=/somewhere/else'.  You can also use
+DESTDIR=/some/staging/directory/ for a staged installation.

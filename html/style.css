@@ -1,0 +1,41 @@
+body {
+	color: #E0E0E0;
+	background: #181818;
+	font-family: sans-serif;
+	font-size: 80%;
+}
+
+a {
+	color: #E0E0E0;
+}
+
+hr {
+	margin: 1em 0;
+	border: 0;
+	border-top: 1px solid #808080;
+}
+
+table {
+	background-color: #303030;
+	border-collapse: collapse;
+}
+
+table,tr,td {
+	border: 2px solid #303030;
+}
+
+th {
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+td {
+	background-color: #181818;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.log {
+	color: green;
+	background-color: black;
+}

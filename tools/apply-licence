@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+from sys import argv, stderr
+
+licence = open ("templates/licence").read().rstrip()
+cLicence = '/*\n' + licence + '\n*/\n\n'
+hashLicence = ''.join (['#' + line + '\n' for line in licence.split ('\n')]) + '\n'
+
+for fname in argv[1:]:
+	contents = open (fname).read()
+	result = None
+	if ' is free software; you can redistribute it' in contents or 'license' in contents:
+		print (fname + ':\talready has licence')
+	elif fname.endswith ('.h') or fname.endswith ('.c') or fname.endswith ('.cpp') or fname.endswith ('.js') or fname.endswith ('.i'):
+		print (fname + ':\tc-style comment')
+		result = cLicence + contents
+	elif fname.endswith ('.py') or 'akefile' in fname:
+		print (fname + ':\thash-style comment')
+		result = hashLicence + contents
+	elif contents.startswith ('#!/'):
+		print (fname + ':\thash-style comment (script)')
+		launcher, contents = contents.split ('\n', 1)
+		result = launcher + '\n\n' + hashLicence + contents
+	else:
+		print (fname + ':\tcannot identify', file=stderr)
+	if result:
+		f = open (fname, "w")
+		f.write (result)
+		f.close()
+		del f

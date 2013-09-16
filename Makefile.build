@@ -1,0 +1,253 @@
+#    pixi-tools: a set of software to interface with the Raspberry Pi
+#    and PiXi-200 hardware
+#    Copyright (C) 2013 Simon Cantrill
+#
+#    pixi-tools is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU Lesser General Public
+#    License as published by the Free Software Foundation; either
+#    version 2.1 of the License, or (at your option) any later version.
+#
+#    This library is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Lesser General Public License for more details.
+#
+#    You should have received a copy of the GNU Lesser General Public
+#    License along with this library; if not, write to the Free Software
+#    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+
+# system python executable
+PYTHON           = python
+python_rootdir   = $(DESTDIR:%=--root=%)
+
+CP = cp
+
+common_CFLAGS = -std=c99 -D_GNU_SOURCE
+
+toolsdir = $(topdir)/tools
+
+# python 'site' packages directory within build tree
+build_bindir   = bin
+build_libdir   = lib
+build_pylibdir = python-site
+build_htmldir  = share/pixitools/html
+build_apidir   = $(build_htmldir)/api
+
+prefix    = /usr/local
+bindir    = $(prefix)/bin
+libdir    = $(prefix)/lib
+htmldir   = $(prefix)/$(build_htmldir)
+
+# run packages-dir.py only on first expansion of $(pylibdir)
+get_pylibdir = $(shell $(PYTHON) $(toolsdir)/packages-dir.py $(libdir)/python$(PYTHON_VERSION))
+pylibdir     = $(eval pylibdir := $(get_pylibdir))$(pylibdir)
+
+includedir = $(prefix)/include
+
+pythonpath = $(CURDIR)/lib/python$(PYTHON_VERSION)/site-packages
+prepare_build_python = make install-purepython install-python prefix=$(CURDIR)
+
+libpixi          = lib/libpixi.a
+libpixi_HEADERS := $(shell cd $(topdir) && find libpixi/ -name \*.h | grep -v private)
+libpixi_SOURCES := $(shell cd $(topdir) && find libpixi/ -name \*.c)
+libpixi_OBJECTS := $(libpixi_SOURCES:.c=.o)
+
+pio         = bin/pio
+pio_SOURCES := $(shell cd $(topdir) && find pio/ -name \*.c)
+pio_OBJECTS := $(pio_SOURCES:.c=.o)
+
+pythonPackage      = pixitools
+pythonPi           = $(build_pylibdir)/_pi.so
+pythonPi_OBJECTS   = swig/pi.o
+pythonPixi         = $(build_pylibdir)/_pixi.so
+pythonPixi_OBJECTS = swig/pixi.o
+
+html_SOURCES := $(shell cd $(topdir)/html && find * -name \*.html -or -iname \*.js -or -iname \*.css)
+html_FILES   := $(addprefix $(build_htmldir)/,$(html_SOURCES))
+
+LIBS       = $(libpixi)
+HEADERS    = $(libpixi_HEADERS)
+APPS       = $(pio)
+PYTHON_EXTS = $(pythonPi) $(pythonPixi)
+PYTHON_MODS = $(build_pylibdir)/pi.py $(build_pylibdir)/pixi.py
+TARGETS    = $(LIBS) $(APPS) $(PYTHON_EXTS) $(html_FILES)
+OBJECTS    = $(libpixi_OBJECTS) $(pio_OBJECTS) $(pythonPixi_OBJECTS)
+
+VPATH = $(topdir)
+
+build_CPPFLAGS = -I$(topdir)
+build_CFLAGS   = $(common_CFLAGS) -Wall -Wextra -Wstrict-prototypes -pedantic
+
+
+.PHONY: all check check-python check-header-syntax run-python run-python-demo run-server help-custom temp-install
+# Don't delete intermediate files:
+.SECONDARY:
+
+all: $(TARGETS)
+
+$(libpixi): build_CPPFLAGS += -fPIC
+$(libpixi): $(libpixi_OBJECTS)
+
+$(pio): $(libpixi) $(pio_OBJECTS)
+
+$(pythonPi): build_CFLAGS = $(common_CFLAGS) $(PYTHON_CFLAGS)
+$(pythonPi): $(libpixi) $(pythonPi_OBJECTS)
+
+$(pythonPixi): build_CFLAGS = $(common_CFLAGS) $(PYTHON_CFLAGS)
+$(pythonPixi): $(libpixi) $(pythonPixi_OBJECTS)
+
+swig/%.c: swig/%.i
+	$(ECHO) "  SWIG    $@"
+	$(CMD)mkdir -p swig $(build_pylibdir)
+	$(CMD)swig -python -I$(topdir) -outdir $(build_pylibdir) -o $@ $<
+
+$(build_htmldir)/%.html: html/%.html
+	$(ECHO) "  SUBST   $@"
+	$(CMD)mkdir -p $(@D)
+	$(CMD)$(toolsdir)/subst $(topdir)/html/*.part.htm < $< > $@
+
+$(build_htmldir)/%: html/%
+	$(ECHO) "  CP      $@"
+	$(CMD)mkdir -p $(@D)
+	$(CMD)$(CP) $< $@
+
+include $(topdir)/Makefile.rules
+
+check: check-python check-header-syntax
+
+check-python: all temp-install
+	PYTHONPATH=$(pythonpath) $(PYTHON) -m pixitools.test --verbose
+
+check-header-syntax:
+	cd $(topdir) && tools/check-headers
+
+doc:
+	$(ECHO) $(build_apidir)
+	$(CMD)sed 's,OUTPUT_DIRECTORY.*=.*,OUTPUT_DIRECTORY = $(CURDIR)/$(build_apidir),' < $(topdir)/Doxyfile > Doxyfile
+	$(CMD)rm -rf $(build_apidir)
+	$(CMD)mkdir -p $(build_apidir)
+	$(CMD)cd $(topdir) && doxygen $(CURDIR)/Doxyfile
+
+run-python: all temp-install
+	PYTHONPATH=$(pythonpath) $(PYTHON)
+
+run-python-demo: all temp-install
+	PYTHONPATH=$(pythonpath) bin/pixi-demo
+
+run-server: all temp-install
+	PYTHONPATH=$(pythonpath) bin/pixi-server $(build_htmldir)
+
+temp-install: all
+	$(prepare_build_python)
+
+help: help-custom
+
+help-custom:
+	@echo "make clean                     Clean the source dir and remove a build dir"
+	@echo "make clean-all-builds          Clean the source dir and remove all build dirs"
+	@echo "make clean                     Clean the source dir"
+	@echo "make check                     Run the tests"
+	@echo "make multi-check               Run the tests for all common build configurations"
+	@echo
+	@echo "The build configuration is dependent on BUILD_MODE and python version"
+	@echo "make                           Runs a standard build"
+	@echo "make BUILD_MODE=debug          Runs a debug build"
+	@echo "make PYTHON_VERSION=3          Build against python3"
+	@echo "make doc                       Run doxygen to generate the API reference html"
+	@echo
+	@echo "make install                   Install files to 'prefix' [$(prefix)] (DESTDIR is honoured)"
+	@echo "make uninstall                 Remove installed files from 'prefix' [$(prefix)] (DESTDIR is honoured)"
+	@echo
+	@echo "make run-python                Run an interactive python prompt, with a suitable PYTHONPATH"
+	@echo "make run-python-demo           Run simple python pixi demo"
+	@echo "make run-server                Run the server - WARNING - probably a gaping security hole"
+
+all_install   := install-libraries install-headers install-exec install-python install-purepython install-files
+all_uninstall := $(subst install,uninstall,$(all_install))
+
+.PHONY: install $(all_install)
+.PHONY: uninstall $(all_uninstall)
+
+install: $(all_install)
+uninstall: $(all_uninstall)
+
+install-exec: $(APPS)
+	$(ECHO) installing executables
+	$(CMD)mkdir -p $(DESTDIR)$(bindir)
+	$(CMD)for target in $(APPS); do \
+		install -v $$target $(DESTDIR)$(bindir)/ || exit 1 ; \
+	done
+
+uninstall-exec:
+	$(ECHO) uninstalling executables
+	$(CMD)for target in $(notdir $(APPS)); do \
+		rm -f -v $(DESTDIR)$(bindir)/$$target ; \
+	done
+
+install-libraries: $(LIBS)
+	$(ECHO) installing libraries
+	$(CMD)mkdir -p $(DESTDIR)$(libdir)
+	$(CMD)for target in $(LIBS); do \
+		install -v -m 0644 $$target $(DESTDIR)$(libdir)/ || exit 1 ; \
+	done
+
+uninstall-libraries:
+	$(ECHO) uninstalling libraries
+	$(CMD)for target in $(notdir $(LIBS)); do \
+		rm -f -v $(DESTDIR)$(libdir)/$$target ; \
+	done
+
+install-headers:
+	$(ECHO) installing headers
+	$(CMD)cd $(topdir) && for target in $(HEADERS); do \
+		targetinclude=$(DESTDIR)$(includedir)/$$(dirname $$target); \
+		mkdir -p -v $$targetinclude || exit 1; \
+		install -v -m 0644 $$target $$targetinclude || exit 1 ; \
+	done
+
+uninstall-headers:
+	$(ECHO) uninstalling headers
+	$(CMD)cd $(topdir) && for target in $(HEADERS); do \
+		targetinclude=$(DESTDIR)$(includedir)/$$(dirname $$target); \
+		rm -f -v $(DESTDIR)$(includedir)/$$target; \
+		rmdir -v --ignore-fail-on-non-empty $$targetinclude; \
+	done
+
+.PHONY: pylibdir
+
+# For some reason, the first $(pylibdir) expansion is sometimes wrong,
+# so force it twice to ensure it is correct
+pylibdir:
+	@echo pylibdir is firstly $(pylibdir), then $(pylibdir)
+
+install-python: $(PYTHON_EXTS) $(PYTHON_MODS) pylibdir
+	$(ECHO) installing python modules
+	$(CMD)mkdir -p $(DESTDIR)$(pylibdir)/$(pythonPackage)
+	$(CMD)for target in $(PYTHON_EXTS); do \
+		install -v $$target $(DESTDIR)$(pylibdir)/$(pythonPackage)/ || exit 1 ; \
+	done
+	$(CMD)for target in $(PYTHON_MODS); do \
+		install -m 0644 -v $$target $(DESTDIR)$(pylibdir)/$(pythonPackage)/ || exit 1 ; \
+	done
+
+uninstall-python: pylibdir
+	$(ECHO) uninstalling python modules
+	$(CMD)for target in $(notdir $(PYTHON_EXTS)); do \
+		rm -f -v $(DESTDIR)$(pylibdir)/$$target ; \
+	done
+	$(CMD)for target in $(notdir $(PYTHON_MODS)); do \
+		rm -f -v $(DESTDIR)$(pylibdir)/$$target ; \
+	done
+
+install-purepython:
+	$(ECHO) installing pure python modules
+	$(CMD)rm -rf $(topdir)/build/python-setup
+	$(CMD)cd $(topdir) && $(PYTHON) tools/setup.py install --prefix $(prefix) $(python_rootdir)
+
+uninstall-purepython:
+	$(ECHO) installing pure python modules [TODO]
+
+install-files:
+	$(ECHO) installing general files
+	$(CMD)mkdir -p $(DESTDIR)$(prefix)
+	$(CMD)$(CP) -a share $(DESTDIR)/$(prefix)/
