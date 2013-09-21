@@ -59,6 +59,14 @@ clean: clean-source
 clean-all-builds: clean-source
 	rm -rf $(basebuilddir)
 
+.PHONY: deb deb-clean
+deb:
+	make clean-all-builds
+	debuild -us -uc -i'build|\.git|\.project|\.cproject|\.settings'
+
+deb-clean:
+	debuild clean
+
 clean-source:
 	find -name \*~ | xargs --no-run-if-empty rm
 

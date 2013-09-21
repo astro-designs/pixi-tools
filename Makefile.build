@@ -30,7 +30,7 @@ toolsdir = $(topdir)/tools
 build_bindir   = bin
 build_libdir   = lib
 build_pylibdir = python-site
-build_htmldir  = share/pixitools/html
+build_htmldir  = share/pixi-tools/html
 build_apidir   = $(build_htmldir)/api
 
 prefix    = /usr/local
