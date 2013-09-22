@@ -19,6 +19,7 @@
 from __future__ import print_function
 
 from json import loads as decodeJson, dumps as encodeJson
+from os import getenv
 from threading import Thread
 from time import sleep
 from unittest import TestCase, main
@@ -47,7 +48,7 @@ class TestLib (TestCase):
 		from pixitools import _pixi
 		info ("Loaded: %s", _pixi)
 
-		from pixitools.pi import getLibVersion, getPiBoardRevision, getPiBoardVersion
+		from pixitools.pi import getLibVersion
 		ver = getLibVersion()
 		assert isinstance (ver, str)
 		info ("libpixi version: %s", ver)
@@ -138,4 +139,7 @@ class TestServer (TestCase):
 
 if __name__ == '__main__':
 	logging.basicConfig (level = logging.INFO)
+	if "no" == getenv ("TEST_HARDWARE"):
+		del TestServer.test_gpioSys
+		del TestServer.test_gpio
 	main()
