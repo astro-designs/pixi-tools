@@ -8,7 +8,18 @@ Dependencies
 GNU make is required.
 A C99 compatible C compiler (any recent gcc).
 swig is required for building the python bindings.
-doxygen is required for generating the API Reference.
+doxygen and graphviz are required for generating the API Reference.
+
+Note that 'apt-get install doxygen' will probably want to install many other
+packages. These are packages that are recommended/suggested by doxygen. You
+can disable automatic installation of recommended/suggested packages by
+writing the following to a file under /etc/apt/apt.conf.d/
+(e.g. /etc/apt/apt.conf.d/99recommends ):
+APT
+{
+        Install-Recommends "false";
+        Install-Suggests   "false";
+};
 
 
 Building
