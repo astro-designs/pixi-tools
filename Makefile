@@ -62,7 +62,8 @@ clean-all-builds: clean-source
 .PHONY: deb deb-clean
 deb:
 	make clean-all-builds
-	debuild -us -uc -i'build|\.git|\.project|\.cproject|\.settings'
+	.  $(topdir)/project-info && git archive -o ../$${PROJECT_NAME}_$${PROJECT_VERSION}.orig.tar.gz HEAD
+	debuild --preserve-envvar TEST_HARDWARE -us -uc -i'build|\.git|\.project|\.cproject|\.settings'
 
 deb-clean:
 	debuild clean

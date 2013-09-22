@@ -7,7 +7,7 @@ Build-Depends: debhelper (>= 8)
 
 Package: pixi-tools
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: pixi-fpga, ${shlibs:Depends}, ${misc:Depends}
 Description: Tools for the Raspberry Pi and PiXi-200
  A set of software to interface with the Raspberry Pi and
  PiXi-200 hardware
