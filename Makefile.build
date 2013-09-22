@@ -25,6 +25,7 @@ CP = cp
 common_CFLAGS = -std=c99 -D_GNU_SOURCE
 
 toolsdir = $(topdir)/tools
+version_h = $(topdir)/libpixi/private/version.h
 
 # python 'site' packages directory within build tree
 build_bindir   = bin
@@ -83,7 +84,7 @@ build_CFLAGS   = $(common_CFLAGS) -Wall -Wextra -Wstrict-prototypes -pedantic
 # Don't delete intermediate files:
 .SECONDARY:
 
-all: $(TARGETS)
+all: $(version_h) $(TARGETS)
 
 $(libpixi): build_CPPFLAGS += -fPIC
 $(libpixi): $(libpixi_OBJECTS)
@@ -110,6 +111,10 @@ $(build_htmldir)/%: html/%
 	$(ECHO) "  CP      $@"
 	$(CMD)mkdir -p $(@D)
 	$(CMD)$(CP) $< $@
+
+$(version_h): $(topdir)/project-info
+	$(ECHO) $@
+	$(CMD). $< && echo "static const char LibPixiVersion[] = \"$$PROJECT_VERSION\";" > $@
 
 include $(topdir)/Makefile.rules
 

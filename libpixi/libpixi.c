@@ -19,6 +19,7 @@
 */
 
 #include <libpixi/libpixi.h>
+#include <libpixi/private/version.h>
 #include <libpixi/util/log.h>
 #include <libpixi/util/string.h>
 #include <stdio.h>
@@ -29,7 +30,6 @@
 
 
 #define SYS_GPIO "/sys/class/gpio"
-#define LIBPIXI_VERSION "0.0"
 
 static void LIBPIXI_CONSTRUCTOR (1) initLib (void)
 {
@@ -44,7 +44,7 @@ int pixi_initLib (void)
 
 const char* pixi_getLibVersion (void)
 {
-	return LIBPIXI_VERSION;
+	return LibPixiVersion;
 }
 
 static char boardRevision[256] = "[unknown]";

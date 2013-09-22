@@ -27,8 +27,6 @@
 #include "log.h"
 
 
-const char PioVersion[] = "0.0";
-
 LogLevel pio_logLevel = LogLevelAll;
 
 static CommandGroup* groups = &gpioGroup;
@@ -91,7 +89,7 @@ int main (int argc, char* argv[])
 		0 == strcasecmp (command, "version")
 		)
 	{
-		printf ("pio version %s\n", PioVersion);
+		printf ("pio version %s\n", pixi_getLibVersion());
 		return 0;
 	}
 
