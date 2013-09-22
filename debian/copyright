@@ -1,0 +1,21 @@
+Homepage:
+	http://astro-designs.net/
+
+Download:
+	TODO
+
+Authors:
+	Simon Cantrill <simonjcantrill@gmail.com>
+
+Copyright:
+	Copyright 2013 Simon Cantrill <simonjcantrill@gmail.com>
+
+License:
+	LGPL-2.1
+	pixi-tools is free software; you can redistribute it and/or modify
+	it under the terms of the GNU Lesser General Public License as
+	published by the Free Software Foundation; either version 2.1 of the
+	License, or (at your option) any later version.
+	On Debian systems, the complete text of the GNU Lesser General
+	Public License version 2.1 can be found in
+	/usr/share/common-licenses/LGPL-2.1
