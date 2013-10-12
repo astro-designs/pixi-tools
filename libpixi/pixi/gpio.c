@@ -20,6 +20,7 @@
 
 #include <libpixi/pixi/gpio.h>
 #include <libpixi/pixi/spi.h>
+#include <libpixi/pixi/registers.h>
 #include <libpixi/util/log.h>
 
 // TODO: named constants for addresses
@@ -49,9 +50,9 @@ int pixi_pixiGpioSetMode (uint gpio, PixiGpioMode mode)
 
 	switch (gpio)
 	{
-	case 1: return setGpioMode (mode, 0x27, 0x28, 0x29);
-	case 2: return setGpioMode (mode, 0x2A, 0x2B, -1);
-	case 3: return setGpioMode (mode, 0x2C, 0x2D, -1);
+	case 1: return setGpioMode (mode, Pixi_GPIO1_00_07_mode, Pixi_GPIO1_08_15_mode, Pixi_GPIO1_16_23_mode);
+	case 2: return setGpioMode (mode, Pixi_GPIO2_00_07_mode, Pixi_GPIO2_08_15_mode, -1);
+	case 3: return setGpioMode (mode, Pixi_GPIO3_00_07_mode, Pixi_GPIO3_08_15_mode, -1);
 	}
 	return -EINVAL; // unreachable
 }

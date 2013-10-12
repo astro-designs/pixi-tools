@@ -18,6 +18,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <libpixi/pixi/registers.h>
 #include <libpixi/pixi/spi.h>
 #include <libpixi/util/string.h>
 #include "Command.h"
@@ -163,7 +164,7 @@ static int monitorButtonsFn (uint argc, char*const*const argv)
 		PIO_LOG_ERROR ("usage: %s", argv[0]);
 		return -EINVAL;
 	}
-	return monitorSpi (0, 0x32);
+	return monitorSpi (0, Pixi_Switch_in);
 }
 static Command monitorButtonsCmd =
 {

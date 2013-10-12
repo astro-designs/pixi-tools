@@ -20,13 +20,14 @@
 
 #include <libpixi/pixi/lcd.h>
 #include <libpixi/pixi/gpio.h>
+#include <libpixi/pixi/registers.h>
 #include <libpixi/pixi/spi.h>
 #include <libpixi/util/log.h>
 #include <string.h>
 
 enum
 {
-	LcdAddress = 0x38,
+	LcdAddress = Pixi_VFDLCD_out,
 
 	LcdClear        = 0x0001,
 	LcdCursorHome   = 0x0002,
@@ -38,6 +39,7 @@ enum
 
 static int setGpioModeForLcd (void)
 {
+	// TODO:
 	int result = pixi_pixiGpioSetMode (3, PixiGpioAllOutputVfdLcd);
 	if (result < 0)
 		LIBPIXI_ERROR (-result, "Could not set GPIO 3 mode for LCD");

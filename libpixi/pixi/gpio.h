@@ -29,8 +29,7 @@ LIBPIXI_BEGIN_DECLS
 ///@defgroup PixiGpio PiXi-200 GPIO interface
 ///@{
 
-// TODO: check all this with Mark
-
+// TODO: maybe remove
 typedef enum PixiGpioMode
 {
 	PixiGpioAllInput,
@@ -39,7 +38,9 @@ typedef enum PixiGpioMode
 	PixiGpio3,
 } PixiGpioMode;
 
+// TODO: maybe remove
 ///	Set the mode of the pixi gpio 1,2 or 3.
+///	@param gpio GPIO device [1,3]
 ///	@return 0 on success, -errno on error
 int pixi_pixiGpioSetMode (uint gpio, PixiGpioMode mode);
 
