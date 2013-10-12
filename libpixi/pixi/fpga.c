@@ -23,6 +23,7 @@
 #include <libpixi/pixi/spi.h>
 #include <libpixi/pi/gpio.h>
 #include <libpixi/util/log.h>
+#include <string.h>
 #include <stdio.h>
 
 #define INPUT 0
@@ -69,6 +70,42 @@ int64 pixi_pixiFpgaGetVersion (void)
 		((uint64) h << 32) |
 		((uint64) m << 16) |
 		((uint64) l);
+}
+
+static int versionPart (const char* text, uint offset)
+{
+	int high = text[offset  ] - '0';
+	int low  = text[offset+1] - '0';
+	return (high * 10) + low;
+}
+
+time_t pixi_pixiFpgaVersionToTime (int64 version)
+{
+	if (version <= 0)
+	{
+		LIBPIXI_LOG_DEBUG("pixi_pixiFpgaVersionToTime invalid version %012llx", (ulonglong) version);
+		return -EINVAL;
+	}
+	char buf[80];
+	int chars = snprintf (buf, sizeof (buf), "%012llx", (ulonglong) version);
+	if (chars != 12)
+	{
+		LIBPIXI_LOG_DEBUG("pixi_pixiFpgaVersionToTime invalid version [%s]", buf);
+		return -EINVAL;
+	}
+
+	struct tm tm;
+	memset (&tm, 0, sizeof (tm));
+	tm.tm_year = versionPart (buf, 10) + 100;
+	tm.tm_mon  = versionPart (buf,  8) - 1;
+	tm.tm_mday = versionPart (buf,  6);
+	tm.tm_hour = versionPart (buf,  0);
+	tm.tm_min  = versionPart (buf,  2);
+	tm.tm_sec  = versionPart (buf,  4);
+	time_t time = mktime (&tm);
+	if (time < 0)
+		return -errno;
+	return time;
 }
 
 int pixi_pixiFpgaLoadBuffer (const Buffer* _buffer)

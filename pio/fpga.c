@@ -84,10 +84,50 @@ static Command fpgaGetVersionCmd =
 	.function    = fpgaGetVersionFn
 };
 
+
+static int fpgaGetBuildTimeFn (uint argc, char*const*const argv)
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+	{
+		PIO_LOG_ERROR ("usage: %s", argv[0]);
+		return -EINVAL;
+	}
+	int64 version = pixi_pixiFpgaGetVersion();
+	if (version <= 0)
+	{
+		PIO_ERROR(-version, "Error getting FPGA version");
+		return version;
+	}
+	time_t time = pixi_pixiFpgaVersionToTime (version);
+	if (time < 0)
+	{
+		PIO_ERROR(-time, "Error converting FPGA version to time");
+		return time;
+	}
+	// Use strftime %c to get localised time format
+	char buf[80];
+	size_t chars = strftime (buf, sizeof (buf), "%c\n", gmtime (&time));
+	if (chars > 0)
+		printf (buf);
+	else
+	{
+		PIO_ERROR(-time, "Error formatting time value of %ld", time);
+		return -EINVAL;
+	}
+	return 0;
+}
+static Command fpgaGetBuildTimeCmd =
+{
+	.name        = "fpga-build-time",
+	.description = "print the PiXi FPGA build time",
+	.function    = fpgaGetBuildTimeFn
+};
 static const Command* commands[] =
 {
 	&fpgaLoadCmd,
-	&fpgaGetVersionCmd
+	&fpgaGetVersionCmd,
+	&fpgaGetBuildTimeCmd
 };
 
 

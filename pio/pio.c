@@ -20,6 +20,7 @@
 
 #include <libpixi/libpixi.h>
 #include <errno.h>
+#include <locale.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <strings.h>
@@ -65,6 +66,8 @@ static void displayHelp (const char* program)
 
 int main (int argc, char* argv[])
 {
+	setlocale (LC_ALL, "");
+
 	if (argc < 2)
 	{
 		displayHelp (argv[0]);
