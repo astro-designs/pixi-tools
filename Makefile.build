@@ -49,7 +49,8 @@ pythonpath = $(CURDIR)/lib/python$(PYTHON_VERSION)/site-packages
 prepare_build_python = make install-purepython install-python prefix=$(CURDIR)
 test_env = PYTHONPATH=$(pythonpath) LD_LIBRARY_PATH=$(CURDIR)/$(build_libdir)
 
-libpixi          = lib/libpixi.a
+libpixi          = lib/libpixi.so
+libpixi_ABI      = 0
 libpixi_HEADERS := $(shell cd $(topdir) && find libpixi/ -name \*.h | grep -v private)
 libpixi_SOURCES := $(shell cd $(topdir) && find libpixi/ -name \*.c)
 libpixi_OBJECTS := $(libpixi_SOURCES:.c=.o)
@@ -199,15 +200,12 @@ uninstall-exec:
 install-libraries: $(LIBS)
 	$(ECHO) installing libraries
 	$(CMD)mkdir -p $(DESTDIR)$(libdir)
-	$(CMD)for target in $(LIBS); do \
-		install -v -m 0644 $$target $(DESTDIR)$(libdir)/ || exit 1 ; \
-	done
+	$(CMD)install -v $(libpixi) $(DESTDIR)$(libdir)/libpixi.so.$(libpixi_ABI)
+	$(CMD)ln -sf libpixi.so.$(libpixi_ABI) $(DESTDIR)$(libdir)/libpixi.so
 
 uninstall-libraries:
 	$(ECHO) uninstalling libraries
-	$(CMD)for target in $(notdir $(LIBS)); do \
-		rm -f -v $(DESTDIR)$(libdir)/$$target ; \
-	done
+	$(CMD)rm -f -v $(DESTDIR)$(libdir)/libpixi.so.$(libpixi_ABI) $(DESTDIR)$(libdir)/libpixi.so
 
 install-headers:
 	$(ECHO) installing headers

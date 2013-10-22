@@ -41,6 +41,7 @@ LIBDIR = .libs
 OBJECTS += $(wildcard *.o *.lo *.gch)
 DEPS     = $(addprefix $(DEPDIR)/, $(addsuffix .p, $(OBJECTS)))
 
+target_ABI      = $($(basename $(@F))_ABI)
 target_OBJECTS  = $($(basename $(@F))_OBJECTS)
 target_LIBS     = $($(basename $(@F))_LIBS)
 target_CPPFLAGS = $($(basename $(@F))_CPPFLAGS)
@@ -139,7 +140,13 @@ help-list:
 %.so:
 	$(ECHO) "  LINK    $@"
 	$(CMD)mkdir -p $(@D)
-	$(CMD)$(LINK_LIB) -o $@ $(target_OBJECTS) $(target_LIBS)
+	$(CMD)if test -n "$(target_ABI)"; then \
+		soname=$(@F).$(target_ABI); \
+		$(LINK_LIB) -Wl,-soname=$$soname -o $@.$(target_ABI) $(target_OBJECTS) $(target_LIBS); \
+		ln -s -f $$soname $@; \
+	else \
+		$(LINK_LIB) -o $@ $(target_OBJECTS) $(target_LIBS); \
+	fi
 
 %.la:
 	$(ECHO) "  LINK    $@"
