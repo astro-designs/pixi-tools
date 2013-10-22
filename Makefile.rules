@@ -41,15 +41,26 @@ LIBDIR = .libs
 OBJECTS += $(wildcard *.o *.lo *.gch)
 DEPS     = $(addprefix $(DEPDIR)/, $(addsuffix .p, $(OBJECTS)))
 
+target_OBJECTS  = $($(basename $(@F))_OBJECTS)
+target_LIBS     = $($(basename $(@F))_LIBS)
+target_CPPFLAGS = $($(basename $(@F))_CPPFLAGS)
+target_CFLAGS   = $($(basename $(@F))_CFLAGS)
+target_CXXFLAGS = $($(basename $(@F))_CXXFLAGS)
+target_LDFLAGS  = $($(basename $(@F))_LDFLAGS)
 
 MK_CPPFLAGS  ?= $(build_CPPFLAGS) $(CPPFLAGS)
-MK_CFLAGS    ?= $(WARN_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) $(build_CFLAGS) $(CFLAGS)
-MK_CXXFLAGS  ?= $(WARN_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) $(build_CXXFLAGS) $(CXXFLAGS)
-MK_LDFLAGS   ?= $(LDFLAGS)
+MK_CFLAGS    ?= $(WARN_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) $(build_CFLAGS) $(target_CFLAGS) $(CFLAGS)
+MK_CXXFLAGS  ?= $(WARN_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) $(build_CXXFLAGS) $(target_CXXFLAGS) $(CXXFLAGS)
+MK_LDFLAGS   ?= $(target_LDFLAGS) $(LDFLAGS)
 
 #LIBTOOL      ?= libtool
 #LIBTOOL_LINK ?= $(LIBTOOL) $(QUIET) --mode=link
 #LIBTOOL_CXX  ?= $(LIBTOOL) $(QUIET) --mode=compile $(CXX) -shared
+
+LINK ?= $(CC) $(MK_CFLAGS)
+
+LINK_LIB = $(LIBTOOL_LINK) $(LINK) -shared $(MK_LDFLAGS)
+LINK_EXE = $(LIBTOOL_LINK) $(LINK) $(MK_LDFLAGS)
 
 sinclude $(DEPS)
 
@@ -92,15 +103,6 @@ sinclude $(DEPS)
 
 %.p: # prevent make-invoked creation of .p files
 
-%.so:
-	$(ECHO) "  CXXLD   $@"
-	$(CMD)mkdir -p $(@D)
-	$(CMD)$(LIBTOOL_LINK) $(CXX) -shared $(MK_CXXFLAGS) $(MK_LDFLAGS) -o $@ $^ $(LIBS) $(XLDFLAGS)
-
-%.la:
-	$(ECHO) 
-	$(CMD)$(LIBTOOL_LINK) $(CXX) -shared $(MK_CXXFLAGS) $(MK_LDFLAGS) -o $@ $^ $(LIBS) $(XLDFLAGS)
-
 .PHONY: clean distclean help help-general help-targets help-var help-value help-list
 
 clean:
@@ -134,8 +136,17 @@ help-value:
 help-list:
 	@list="$($(variable))"; for T in $$list; do echo $$T; done
 
+%.so:
+	$(ECHO) "  LINK    $@"
+	$(CMD)mkdir -p $(@D)
+	$(CMD)$(LINK_LIB) -o $@ $(target_OBJECTS) $(target_LIBS)
+
+%.la:
+	$(ECHO) "  LINK    $@"
+	$(CMD)$(LINK_LIB) -o $@ $(target_OBJECTS) $(target_LIBS)
+
 # Must be the final rule: build executables
 %:
-	$(ECHO) "  CXXLD   $@"
+	$(ECHO) "  LINK    $@"
 	$(CMD)mkdir -p $(@D)
-	$(CMD)$(LIBTOOL_LINK) $(CXX) $(MK_CXXFLAGS) $(MK_LDFLAGS) -o $@ $^ $(LIBS)
+	$(CMD)$(LINK_EXE) -o $@ $(target_OBJECTS) $(target_LIBS)
