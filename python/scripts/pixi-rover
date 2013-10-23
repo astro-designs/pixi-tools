@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+import sys
+from time import sleep
+from pixitools.pi import SpiDevice, spiClose
+from pixitools.pixi import pixiSpiOpen, pixiSpiWriteValue16
+
+forwards =  0
+reverse  =  1
+
+def prepare():
+	global spi
+	spi = SpiDevice()
+	pixiSpiOpen (spi)
+	# enable motor
+	write16 (0x23, 0x1)
+
+def write16 (address, value):
+	print ('write-spi', hex (address), hex (value))
+	pixiSpiWriteValue16 (spi, address, value)
+
+motor = [0, 0x8000]
+def moveRover (leftSide, rightSide, speed):
+	pwm = (speed * 1023 / 100) & 0x000003ff
+	print ('moveRover', leftSide, rightSide, speed, pwm, hex (pwm))
+	# each side must be synchronised, but each side the motors are opposed:
+	fl = pwm + motor[    leftSide ]
+	bl = pwm + motor[not leftSide ]
+	fr = pwm + motor[    rightSide]
+	br = pwm + motor[not rightSide]
+
+	write16 (0x45, fr)
+	write16 (0x46, bl)
+	write16 (0x44, br)
+	write16 (0x47, fl) # Must write to 0x47 last!
+
+def moveForward  (speed):
+	moveRover (forwards, forwards, speed)
+def moveBackward (speed):
+	moveRover (reverse , reverse , speed)
+def turnLeft     (speed):
+	moveRover (reverse , forwards, speed)
+def turnRight    (speed):
+	moveRover (forwards, reverse , speed)
+
+def demo (speed = 100):
+	def rest():
+		sleep (3)
+	moveForward (speed)
+	rest()
+	moveBackward (speed)
+	rest()
+	turnLeft (speed)
+	rest()
+	turnRight (speed)
+	rest()
+
+commands = {
+	'forward' : moveForward,
+	'backward': moveBackward,
+	'left'    : turnLeft,
+	'right'   : turnRight
+	}
+
+if len (sys.argv) == 2:
+	if sys.argv[1] == "demo":
+		prepare()
+		demo()
+		spiClose (spi)
+	sys.exit (0)
+elif len (sys.argv) == 3:
+	cmd = sys.argv[1]
+	speed = int (sys.argv[2])
+	command = None
+	for direction, function in commands.items():
+		# allow direction to be 1 character or more:
+		if direction.startswith (cmd):
+			command = function
+			break
+	if command:
+		prepare()
+		command (speed)
+		spiClose (spi)
+		sys.exit (0)
+
+print ("usage: %s demo" % sys.argv[0])
+print ("usage: %s f[orward]|b[ackward]|l[eft]|r[ight] speed" % sys.argv[0])
+sys.exit (1)
