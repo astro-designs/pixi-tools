@@ -23,15 +23,9 @@
 #include <libpixi/util/log.h>
 #include <unistd.h>
 
-enum
-{
-	PixiAdcSpiChannel = 1,
-	PixiAdcChannels = 4
-};
-
 int pixi_pixiAdcOpen (SpiDevice* device)
 {
-	int result = pixi_spiOpen (PixiAdcSpiChannel, PixiSpiSpeed, device);
+	int result = pixi_spiOpen (PixiAdcSpiChannel, PixiAdcSpiSpeed, device);
 	if (result < 0)
 		LIBPIXI_ERROR(-result, "Cannot open SPI channel to PiXi ADC");
 	return result;

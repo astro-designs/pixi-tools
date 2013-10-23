@@ -31,8 +31,11 @@ LIBPIXI_BEGIN_DECLS
 
 enum
 {
-	PixiSpiChannel = 0,
-	PixiSpiSpeed   = 8000000,
+	PixiSpiChannel    = 0, ///< Default value. Can also be configured to 1.
+	PixiAdcSpiChannel = 1, ///< Default value. Can also be configured to 0.
+
+	PixiSpiSpeed      = 8000000,
+	PixiAdcSpiSpeed   = 1000000,
 
 	PixiSpiEnableWrite8  = 0x40,
 	PixiSpiEnableWrite16 = 0x50,
