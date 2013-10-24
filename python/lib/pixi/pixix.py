@@ -17,7 +17,7 @@
 #    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 from __future__ import print_function
-import pixitools.pixi
+from pixitools import pixi
 from os import strerror
 from time import sleep
 import logging
@@ -88,7 +88,7 @@ class Lcd (object):
 		pause()
 
 	def setCursorPos (self, x, y):
-		check (pixi.lcdSetCursorPos (self.lcd, 0, 0))
+		check (pixi.lcdSetCursorPos (self.lcd, x, y))
 		pause()
 
 	def setBrightness (self, brightness):
