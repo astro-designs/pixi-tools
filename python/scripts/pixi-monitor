@@ -1,0 +1,121 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+import sys
+from subprocess import call
+from time import localtime, sleep, strftime
+from threading import Thread, RLock
+from pixitools.pi import SpiDevice, spiClose
+from pixitools.pixi import pixiAdcOpen, pixiSpiOpen, pixiAdcRead, pixiSpiOpen, pixiSpiReadValue16, Pixi_Switch_in
+from pixitools import pixix
+from pixitools.pixix import check, Lcd
+
+format = "%H:%M:%S"
+persistent = "/run/shm/pixi-display"
+
+adc = SpiDevice()
+check (pixiAdcOpen (adc))
+
+spi = SpiDevice()
+check (pixiSpiOpen (spi))
+
+lcd = Lcd() #persistent)
+#lcd.clear()
+lcdLock = RLock()
+
+def textAt (x, y, text):
+	lcdLock.acquire()
+	try:
+		lcd.setCursorPos (x, y)
+		lcd.write (text)
+	finally:
+		lcdLock.release()
+
+def monitorPower (interval = 1):
+	while True:
+		power = pixiAdcRead (adc, 0)
+		voltage = 10.277 * (power / 4096.0)
+		time = strftime (format, localtime())
+		text = "%s %.3fv " % (time, voltage)
+		print (text, power)
+		textAt (0, 0, text)
+		sleep (interval)
+
+# button states
+ButtonUp        = 0x0
+ButtonPress     = 0x3
+ButtonDown      = 0x1
+ButtonRelease   = 0x2
+ButtonVisuals = {
+	ButtonUp        : '-',
+	ButtonPress     : '_',
+	ButtonDown      : '+',
+	ButtonRelease   : '='
+}
+
+def parseButtons (value):
+	return [
+		(value      ) & 0x3,
+		(value >>  2) & 0x3,
+		(value >>  4) & 0x3,
+		(value >>  6) & 0x3,
+		]
+
+def formatButtons (buttons):
+	return ''.join ((
+			ButtonVisuals[buttons[0]],
+			ButtonVisuals[buttons[1]],
+			ButtonVisuals[buttons[2]],
+			ButtonVisuals[buttons[3]],
+			))
+
+def panicCommand (args, output):
+	# Avoid any print()s, because if stdout is routed over the network,
+	# it might block!
+	textAt (0, 1, '[' + ' '.join (args) + ']')
+#	print (args)
+	sleep (1)
+	try:
+		result = call (args, stdout=output, stderr=output, stdin=output)
+		text = ":result=" + str(result)
+#		print (text)
+		textAt (0, 1, text)
+		sleep (1)
+	except Exception as e:
+#		from traceback import print_exc
+#		print_exc()
+		textAt (0, 1, str (e))
+		sleep (2)
+
+def panic():
+	output = open ('/dev/console')
+	panicCommand (['sync'], output)
+	panicCommand (['ifdown', 'eth0'], output)
+	panicCommand (['ifup', 'eth0'], output)
+
+panicButtons = [0, ButtonDown, ButtonDown, 0]
+
+class ButtonReader (Thread):
+	def run (self):
+		prev = -1
+		while True:
+			value = pixiSpiReadValue16 (spi, Pixi_Switch_in)
+			if value != prev:
+				buttons = parseButtons (value)
+				if buttons == panicButtons:
+					panic()
+				visual = formatButtons (buttons)
+				print (visual)
+				textAt (0, 1, visual + '        ')
+				prev = value
+			else:
+				sleep (0.05)
+
+print ("Monitoring power and buttons")
+print ("Press middle two buttons to invoke panic handler (sync files and reset network)")
+
+br = ButtonReader()
+br.daemon = True
+br.start()
+monitorPower()
