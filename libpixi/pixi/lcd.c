@@ -113,6 +113,7 @@ int pixi_lcdSetCursorPos (LcdDevice* device, uint x, uint y)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 
+	LIBPIXI_LOG_DEBUG("Setting cursor position to: %d, %d", x, y);
 	uint value = 0x0080 + ((y & 0x3f) << 6) + (x & 0x3f);
 	return lcdWrite (device, value);
 }
@@ -122,7 +123,7 @@ int pixi_lcdWriteStr (LcdDevice* device, const char* str)
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 	LIBPIXI_PRECONDITION_NOT_NULL(str);
 
-	LIBPIXI_LOG_TRACE("Writing str to LCD: [%s]", str);
+	LIBPIXI_LOG_DEBUG("Writing str to LCD: [%s]", str);
 	uint len = strlen (str);
 	int result = 0;
 	for (uint i = 0; i < len; i++)
