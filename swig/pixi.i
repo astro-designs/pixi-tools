@@ -24,11 +24,15 @@
 %rename("%(strip:[pixi_])s") "";
 
 %{
+#include <libpixi/pixi/adc.h>
 #include <libpixi/pixi/gpio.h>
 #include <libpixi/pixi/spi.h>
 #include <libpixi/pixi/lcd.h>
+#include <libpixi/pixi/registers.h>
 %}
 %include <libpixi/common.h>
+%include <libpixi/pixi/adc.h>
 %include <libpixi/pixi/gpio.h>
 %include <libpixi/pixi/spi.h>
 %include <libpixi/pixi/lcd.h>
+%include <libpixi/pixi/registers.h>
