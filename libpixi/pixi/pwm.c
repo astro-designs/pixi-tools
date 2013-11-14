@@ -18,23 +18,24 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-%module pixi
-
-// strip pixi_ prefix for python symbols
-%rename("%(strip:[pixi_])s") "";
-
-%{
-#include <libpixi/pixi/adc.h>
-#include <libpixi/pixi/gpio.h>
-#include <libpixi/pixi/spi.h>
-#include <libpixi/pixi/lcd.h>
 #include <libpixi/pixi/pwm.h>
+#include <libpixi/pixi/spi.h>
 #include <libpixi/pixi/registers.h>
-%}
-%include <libpixi/common.h>
-%include <libpixi/pixi/adc.h>
-%include <libpixi/pixi/gpio.h>
-%include <libpixi/pixi/spi.h>
-%include <libpixi/pixi/lcd.h>
-%include <libpixi/pixi/pwm.h>
-%include <libpixi/pixi/registers.h>
+#include <libpixi/util/log.h>
+#include <string.h>
+
+int pixi_pwmSet (SpiDevice* device, uint pwm, uint dutyCycle)
+{
+	LIBPIXI_PRECONDITION_NOT_NULL(device);
+	LIBPIXI_PRECONDITION_NOT_NULL(pwm < 8);
+	LIBPIXI_PRECONDITION_NOT_NULL(dutyCycle < 1024);
+	return pixi_pixiSpiWriteValue16 (device, 	Pixi_PWM0_control + pwm, dutyCycle);
+}
+
+int pixi_pwmSetPercent (SpiDevice* device, uint pwm, double dutyCycle)
+{
+	LIBPIXI_PRECONDITION_NOT_NULL(dutyCycle >= 0);
+	LIBPIXI_PRECONDITION_NOT_NULL(dutyCycle <= 100);
+	uint cycle = dutyCycle * 1023.0;
+	return pixi_pwmSet (device, pwm, cycle);
+}
