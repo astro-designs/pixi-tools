@@ -18,8 +18,8 @@
 
 from pixitools import pi
 from pixitools.pi import gpioSysGetPinState, gpioGetPinState, gpioMapRegisters, gpioUnmapRegisters, gpioDirectionToStr, gpioEdgeToStr, GpioState, SpiDevice
-from pixitools.pixi import pixiSpiOpen, pixiSpiWriteValue16
-from pixitools.pixix import Lcd
+from pixitools.pixi import pixiSpiOpen, pixiSpiWriteValue16, pwmSet as _pwmSet, pwmSetPercent as _pwmSetPercent
+from pixitools.pixix import Lcd, Spi
 import logging
 
 log = logging.getLogger(__name__)
@@ -115,6 +115,24 @@ def lcdSetText (text):
 		lcd = Lcd()
 	lcd.setText (text)
 addCommand (lcdSetText)
+
+spi = None
+def pwmSet (pwm, dutyCycle):
+	'Set the state of the PiXi PWM'
+	global spi
+	if not spi:
+		spi = Spi()
+	_pwmSet (spi, pwm, dutyCycle)
+addCommand (pwmSet)
+
+spi = None
+def pwmSetPercent (pwm, dutyCycle):
+	'Set the state of the PiXi PWM'
+	global spi
+	if not spi:
+		spi = Spi()
+	_pwmSetPercent (spi, pwm, dutyCycle)
+addCommand (pwmSetPercent)
 
 def processCommand (command):
 	methodName = command.get ('method')
