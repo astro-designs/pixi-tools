@@ -17,7 +17,7 @@
 #    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 from __future__ import print_function
-from pixitools import pixi
+from pixitools import pi, pixi
 from os import strerror
 from time import sleep
 import logging
@@ -132,7 +132,7 @@ class Lcd (object):
 class Spi (object):
 	def __init__(self):
 		self.spi = None
-		spi = pixi.SpiDevice()
+		spi = pi.SpiDevice()
 		check (pixi.pixiSpiOpen (spi))
 		self.spi = spi
 
@@ -142,7 +142,7 @@ class Spi (object):
 	def close (self):
 		spi = self.spi
 		if spi:
-			check (pixi.spiClose (spi))
+			check (pi.spiClose (spi))
 			self.spi = None
 
 	def write16 (self, address, value):
