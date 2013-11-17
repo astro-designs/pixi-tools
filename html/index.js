@@ -70,9 +70,9 @@ function init() {
 				var body = $('#commandTable').find('tbody');
 				for (var i = 0; i < result.length; i++) {
 					var cmd = result[i];
-					var row = body.append('<tr>');
-					row.append($('<td>').text(cmd.method));
-					row.append($('<td>').text(cmd.description));
+					var $row = addRow(body);
+					addCell($row).text(cmd.method);
+					addCell($row).text(cmd.description);
 				}
 			},
 			function(jqXHR, textStatus, errorThrown) {

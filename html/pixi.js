@@ -35,6 +35,20 @@ function dump(obj) {
 	log.innerHTML += JSON.stringify (obj) + '<br/>';
 }
 
+function addCell(row, content) {
+	var cell = $('<td>');
+	if (content !== null) {
+		cell.append(content);
+	}
+	row.append(cell);
+	return cell;
+}
+function addRow(tbody) {
+	row = $('<tr>');
+	tbody.append(row);
+	return row;
+}
+
 function postCommand (data, onSuccess, onError) {
 	$.ajax({
 		type: 'POST',

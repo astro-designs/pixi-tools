@@ -37,10 +37,10 @@ function fillStateTable (states) {
 	var body = $('#gpioStatesTable').find('tbody');
 	for (var i = 0; i < states.length; i++) {
 		var state = states[i];
-		var row = body.append('<tr>');
-		row.append($('<td>').text(state.gpio));
-		row.append($('<td>').text(state.direction));
-		row.append($('<td>').text(state.value));
+		var row = addRow(body);
+		addCell(row).text(state.gpio);
+		addCell(row).text(state.direction);
+		addCell(row).text(state.value);
 	}
 }
 
