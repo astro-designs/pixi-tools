@@ -22,6 +22,12 @@ var log;
 var toJson = JSON.stringify
 var fromJson = JSON.parse
 
+if (typeof String.prototype.startsWith != 'function') {
+	String.prototype.startsWith = function (str){
+		return this.slice(0, str.length) == str;
+	};
+}
+
 if (!window.console)
 	console = {
 		log: function(){}
@@ -35,13 +41,22 @@ function dump(obj) {
 	log.innerHTML += JSON.stringify (obj) + '<br/>';
 }
 
-function addCell(row, content) {
+function addTableItem(type, row, content, attributes) {
 	var cell = $('<td>');
 	if (content !== null) {
 		cell.append(content);
 	}
+	if (attributes != null) {
+		cell.attr(attributes);
+	}
 	row.append(cell);
 	return cell;
+}
+function addCell(row, content, attributes) {
+	return addTableItem('<td>', row, content, attributes);
+}
+function addHeaderCell(row, content, attributes) {
+	return addTableItem('<th>', row, content, attributes);
 }
 function addRow(tbody) {
 	row = $('<tr>');
