@@ -56,6 +56,18 @@ int pixi_pixiSpiWriteValue16 (SpiDevice* device, uint address, ushort value);
 ///	@return the (uint16) value on success, or -errno on error
 int pixi_pixiSpiReadValue16 (SpiDevice* device, uint address);
 
+///	Read a @c value from a PiXi register.
+///	@return the register value on success, or -errno on error
+int pixi_registerRead (SpiDevice* device, uint address);
+
+///	Write a @c value to a PiXi register.
+///	@return the read back value on success, or -errno on error
+int pixi_registerWrite (SpiDevice* device, uint address, ushort value);
+
+///	Perform a read/write to set the part of a register specified by @c mask to @c value.
+///	@return the previous register value, or -errno on error
+int pixi_registerWriteMasked (SpiDevice* device, uint address, ushort value, ushort mask);
+
 ///@} defgroup
 
 LIBPIXI_END_DECLS

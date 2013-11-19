@@ -44,10 +44,36 @@ static int readWriteValue16 (SpiDevice* device, uint function, uint address, uin
 
 int pixi_pixiSpiWriteValue16 (SpiDevice* device, uint address, uint16_t value)
 {
-	return readWriteValue16 (device, PixiSpiEnableWrite16, address, value);
+	return pixi_registerWrite (device, address, value);
 }
 
 int pixi_pixiSpiReadValue16 (SpiDevice* device, uint address)
 {
-	return readWriteValue16 (device, PixiSpiEnableRead16, address, 0);
+	return pixi_registerRead (device, address);
+}
+
+int pixi_registerRead (SpiDevice* device, uint address)
+{
+	int result = readWriteValue16 (device, PixiSpiEnableRead16, address, 0);
+	LIBPIXI_LOG_DEBUG("pixi_pixiWriteRegister address=0x%02x result=%d", address, result);
+	return result;
+}
+
+int pixi_registerWrite (SpiDevice* device, uint address, ushort value)
+{
+	int result = readWriteValue16 (device, PixiSpiEnableWrite16, address, value);
+	LIBPIXI_LOG_DEBUG("pixi_pixiWriteRegister address=0x%02x value=0x%04x result=%d", address, value, result);
+	return result;
+}
+
+int pixi_registerWriteMasked (SpiDevice* device, uint address, ushort value, ushort mask)
+{
+	int previous = pixi_registerRead (device, address);
+	if (previous < 0)
+		return previous;
+	ushort masked = (value & mask) | (previous & ~mask);
+	int result = pixi_registerWrite (device, address, masked);
+	if (result < 0)
+		return result;
+	return previous;
 }
