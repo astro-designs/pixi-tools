@@ -64,7 +64,7 @@ int pixi_lcdClose (LcdDevice* device)
 static inline int lcdWrite (LcdDevice* device, uint value)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
-	return pixi_pixiSpiWriteValue16 (&device->spi, LcdAddress, value);
+	return pixi_registerWrite (&device->spi, LcdAddress, value);
 }
 
 int pixi_lcdInit (LcdDevice* device)

@@ -50,11 +50,11 @@ int pixi_pixiSpiOpen (SpiDevice* device);
 
 ///	Write a @c value to an @c address.
 ///	@return the read back value on success, or -errno on error
-int pixi_pixiSpiWriteValue16 (SpiDevice* device, uint address, ushort value);
+int pixi_pixiSpiWriteValue16 (SpiDevice* device, uint address, ushort value) LIBPIXI_DEPRECATED;
 
 ///	Read a value from a @c address.
 ///	@return the (uint16) value on success, or -errno on error
-int pixi_pixiSpiReadValue16 (SpiDevice* device, uint address);
+int pixi_pixiSpiReadValue16 (SpiDevice* device, uint address) LIBPIXI_DEPRECATED;
 
 ///	Read a @c value from a PiXi register.
 ///	@return the register value on success, or -errno on error

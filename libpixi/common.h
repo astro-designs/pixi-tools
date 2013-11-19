@@ -47,8 +47,15 @@ typedef uint64_t  uint64;
 #define LIBPIXI_UNUSED(var) (void) (var)
 #define ARRAY_COUNT(array) (sizeof (array) / sizeof (array[0]))
 
-#define LIBPIXI_PRINTF_ARG(arg) __attribute__((format (printf, arg, arg+1)))
-#define LIBPIXI_CONSTRUCTOR(priority) __attribute__((constructor (10000 + priority)))
+#if defined __GNUC__
+#	define LIBPIXI_PRINTF_ARG(arg) __attribute__((format (printf, arg, arg+1)))
+#	define LIBPIXI_CONSTRUCTOR(priority) __attribute__((constructor (10000 + priority)))
+#	define LIBPIXI_DEPRECATED __attribute__((deprecated))
+#else
+#	define LIBPIXI_PRINTF_ARG(arg)
+#	define LIBPIXI_CONSTRUCTOR(priority)
+#	define LIBPIXI_DEPRECATED
+#endif
 
 
 #if defined __cplusplus && __cplusplus >= 201103L

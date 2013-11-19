@@ -28,8 +28,8 @@ int pixi_pwmSet (SpiDevice* device, uint pwm, uint dutyCycle)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 	LIBPIXI_PRECONDITION_NOT_NULL(pwm < 8);
-	LIBPIXI_PRECONDITION_NOT_NULL(dutyCycle < 1024);
-	return pixi_pixiSpiWriteValue16 (device, 	Pixi_PWM0_control + pwm, dutyCycle);
+//	LIBPIXI_PRECONDITION_NOT_NULL(dutyCycle < 1024);
+	return pixi_registerWrite (device, 	Pixi_PWM0_control + pwm, dutyCycle);
 }
 
 int pixi_pwmSetPercent (SpiDevice* device, uint pwm, double dutyCycle)

@@ -60,9 +60,9 @@ int64 pixi_pixiFpgaGetVersion (void)
 	if (result < 0)
 		return result;
 
-	int h = pixi_pixiSpiReadValue16 (&spi, Pixi_FPGA_build_time2);
-	int m = pixi_pixiSpiReadValue16 (&spi, Pixi_FPGA_build_time1);
-	int l = pixi_pixiSpiReadValue16 (&spi, Pixi_FPGA_build_time0);
+	int h = pixi_registerRead (&spi, Pixi_FPGA_build_time2);
+	int m = pixi_registerRead (&spi, Pixi_FPGA_build_time1);
+	int l = pixi_registerRead (&spi, Pixi_FPGA_build_time0);
 	LIBPIXI_LOG_DEBUG("Got PiXi FPGA version %04x,%04x,%04x", h, m, l);
 
 	pixi_spiClose (&spi);
