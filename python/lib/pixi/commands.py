@@ -18,8 +18,8 @@
 
 from pixitools import pi
 from pixitools.pi import gpioSysGetPinState, gpioGetPinState, gpioMapRegisters, gpioUnmapRegisters, gpioDirectionToStr, gpioEdgeToStr, GpioState, SpiDevice
-from pixitools.pixi import pixiSpiOpen, pixiSpiWriteValue16, pwmSet as _pwmSet, pwmSetPercent as _pwmSetPercent
-from pixitools.pixix import Lcd, Spi
+from pixitools.pixi import pixiSpiOpen, pixiSpiWriteValue16, pixiGpioSetPinMode as _pixiGpioSetPinMode, pixiGpioWritePin as _pixiGpioWritePin, pwmSet as _pwmSet, pwmSetPercent as _pwmSetPercent
+from pixitools.pixix import Lcd, Spi, check
 import logging
 
 log = logging.getLogger(__name__)
@@ -117,12 +117,30 @@ def lcdSetText (text):
 addCommand (lcdSetText)
 
 spi = None
+def gpioWritePin (gpioController, pin, value):
+	'Set the output value of a PiXi GPIO pin'
+	global spi
+	if not spi:
+		spi = Spi()
+	check (_pixiGpioWritePin (spi.spi, gpioController, pin, value))
+addCommand (gpioWritePin)
+
+spi = None
+def gpioSetMode (gpioController, pin, mode):
+	'Set the mode of a PiXi GPIO pin'
+	global spi
+	if not spi:
+		spi = Spi()
+	check (_pixiGpioSetPinMode (spi.spi, gpioController, pin, mode))
+addCommand (gpioSetMode)
+
+spi = None
 def pwmSet (pwm, dutyCycle):
 	'Set the state of the PiXi PWM'
 	global spi
 	if not spi:
 		spi = Spi()
-	_pwmSet (spi, pwm, dutyCycle)
+	check (_pwmSet (spi.spi, pwm, dutyCycle))
 addCommand (pwmSet)
 
 spi = None
@@ -131,7 +149,7 @@ def pwmSetPercent (pwm, dutyCycle):
 	global spi
 	if not spi:
 		spi = Spi()
-	_pwmSetPercent (spi, pwm, dutyCycle)
+	check (_pwmSetPercent (spi.spi, pwm, dutyCycle))
 addCommand (pwmSetPercent)
 
 def processCommand (command):
