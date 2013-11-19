@@ -24,7 +24,7 @@
 #include <libpixi/util/log.h>
 #include <string.h>
 
-int pixi_pwmSet (SpiDevice* device, uint pwm, uint dutyCycle)
+int pixi_pwmWritePin (SpiDevice* device, uint pwm, uint dutyCycle)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 	LIBPIXI_PRECONDITION_NOT_NULL(pwm < 8);
@@ -32,10 +32,10 @@ int pixi_pwmSet (SpiDevice* device, uint pwm, uint dutyCycle)
 	return pixi_registerWrite (device, 	Pixi_PWM0_control + pwm, dutyCycle);
 }
 
-int pixi_pwmSetPercent (SpiDevice* device, uint pwm, double dutyCycle)
+int pixi_pwmWritePinPercent (SpiDevice* device, uint pwm, double dutyCycle)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(dutyCycle >= 0);
 	LIBPIXI_PRECONDITION_NOT_NULL(dutyCycle <= 100);
 	uint cycle = dutyCycle * 1023.0;
-	return pixi_pwmSet (device, pwm, cycle);
+	return pixi_pwmWritePin (device, pwm, cycle);
 }

@@ -30,9 +30,9 @@ function gpioSetMethod(gpioController, pin, value) {
 		}
 	};
 }
-function pwmSetMethod(pin, value) {
+function pwmWritePinMethod(pin, value) {
 	return {
-		method: 'pwmSet', // TODO: rename to pwmSetValue
+		method: 'pwmWritePin',
 		params: {
 			pwm: pin,
 			dutyCycle: value
@@ -43,7 +43,7 @@ var methods = {
 		'GPIO1' : function(pin, value) {return gpioSetMethod(1, pin, value);},
 		'GPIO2' : function(pin, value) {return gpioSetMethod(2, pin, value);},
 		'GPIO3' : function(pin, value) {return gpioSetMethod(3, pin, value);},
-		'PWM'   : pwmSetMethod,
+		'PWM'   : pwmWritePinMethod,
 };
 
 var gpioModes = ['unspecified', 'High impedance input', 'GPIO out', 'Special 1', 'Special 2'];
