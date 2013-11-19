@@ -38,7 +38,7 @@ if len (sys.argv) > 1:
 	dname = sys.argv[1]
 else:
 	dname = dirname (join (getcwd(), sys.argv[0]))
-	dname = join (dname, '../share/pixitools/html')
+	dname = join (dname, '../share/pixi-tools/html')
 if len (sys.argv) > 2:
 	port = int (sys.argv[2])
 
