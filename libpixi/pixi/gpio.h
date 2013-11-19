@@ -23,6 +23,7 @@
 
 
 #include <libpixi/common.h>
+#include <libpixi/pi/spi.h>
 
 LIBPIXI_BEGIN_DECLS
 
@@ -43,6 +44,17 @@ typedef enum PixiGpioMode
 ///	@param gpio GPIO device [1,3]
 ///	@return 0 on success, -errno on error
 int pixi_pixiGpioSetMode (uint gpio, PixiGpioMode mode);
+
+///	Set the @c mode of a @c pin on a @c gpioController.
+///	@param gpioController a PiXi GPIO in the range [1,3]
+///	 (0 is reserved for possible designation as the Pi GPIO).
+///	@param pin in
+///	@return >=0 on success, -errno on error
+int pixi_pixiGpioSetPinMode (SpiDevice* spi, uint gpioController, uint pin, PixiGpioMode mode);
+
+///	Set the @c value of a @c pin on a @c gpioController.
+///	@return >0 on success, -errno on error
+int pixi_pixiGpioWritePin (SpiDevice* spi, uint gpioController, uint pin, uint value);
 
 ///@} defgroup
 

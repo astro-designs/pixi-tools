@@ -41,7 +41,7 @@ static int setGpioMode (PixiGpioMode mode, int addr1, int addr2, int addr3)
 	pixi_spiClose (&spi);
 	if (result < 0)
 		LIBPIXI_ERROR(-result, "spiPixiWriteValue16");
-	return 0;
+	return result;
 }
 
 int pixi_pixiGpioSetMode (uint gpio, PixiGpioMode mode)
@@ -56,3 +56,68 @@ int pixi_pixiGpioSetMode (uint gpio, PixiGpioMode mode)
 	}
 	return -EINVAL; // unreachable
 }
+
+int pixi_pixiGpioSetPinMode (SpiDevice* spi, uint gpioController, uint pin, PixiGpioMode mode)
+{
+	LIBPIXI_PRECONDITION(gpioController >= 1 && gpioController <= 3);
+	LIBPIXI_PRECONDITION(mode < 4);
+	uint limit = 16;
+	uint address;
+	switch (gpioController)
+	{
+	case 1: address = Pixi_GPIO1_00_07_mode; limit = 24; break;
+	case 2: address = Pixi_GPIO2_00_07_mode; break;
+	case 3: address = Pixi_GPIO3_00_07_mode; break;
+	default:
+		LIBPIXI_PRECONDITION_FAILURE("gpioController value not recognised");
+		return -EINVAL;
+	}
+	LIBPIXI_PRECONDITION(pin < limit);
+
+	if (pin > 8 ) address++;
+	if (pin > 16) address++;
+	uint shift = 2 * (pin & 0x7);
+	uint regValue = mode << shift;
+	uint regMask  = 1 << shift;
+	LIBPIXI_LOG_DEBUG("Setting GPIO controller=%u pin=%u mode=%u [address=0x%x regValue=0x%x]",
+		gpioController, pin, mode, address, regValue);
+
+	int result = pixi_registerWriteMasked (spi, address, regValue, regMask);
+	if (result < 0)
+		LIBPIXI_ERROR(-result, "pixi_pixiWriteValueMasked");
+	return result;
+}
+
+int pixi_pixiGpioWritePin (SpiDevice* spi, uint gpioController, uint pin, uint value)
+{
+	LIBPIXI_PRECONDITION(gpioController >= 1 && gpioController <= 3);
+	LIBPIXI_PRECONDITION(value <= 1);
+	uint limit = 16;
+	uint address;
+	switch (gpioController)
+	{
+	case 1: address = Pixi_GPIO1_00_07_IO; limit = 24; break;
+	case 2: address = Pixi_GPIO2_00_07_IO; break;
+	case 3: address = Pixi_GPIO3_00_07_IO; break;
+	default:
+		LIBPIXI_PRECONDITION_FAILURE("gpioController value not recognised");
+		return -EINVAL;
+	}
+	LIBPIXI_PRECONDITION(pin < limit);
+
+	if (pin > 8 ) address++;
+	if (pin > 16) address++;
+	uint shift = (pin & 0x7);
+	uint regValue = value << shift;
+	uint regMask  = 1 << shift;
+	LIBPIXI_LOG_TRACE("Setting GPIO controller=%u pin=%u value=%u [address=0x%x regValue=0x%x]",
+		gpioController, pin, value, address, regValue);
+
+	// FIXME: writeMasked does not really make sense if any pins are in input mode.
+	// Should instead store all register states internally.
+	int result = pixi_registerWriteMasked (spi, address, regValue, regMask);
+	if (result < 0)
+		LIBPIXI_ERROR(-result, "pixi_pixiWriteValueMasked");
+	return result;
+}
+
