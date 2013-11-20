@@ -1,3 +1,18 @@
+pixi-tools (0.2-1) unstable; urgency=low
+
+  * Add real debian packaging infrastructure
+    - Install into /usr instead of /usr/local.
+    - Use dh_pysupport.
+
+  * Many code changes:
+    - Make libpixi a shared library.
+    - Add command 'fpga-build-time'.
+    - Add command 'adc-read'.
+    - Fixes to the dynamically generated HTML.
+    - Addition of the 'Sequencer' UI.
+
+ -- Simon Cantrill <simonjcantrill@gmail.com>  Tue, 19 Nov 2013 20:38:32 +0000
+
 pixi-tools (0.1-1) unstable; urgency=low
 
   * Initial release.

@@ -1,1 +1,1 @@
-static const char LibPixiVersion[] = "0.1";
+static const char LibPixiVersion[] = "0.2";
