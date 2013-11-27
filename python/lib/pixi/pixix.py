@@ -145,8 +145,8 @@ class Spi (object):
 			check (pi.spiClose (spi))
 			self.spi = None
 
-	def write16 (self, address, value):
-		check (pixi.pixiSpiWriteValue16 (self.spi, address, value))
+	def registerWrite (self, address, value):
+		check (pixi.registerWrite (self.spi, address, value))
 
 ServoA1 = 0x40
 ServoA2 = 0x41

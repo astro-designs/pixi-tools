@@ -5,21 +5,21 @@ from __future__ import print_function
 import sys
 from time import sleep
 from pixitools.pi import SpiDevice, spiClose
-from pixitools.pixi import pixiSpiOpen, pixiSpiWriteValue16
+from pixitools.pixi import pixiSpiOpen, pixiGpioWritePin, pwmWritePin, registerWrite
+from pixitools.pixix import Spi
 
 forwards =  0
 reverse  =  1
 
 def prepare():
 	global spi
-	spi = SpiDevice()
-	pixiSpiOpen (spi)
+	spi = Spi()
 	# enable motor
-	write16 (0x23, 0x1)
+	pixiGpioWritePin (spi.spi, 2, 0, 1)
 
-def write16 (address, value):
-	print ('write-spi', hex (address), hex (value))
-	pixiSpiWriteValue16 (spi, address, value)
+def pwmSet (pin, value):
+#	print ('pwmWritePin', pin, hex (value))
+	pwmWritePin (spi.spi, pin, value)
 
 motor = [0, 0x8000]
 def moveRover (leftSide, rightSide, speed):
@@ -31,10 +31,10 @@ def moveRover (leftSide, rightSide, speed):
 	fr = pwm + motor[    rightSide]
 	br = pwm + motor[not rightSide]
 
-	write16 (0x45, fr)
-	write16 (0x46, bl)
-	write16 (0x44, br)
-	write16 (0x47, fl) # Must write to 0x47 last!
+	pwmSet (5, fr)
+	pwmSet (6, bl)
+	pwmSet (4, br)
+	pwmSet (7, fl) # Must write to this pin last!
 
 def moveForward  (speed):
 	moveRover (forwards, forwards, speed)
@@ -68,7 +68,7 @@ if len (sys.argv) == 2:
 	if sys.argv[1] == "demo":
 		prepare()
 		demo()
-		spiClose (spi)
+		spi.close()
 	sys.exit (0)
 elif len (sys.argv) == 3:
 	cmd = sys.argv[1]
@@ -82,7 +82,7 @@ elif len (sys.argv) == 3:
 	if command:
 		prepare()
 		command (speed)
-		spiClose (spi)
+		spi.close()
 		sys.exit (0)
 
 print ("usage: %s demo" % sys.argv[0])
