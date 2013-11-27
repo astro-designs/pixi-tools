@@ -40,7 +40,7 @@ static int setGpioMode (PixiGpioMode mode, int addr1, int addr2, int addr3)
 		result = pixi_registerWrite (&spi, addr3, value);
 	pixi_spiClose (&spi);
 	if (result < 0)
-		LIBPIXI_ERROR(-result, "spiPixiWriteValue16");
+		LIBPIXI_ERROR(-result, "pixi_registerWrite");
 	return result;
 }
 
