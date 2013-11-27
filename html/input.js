@@ -31,21 +31,18 @@ var tracking = false;
 var x;
 var y;
 
-function Controller(channel, address, min, max, key) {
-	this.$channel = $('#channel'+key);
-	this.$address = $('#address'+key);
+function Controller(pin, min, max, key) {
+	this.$pin     = $('#pin'+key);
 	this.$min     = $('#min'+key);
 	this.$max     = $('#max'+key);
 	this.$value   = $('#value'+key);
-	this.$channel.val(channel);
-	this.$address.val(address);
+	this.$pin.val(pin);
 	this.$min    .val(min);
 	this.$max    .val(max);
 	this.$value  .text(min);
 
 	this.update = function(scaled) {
-		var channel = parseInt(this.$channel.val());
-		var address = parseInt(this.$address.val());
+		var pin     = parseInt(this.$pin.val());
 		var min     = parseInt(this.$min.val());
 		var max     = parseInt(this.$max.val());
 		var value = Math.round (min + (scaled * (max - min)));
@@ -57,11 +54,10 @@ function Controller(channel, address, min, max, key) {
 
 		postCommand (
 				{
-					method: 'spiWriteValue16',
+					method: 'pwmWritePin',
 					params: {
-						channel: channel,
-						address: address,
-						value  : value
+						pwm:       pin,
+						dutyCycle: value
 					}
 				},
 				function (result) {
@@ -87,8 +83,8 @@ function init() {
 	});
 	canvas = document.getElementById('canvas');
 
-	controllerX = new Controller(0, 0x40, 60, 70, 'X');
-	controllerY = new Controller(0, 0x41, 65, 75, 'Y');
+	controllerX = new Controller(0, 60, 70, 'X');
+	controllerY = new Controller(1, 65, 75, 'Y');
 
 	if (canvas != null && canvas.getContext) {
 		context = canvas.getContext('2d');

@@ -18,7 +18,8 @@
 
 from pixitools import pi
 from pixitools.pi import gpioSysGetPinState, gpioGetPinState, gpioMapRegisters, gpioUnmapRegisters, gpioDirectionToStr, gpioEdgeToStr, GpioState, SpiDevice
-from pixitools.pixi import pixiSpiOpen, pixiSpiWriteValue16, pixiGpioSetPinMode as _pixiGpioSetPinMode, pixiGpioWritePin as _pixiGpioWritePin, pwmWritePin as _pwmWritePin, pwmWritePinPercent as _pwmWritePinPercent
+from pixitools.pixi import pixiSpiOpen, registerWrite as _registerWrite, pixiGpioSetPinMode as _pixiGpioSetPinMode
+from pixitools.pixi import pixiGpioWritePin as _pixiGpioWritePin, pwmWritePin as _pwmWritePin, pwmWritePinPercent as _pwmWritePinPercent
 from pixitools.pixix import Lcd, Spi, check
 import logging
 
@@ -96,15 +97,14 @@ def gpioSysGetStates():
 	return states
 addCommand (gpioSysGetStates)
 
-def spiWriteValue16 (channel, address, value):
-	'Write a 16 bit value over SPI'
-	dev = SpiDevice()
-	if pixiSpiOpen (dev) < 0:
-		raise CommandError ("Failed to open PiXi SPI device")
-	# FIXME: don't ignore channel
-	if pixiSpiWriteValue16 (dev, address, value) < 0:
+def registerWrite (address, value):
+	'Write to a PiXi register via SPI'
+	global spi
+	if not spi:
+		spi = Spi()
+	if _registerWrite (spi.spi, address, value) < 0:
 		raise CommandError ("Failed to write SPI value")
-addCommand (spiWriteValue16)
+addCommand (registerWrite)
 
 lcd = None
 def lcdSetText (text):
