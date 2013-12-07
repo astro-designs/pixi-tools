@@ -29,6 +29,7 @@
 #include <libpixi/pi/gpio.h>
 #include <libpixi/pi/spi.h>
 %}
+%include <stdint.i>
 %include <libpixi/common.h>
 %include <libpixi/libpixi.h>
 %include <libpixi/pi/gpio.h>
