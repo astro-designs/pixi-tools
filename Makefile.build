@@ -55,6 +55,11 @@ libpixi_HEADERS := $(shell cd $(topdir) && find libpixi/ -name \*.h | grep -v pr
 libpixi_SOURCES := $(shell cd $(topdir) && find libpixi/ -name \*.c)
 libpixi_OBJECTS := $(libpixi_SOURCES:.c=.o)
 
+pixisim          = lib/pixisim.so
+pixisim_SOURCES := $(shell cd $(topdir) && find pixisim/ -name \*.c)
+pixisim_OBJECTS := $(pixisim_SOURCES:.c=.o)
+pixisim_LIBS     = -Llib -lpixi
+
 pio          = bin/pio
 pio_SOURCES := $(shell cd $(topdir) && find pio/ -name \*.c)
 pio_OBJECTS := $(pio_SOURCES:.c=.o)
@@ -75,7 +80,7 @@ _pixi_LIBS     = -Llib -lpixi
 html_SOURCES := $(shell cd $(topdir)/html && find * -name \*.html -or -iname \*.js -or -iname \*.css)
 html_FILES   := $(addprefix $(build_htmldir)/,$(html_SOURCES))
 
-LIBS       = $(libpixi)
+LIBS       = $(libpixi) $(pixisim)
 HEADERS    = $(libpixi_HEADERS)
 APPS       = $(pio)
 PYTHON_EXTS = $(_pi) $(_pixi)
@@ -96,6 +101,9 @@ all: $(version_h) $(TARGETS)
 
 $(libpixi): build_CFLAGS += -fPIC
 $(libpixi): $(libpixi_OBJECTS)
+
+$(pixisim): build_CFLAGS += -fPIC
+$(pixisim): $(libpixi) $(pixisim_OBJECTS)
 
 $(pio): $(libpixi) $(pio_OBJECTS)
 
