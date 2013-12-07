@@ -50,7 +50,7 @@ int pixi_pixiGpioSetMode (uint gpio, PixiGpioMode mode);
 ///	 (0 is reserved for possible designation as the Pi GPIO).
 ///	@param pin in
 ///	@return >=0 on success, -errno on error
-int pixi_pixiGpioSetPinMode (SpiDevice* spi, uint gpioController, uint pin, PixiGpioMode mode);
+int pixi_pixiGpioSetPinMode (SpiDevice* spi, uint gpioController, uint pin, uint mode);
 
 ///	Set the @c value of a @c pin on a @c gpioController.
 ///	@return >0 on success, -errno on error

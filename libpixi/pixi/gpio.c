@@ -57,7 +57,7 @@ int pixi_pixiGpioSetMode (uint gpio, PixiGpioMode mode)
 	return -EINVAL; // unreachable
 }
 
-int pixi_pixiGpioSetPinMode (SpiDevice* spi, uint gpioController, uint pin, PixiGpioMode mode)
+int pixi_pixiGpioSetPinMode (SpiDevice* spi, uint gpioController, uint pin, uint mode)
 {
 	LIBPIXI_PRECONDITION(gpioController >= 1 && gpioController <= 3);
 	LIBPIXI_PRECONDITION(mode < 4);

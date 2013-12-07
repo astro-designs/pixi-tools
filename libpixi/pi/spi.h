@@ -38,7 +38,8 @@ typedef struct SpiDevice
 	int bitsPerWord;
 } SpiDevice;
 
-static const SpiDevice SpiDeviceInit = {-1, 0, 0, 0};
+#define SPI_DEVICE_INIT {-1, 0, 0, 0}
+static const SpiDevice SpiDeviceInit = SPI_DEVICE_INIT;
 
 ///	Open the SPI device @c channel, also setting @c speed.
 ///	On success, the fields of @c device are filled out, and
