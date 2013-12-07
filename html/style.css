@@ -39,3 +39,8 @@ td {
 	color: green;
 	background-color: black;
 }
+
+.errorLog {
+	color: red;
+	background-color: black;
+}

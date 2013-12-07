@@ -52,7 +52,7 @@ function Controller(pin, min, max, key) {
 		this.value = value;
 		var $value = this.$value;
 
-		postCommand (
+		logPostCommand (
 				{
 					method: 'pwmWritePin',
 					params: {
@@ -63,8 +63,8 @@ function Controller(pin, min, max, key) {
 				function (result) {
 					$value.text(value);
 				},
-				function(jqXHR, textStatus, errorThrown) {
-					$value.text(value + ': ' + textStatus + ': ' + toJson (errorThrown));
+				function (error) {
+					$value.text(value + ': ' + error);
 				}
 		);
 	};

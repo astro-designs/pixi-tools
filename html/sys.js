@@ -21,14 +21,10 @@
 function init() {
 	initPage();
 
-	postCommand (
+	logPostCommand (
 			{ method: 'gpioSysGetStates' },
 			function (result) {
-				print ('Received gpioSysGetStates');
 				fillStateTable (result);
-			},
-			function(jqXHR, textStatus, errorThrown) {
-				print ('gpioSysGetStates: ' + textStatus + ': ' + toJson (errorThrown));
 			}
 	);
 }

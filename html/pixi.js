@@ -33,8 +33,18 @@ if (!window.console)
 		log: function(){}
 	};
 
+function escapeHtml (text) {
+    var pre  = document.createElement ('pre');
+    pre.appendChild (document.createTextNode (text));
+    return pre.innerHTML;
+}
+
 function print(text) {
-	log.innerHTML += text + '<br/>';
+	log.innerHTML += escapeHtml (text) + '<br/>';
+}
+
+function printError (text) {
+	log.innerHTML += '<div class="errorLog">' + escapeHtml (text) + '</div>';
 }
 
 function dump(obj) {
@@ -91,6 +101,24 @@ function postCommand (data, onSuccess, onError) {
 		}
 	});
 }
+
+function logPostCommand (data, onSuccess, onError) {
+	postCommand(
+			data,
+			function (result) {
+				print (new Date() + ': Received successful response from: ' + data.method);
+				if (onSuccess)
+					onSuccess(result);
+			},
+			function (jqXHR, textStatus, errorThrown) {
+				error = data.method + ': ' + textStatus + ': ' + toJson (errorThrown);
+				printError (new Date() + ': Received error response from ' + error);
+				if (onError != null)
+					onError (error);
+			}
+			);
+}
+
 
 function initPage() {
 	log = document.getElementById('log');

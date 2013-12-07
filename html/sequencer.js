@@ -112,7 +112,7 @@ function Control($row, id, sequencer) {
 			return;
 
 		print('Setting gpio ' + gpio + ' pin ' + pin + ' to mode ' + mode);
-		postCommand ({
+		logPostCommand ({
 					method: 'gpioSetMode',
 					params: {
 						gpioController: gpio,
@@ -121,10 +121,10 @@ function Control($row, id, sequencer) {
 					}
 				},
 				function (result) {
-					$status.text(value);
+					$status.text (result);
 				},
-				function(jqXHR, textStatus, errorThrown) {
-					$status.text(textStatus + ': ' + toJson (errorThrown));
+				function (error) {
+					$status.text (error);
 				}
 		);
 	}
@@ -148,13 +148,13 @@ function Control($row, id, sequencer) {
 		console.log(method);
 		method = method (pin, value);
 		console.log(method);
-		postCommand (
+		logPostCommand (
 				method,
 				function (result) {
 					$status.text(value);
 				},
-				function(jqXHR, textStatus, errorThrown) {
-					$status.text(textStatus + ': ' + toJson (errorThrown));
+				function (error) {
+					$status.text (error);
 				}
 		);
 	};

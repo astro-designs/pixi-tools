@@ -23,64 +23,55 @@ function init() {
 
 	var version = $('#pixiVer');
 
-	postCommand (
+	logPostCommand (
 			{ method: 'getLibVersion' },
 			function (result) {
-				print ('Received getLibVersion');
 				version.text (result);
 			},
-			function(jqXHR, textStatus, errorThrown) {
-				version.text (textStatus + ': ' + errorThrown);
-				print ('getLibVersion: ' + textStatus + ': ' + toJson (errorThrown));
+			function (error) {
+				version.text (error);
 			}
 	);
 
 	var piBoardRevision = $('#piBoardRevision');
 
-	postCommand (
+	logPostCommand (
 			{ method: 'getPiBoardRevision' },
 			function (result) {
-				print ('Received getPiBoardRevision');
 				piBoardRevision.text (result);
 			},
-			function(jqXHR, textStatus, errorThrown) {
-				piBoardRevision.text (textStatus + ': ' + errorThrown);
-				print ('getPiBoardRevision: ' + textStatus + ': ' + toJson (errorThrown));
+			function (error) {
+				piBoardRevision.text (error);
 			}
 	);
 
 	var piBoardVersion = $('#piBoardVersion');
 
-	postCommand (
+	logPostCommand (
 			{ method: 'getPiBoardVersion' },
 			function (result) {
-				print ('Received getPiBoardVersion');
 				piBoardVersion.text (result);
 			},
-			function(jqXHR, textStatus, errorThrown) {
-				piBoardVersion.text (textStatus + ': ' + errorThrown);
-				print ('getPiBoardVersion: ' + textStatus + ': ' + toJson (errorThrown));
+			function (error) {
+				piBoardVersion.text (error);
 			}
 	);
 
 	var pixiFpgaBuildTime = $('#pixiFpgaBuildTime');
 
-	postCommand (
+	logPostCommand (
 			{ method: 'pixiFpgaGetBuildTime' },
 			function (result) {
-				print ('Received pixiFpgaGetBuildTime');
 				pixiFpgaBuildTime.text (new Date(1000 * result).toString());
 			},
-			function(jqXHR, textStatus, errorThrown) {
-				pixiFpgaBuildTime.text (textStatus + ': ' + errorThrown);
-				print ('pixiFpgaGetBuildTime: ' + textStatus + ': ' + toJson (errorThrown));
+			function (error) {
+				pixiFpgaBuildTime.text (error);
 			}
 	);
 
-	postCommand (
+	logPostCommand (
 			{ method: 'getCommands' },
 			function (result) {
-				print ('Received getCommands');
 				var body = $('#commandTable').find('tbody');
 				for (var i = 0; i < result.length; i++) {
 					var cmd = result[i];
@@ -88,9 +79,6 @@ function init() {
 					addCell($row).text(cmd.method);
 					addCell($row).text(cmd.description);
 				}
-			},
-			function(jqXHR, textStatus, errorThrown) {
-				print ('getCommands: ' + textStatus + ': ' + toJson (errorThrown));
 			}
 	);
 }
