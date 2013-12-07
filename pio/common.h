@@ -24,6 +24,7 @@
 
 #include <libpixi/common.h>
 
+///	Add a constructor attribute to function, with the given priority (ordering).
 #define PIO_CONSTRUCTOR(priority) LIBPIXI_CONSTRUCTOR(10000 + priority)
 
 
