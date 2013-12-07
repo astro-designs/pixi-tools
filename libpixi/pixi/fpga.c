@@ -79,7 +79,7 @@ static int versionPart (const char* text, uint offset)
 	return (high * 10) + low;
 }
 
-time_t pixi_pixiFpgaVersionToTime (int64 version)
+int64 pixi_pixiFpgaVersionToTime (int64 version)
 {
 	if (version <= 0)
 	{
@@ -113,7 +113,7 @@ int pixi_pixiFpgaLoadBuffer (const Buffer* _buffer)
 	int result = pixi_gpioMapRegisters();
 	if (result < 0)
 	{
-		LIBPIXI_LOG_ERROR("Unable map GPIO registers");
+		LIBPIXI_LOG_ERROR("Unable to map GPIO registers");
 		return result;
 	}
 
@@ -234,4 +234,13 @@ int pixi_pixiFpgaLoadFile (const char* filename)
 	free (buffer.memory);
 
 	return result;
+}
+
+int64 pixi_pixiFpgaGetBuildTime()
+{
+	int64 version = pixi_pixiFpgaGetVersion();
+	if (version < 0)
+		return version;
+	int64 build = pixi_pixiFpgaVersionToTime (version);
+	return build;
 }

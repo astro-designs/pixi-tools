@@ -42,9 +42,13 @@ int pixi_pixiFpgaLoadBuffer (const Buffer* buffer);
 ///	@return >=0 on success, -errno on error.
 int64 pixi_pixiFpgaGetVersion (void);
 
-///	Convert an FPGA version to a time_t
+///	Convert an FPGA version to a time_t compatible value.
 ///	@return >=0 on success, -errno on error.
-time_t pixi_pixiFpgaVersionToTime (int64 version);
+int64 pixi_pixiFpgaVersionToTime (int64 version);
+
+///	More or less: pixi_pixiFpgaVersionToTime (pixi_pixiFpgaGetVersion())
+///	@return >=0 on success, -errno on error.
+int64 pixi_pixiFpgaGetBuildTime (void);
 
 ///@} defgroup
 

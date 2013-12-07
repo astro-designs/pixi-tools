@@ -94,7 +94,12 @@ static int fpgaGetBuildTimeFn (uint argc, char*const*const argv)
 		return -EINVAL;
 	}
 	int64 version = pixi_pixiFpgaGetVersion();
-	if (version <= 0)
+	if (version == 0)
+	{
+		PIO_LOG_ERROR("Error getting FPGA version: value is zero");
+		return -EINVAL;
+	}
+	if (version < 0)
 	{
 		PIO_ERROR(-version, "Error getting FPGA version");
 		return version;

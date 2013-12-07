@@ -35,6 +35,7 @@ class PixiError (RuntimeError):
 def check (result):
 	if result < 0:
 		raise PixiError (result)
+	return result
 
 def pause():
 	sleep (0.1)

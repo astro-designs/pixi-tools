@@ -20,6 +20,7 @@ from pixitools import pi
 from pixitools.pi import gpioSysGetPinState, gpioGetPinState, gpioMapRegisters, gpioUnmapRegisters, gpioDirectionToStr, gpioEdgeToStr, GpioState, SpiDevice
 from pixitools.pixi import pixiSpiOpen, registerWrite as _registerWrite, pixiGpioSetPinMode as _pixiGpioSetPinMode
 from pixitools.pixi import pixiGpioWritePin as _pixiGpioWritePin, pwmWritePin as _pwmWritePin, pwmWritePinPercent as _pwmWritePinPercent
+from pixitools.pixi import pixiFpgaGetBuildTime as _pixiFpgaGetBuildTime
 from pixitools.pixix import Lcd, Spi, check
 import logging
 
@@ -97,12 +98,16 @@ def gpioSysGetStates():
 	return states
 addCommand (gpioSysGetStates)
 
-def registerWrite (address, value):
-	'Write to a PiXi register via SPI'
+spi = None
+def getSpi():
 	global spi
 	if not spi:
 		spi = Spi()
-	if _registerWrite (spi.spi, address, value) < 0:
+	return spi.spi
+
+def registerWrite (address, value):
+	'Write to a PiXi register via SPI'
+	if _registerWrite (getSpi(), address, value) < 0:
 		raise CommandError ("Failed to write SPI value")
 addCommand (registerWrite)
 
@@ -116,41 +121,30 @@ def lcdSetText (text):
 	lcd.setText (text)
 addCommand (lcdSetText)
 
-spi = None
 def gpioWritePin (gpioController, pin, value):
 	'Set the output value of a PiXi GPIO pin'
-	global spi
-	if not spi:
-		spi = Spi()
-	check (_pixiGpioWritePin (spi.spi, gpioController, pin, value))
+	check (_pixiGpioWritePin (getSpi(), gpioController, pin, value))
 addCommand (gpioWritePin)
 
-spi = None
 def gpioSetMode (gpioController, pin, mode):
 	'Set the mode of a PiXi GPIO pin'
-	global spi
-	if not spi:
-		spi = Spi()
-	check (_pixiGpioSetPinMode (spi.spi, gpioController, pin, mode))
+	check (_pixiGpioSetPinMode (getSpi(), gpioController, pin, mode))
 addCommand (gpioSetMode)
 
-spi = None
 def pwmWritePin (pwm, dutyCycle):
 	'Set the state of the PiXi PWM'
-	global spi
-	if not spi:
-		spi = Spi()
-	check (_pwmWritePin (spi.spi, pwm, dutyCycle))
+	check (_pwmWritePin (getSpi(), pwm, dutyCycle))
 addCommand (pwmWritePin)
 
-spi = None
 def pwmWritePinPercent (pwm, dutyCycle):
 	'Set the state of the PiXi PWM'
-	global spi
-	if not spi:
-		spi = Spi()
-	check (_pwmWritePinPercent (spi.spi, pwm, dutyCycle))
+	check (_pwmWritePinPercent (getSpi(), pwm, dutyCycle))
 addCommand (pwmWritePinPercent)
+
+def pixiFpgaGetBuildTime():
+	'Get the build time of the PiXi FPGA as seconds-since-epoch'
+	return check (_pixiFpgaGetBuildTime())
+addCommand (pixiFpgaGetBuildTime)
 
 def processCommand (command):
 	methodName = command.get ('method')

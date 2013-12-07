@@ -63,6 +63,20 @@ function init() {
 			}
 	);
 
+	var pixiFpgaBuildTime = $('#pixiFpgaBuildTime');
+
+	postCommand (
+			{ method: 'pixiFpgaGetBuildTime' },
+			function (result) {
+				print ('Received pixiFpgaGetBuildTime');
+				pixiFpgaBuildTime.text (new Date(1000 * result).toString());
+			},
+			function(jqXHR, textStatus, errorThrown) {
+				pixiFpgaBuildTime.text (textStatus + ': ' + errorThrown);
+				print ('pixiFpgaGetBuildTime: ' + textStatus + ': ' + toJson (errorThrown));
+			}
+	);
+
 	postCommand (
 			{ method: 'getCommands' },
 			function (result) {
