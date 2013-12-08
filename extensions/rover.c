@@ -40,17 +40,26 @@ typedef enum MotorDirection {
 
 const uint MotorDirectionValues[2] = {0, 0x8000};
 
-static inline void prepare (void)
+static void prepare (void)
 {
 	pixiOpenOrDie();
-	gpioSetPinMode (MotorGpioController, MotorGpioPin, 0);
+	pixiAdcOpenOrDie();
+//	gpioSetPinMode (MotorGpioController, MotorGpioPin, ??);
 	gpioWritePin   (MotorGpioController, MotorGpioPin, true);
 }
 
-static inline void unprepare (void)
+static void unprepare (void)
 {
 	gpioWritePin (MotorGpioController, MotorGpioPin, false);
+	pixiAdcClose();
 	pixiClose();
+}
+
+static double readVoltage (void)
+{
+	double power = adcRead (0);
+	double voltage = 10.277 * power / 4096.0;
+	return voltage;
 }
 
 static void moveRover (MotorDirection leftSide, MotorDirection rightSide, double speed)
@@ -71,8 +80,10 @@ static void turnLeft     (double speed) {moveRover (Reverse, Forward, speed);}
 static void turnRight    (double speed) {moveRover (Forward, Reverse, speed);}
 
 static void rest (void) {
+	PIO_LOG_INFO("Power = %.3fv", readVoltage());
 	PIO_LOG_INFO("Waiting...");
 	sleep (2);
+	PIO_LOG_INFO("Power = %.3fv", readVoltage());
 }
 
 static int roverFn (uint argc, char*const*const argv)
@@ -87,6 +98,7 @@ static int roverFn (uint argc, char*const*const argv)
 	double speed = atof (argv[2]);
 
 	prepare();
+	PIO_LOG_INFO("Power = %.3fv", readVoltage());
 	if      (pixi_strStartsWithI ("forward" , move)) moveForward  (speed);
 	else if (pixi_strStartsWithI ("backward", move)) moveBackward (speed);
 	else if (pixi_strStartsWithI ("left"    , move)) turnLeft     (speed);
