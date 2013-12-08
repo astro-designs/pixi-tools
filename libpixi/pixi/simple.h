@@ -25,12 +25,14 @@
 #include <libpixi/pixi/fpga.h>
 #include <libpixi/pixi/gpio.h>
 #include <libpixi/pixi/pwm.h>
+#include <libpixi/pixi/adc.h>
 #include <stdlib.h>
 
 ///@defgroup PiXiSimple PiXi simple interface
 ///@{
 
 extern SpiDevice globalPixi;
+extern SpiDevice globalPixiAdc;
 
 ///	Open the global SPI channel to the PiXi.
 ///	@return PiXi FPGA version on success, or -errno on error
@@ -50,11 +52,35 @@ static inline int64 pixiOpenOrDie (void) {
 	return version;
 }
 
+///	Open the global SPI channel to the PiXi ADC.
+///	@return 0 on success, or -errno on error
+static inline int pixiAdcOpen (void) {
+	return pixi_pixiAdcOpen (&globalPixiAdc);
+}
+
+///	Open the global SPI channel to the PiXi ADC. Exit the process on error.
+///	@return PiXi FPGA version on success, no return on error
+static inline int64 pixiAdcOpenOrDie (void) {
+	int result = pixiAdcOpen();
+	if (result <= 0)
+		exit (254);
+	return result;
+}
+
 ///	Close the global SPI channel to the PiXi.
 static inline int pixiClose (void) {
 	return pixi_spiClose (&globalPixi);
 }
 
+///	Wrapper for @ref pixi_registerRead
+static inline int registerRead (uint address) {
+	return pixi_registerRead (&globalPixi, address);
+}
+
+///	Wrapper for @ref pixi_registerWrite
+static inline int registerWrite (uint address, ushort value) {
+	return pixi_registerWrite (&globalPixi, address, value);
+}
 
 ///	Wrapper for @ref pixi_pixiGpioSetPinMode
 static inline int gpioSetPinMode (uint gpioController, uint pin, uint mode) {
@@ -69,6 +95,16 @@ static inline int gpioWritePin (uint gpioController, uint pin, uint value) {
 ///	Wrapper for @ref pixi_pwmWritePin
 static inline int pwmWritePin (uint pin, uint dutyCycle) {
 	return pixi_pwmWritePin (&globalPixi, pin, dutyCycle);
+}
+
+///	Wrapper for @ref pwmWritePinPercent
+static inline int pwmWritePinPercent (uint pin, double dutyCycle) {
+	return pixi_pwmWritePinPercent (&globalPixi, pin, dutyCycle);
+}
+
+///	Wrapper for @ref pixi_pixiAdcRead
+static inline int pixiAdcRead (uint adcChannel) {
+	return pixi_pixiAdcRead (&globalPixiAdc, adcChannel);
 }
 
 ///@} defgroup
