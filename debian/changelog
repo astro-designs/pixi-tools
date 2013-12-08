@@ -1,3 +1,17 @@
+pixi-tools (0.2.1-1) unstable; urgency=low
+
+  * Improvements to existing APIs
+
+  * Add libpixi/pixi/simple.h API
+
+  * Improvements to server pages
+
+  * Add rover.c as an example extension
+
+  * Add pixisim library as a crude simulator
+
+ -- Simon Cantrill <simonjcantrill@gmail.com>  Sun, 08 Dec 2013 16:33:23 +0000
+
 pixi-tools (0.2-1) unstable; urgency=low
 
   * Add real debian packaging infrastructure
