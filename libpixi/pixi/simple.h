@@ -26,6 +26,7 @@
 #include <libpixi/pixi/gpio.h>
 #include <libpixi/pixi/pwm.h>
 #include <libpixi/pixi/adc.h>
+#include <libpixi/util/log.h>
 #include <stdlib.h>
 
 ///@defgroup PiXiSimple PiXi simple interface
@@ -39,8 +40,14 @@ extern SpiDevice globalPixiAdc;
 static inline int64 pixiOpen (void) {
 	int result = pixi_pixiSpiOpen (&globalPixi);
 	if (result < 0)
+	{
+		LIBPIXI_ERROR(-result, "Failed to open PiXi SPI channel");
 		return result;
-	return pixi_pixiFpgaGetVersion();
+	}
+	int64 version = pixi_pixiFpgaGetVersion();
+	if (version <= 0)
+		LIBPIXI_LOG_ERROR("Failed to get valid PiXi FPGA version, got: %d", (int) result);
+	return version;
 }
 
 ///	Open the global SPI channel to the PiXi. Exit the process on error.
@@ -48,28 +55,42 @@ static inline int64 pixiOpen (void) {
 static inline int64 pixiOpenOrDie (void) {
 	int64 version = pixiOpen();
 	if (version <= 0)
+	{
+		LIBPIXI_LOG_ERROR("Aborting");
 		exit (255);
+	}
 	return version;
+}
+
+///	Close the global SPI channel to the PiXi.
+static inline int pixiClose (void) {
+	return pixi_spiClose (&globalPixi);
 }
 
 ///	Open the global SPI channel to the PiXi ADC.
 ///	@return 0 on success, or -errno on error
 static inline int pixiAdcOpen (void) {
-	return pixi_pixiAdcOpen (&globalPixiAdc);
+	int result = pixi_pixiAdcOpen (&globalPixiAdc);
+	if (result < 0)
+		LIBPIXI_ERROR(-result, "Failed to open PiXi ADC SPI channel");
+	return result;
 }
 
 ///	Open the global SPI channel to the PiXi ADC. Exit the process on error.
 ///	@return PiXi FPGA version on success, no return on error
 static inline int64 pixiAdcOpenOrDie (void) {
 	int result = pixiAdcOpen();
-	if (result <= 0)
+	if (result < 0)
+	{
+		LIBPIXI_LOG_ERROR("Aborting");
 		exit (254);
+	}
 	return result;
 }
 
-///	Close the global SPI channel to the PiXi.
-static inline int pixiClose (void) {
-	return pixi_spiClose (&globalPixi);
+///	Close the global SPI channel to the PiXi ADC.
+static inline int pixiAdcClose (void) {
+	return pixi_spiClose (&globalPixiAdc);
 }
 
 ///	Wrapper for @ref pixi_registerRead
@@ -103,7 +124,7 @@ static inline int pwmWritePinPercent (uint pin, double dutyCycle) {
 }
 
 ///	Wrapper for @ref pixi_pixiAdcRead
-static inline int pixiAdcRead (uint adcChannel) {
+static inline int adcRead (uint adcChannel) {
 	return pixi_pixiAdcRead (&globalPixiAdc, adcChannel);
 }
 
