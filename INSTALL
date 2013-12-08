@@ -7,7 +7,7 @@ Dependencies
 
 GNU make is required.
 A C99 compatible C compiler (any recent gcc).
-swig is required for building the python bindings.
+python-dev and swig are required for building the python bindings.
 doxygen and graphviz are required for generating the API Reference.
 
 Note that 'apt-get install doxygen' will probably want to install many other
@@ -21,6 +21,10 @@ APT
         Install-Suggests   "false";
 };
 
+Another way is to use --no-install-recommends. You can get everything you
+need with the following:
+apt-get update
+apt-get install --no-install-recommends python-dev swig doxygen graphviz
 
 Building
 --------
