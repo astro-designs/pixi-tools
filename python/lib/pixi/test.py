@@ -1,6 +1,6 @@
 #    pixi-tools: a set of software to interface with the Raspberry Pi
 #    and PiXi-200 hardware
-#    Copyright (C) 2013 Simon Cantrill
+#    Copyright (C) 2014 Simon Cantrill
 #
 #    pixi-tools is free software; you can redistribute it and/or
 #    modify it under the terms of the GNU Lesser General Public
@@ -54,10 +54,11 @@ class TestLib (TestCase):
 		info ("libpixi version: %s", ver)
 
 
-def runCommand (method, data = None):
-	if data is None:
-		data = {}
+def runCommand (method, **params):
+	data = {}
 	data["method"] = method
+	if params:
+		data["params"] = params
 	params = encodeJson (data)
 	headers = {'Content-Type': 'application/json'}
 	con = HTTPConnection ('localhost', port)
@@ -80,6 +81,12 @@ class TestServer (TestCase):
 	@staticmethod
 	def tearDownClass():
 		httpd.shutdown()
+
+	def assertCommandError (self, response):
+		# TODO: more detail
+		assert isinstance (response, dict)
+		self.assertEquals ('exception', response['.response'])
+		assert response['message']
 
 	def test_core (self):
 		from pixitools.pi import getLibVersion, getPiBoardRevision, getPiBoardVersion
@@ -136,6 +143,32 @@ class TestServer (TestCase):
 		finally:
 			gpioUnmapRegisters()
 
+	def test_readWriteData (self):
+		from shutil import rmtree
+		from os.path import exists, join
+		from os import getcwd
+		import pixitools.commands
+		datadir = join (getcwd(), 'pixitools-testdatadir')
+		pixitools.commands.datadir = datadir
+		if exists (datadir):
+			rmtree (datadir)
+
+		save = "some data"
+		assert not runCommand ('writeData', group = 'testgroup', name = 'test1', data = save)
+		assert not runCommand ('writeData', group = 'testgroup', name = 'test2', data = save + save)
+		assert exists (join (datadir, 'testgroup', 'test1'))
+		assert exists (join (datadir, 'testgroup', 'test2'))
+		self.assertEqual (['test1', 'test2'], runCommand ('listDataGroup', group = 'testgroup'))
+		self.assertEqual (save, runCommand ('readData', group = 'testgroup', name = 'test1'))
+		self.assertEqual (save + save, runCommand ('readData', group = 'testgroup', name = 'test2'))
+		assert exists (join (datadir, 'testgroup', 'test2'))
+
+		self.assertCommandError (runCommand ('writeData', group = 'test.group', name = 'test2', data = save))
+		self.assertCommandError (runCommand ('writeData', group = 'test/group', name = 'test2', data = save))
+		self.assertCommandError (runCommand ('writeData', group = 'testgroup', name = 'te/st2', data = save))
+		self.assertCommandError (runCommand ('writeData', group = 'testgroup', name = 'te.st2', data = save))
+		# TODO: test for escape characters
+		rmtree (datadir)
 
 if __name__ == '__main__':
 	logging.basicConfig (level = logging.INFO)

@@ -1,6 +1,6 @@
 #    pixi-tools: a set of software to interface with the Raspberry Pi
 #    and PiXi-200 hardware
-#    Copyright (C) 2013 Simon Cantrill
+#    Copyright (C) 2014 Simon Cantrill
 #
 #    pixi-tools is free software; you can redistribute it and/or
 #    modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,9 @@ from pixitools.pixi import pixiSpiOpen, registerWrite as _registerWrite, pixiGpi
 from pixitools.pixi import pixiGpioWritePin as _pixiGpioWritePin, pwmWritePin as _pwmWritePin, pwmWritePinPercent as _pwmWritePinPercent
 from pixitools.pixi import pixiFpgaGetBuildTime as _pixiFpgaGetBuildTime
 from pixitools.pixix import Lcd, Spi, check
+from os.path import isdir, join
+from os import listdir, makedirs
+from os import getenv
 import logging
 
 log = logging.getLogger(__name__)
@@ -145,6 +148,52 @@ def pixiFpgaGetBuildTime():
 	'Get the build time of the PiXi FPGA as seconds-since-epoch'
 	return check (_pixiFpgaGetBuildTime())
 addCommand (pixiFpgaGetBuildTime)
+
+def validateNameParam (paramName, name):
+	if not isinstance (name, basestring):
+		raise CommandError ("Invalid data type for " + paramName)
+	# FIXME: more validation
+	if "." in name or "/" in name or "\\" in name:
+		raise CommandError ("Invalid name string for " + paramName)
+
+datadir = getenv ("PIXI_DATADIR") or "/var/lib/pixi-tools/user-data"
+
+def writeData (group, name, data):
+	'Save configuration data'
+	validateNameParam ("group", group)
+	validateNameParam ("name", name)
+	if not isinstance (data, basestring):
+		raise CommandError ("Invalid data type for data")
+
+	parent = join (datadir, group)
+	filename = join (parent, name)
+	if not isdir (parent):
+		makedirs (parent)
+	out = open (filename, "w")
+	try:
+		out.write (data)
+	finally:
+		out.close()
+addCommand (writeData)
+
+def readData (group, name):
+	'Read configuration data'
+	validateNameParam ("group", group)
+	validateNameParam ("name", name)
+	filename = join (datadir, group, name)
+	out = open (filename)
+	try:
+		return out.read()
+	finally:
+		out.close()
+addCommand (readData)
+
+def listDataGroup (group):
+	'List configuration data'
+	validateNameParam ("group", group)
+	parent = join (datadir, group)
+	return sorted (listdir (parent))
+addCommand (listDataGroup)
 
 def processCommand (command):
 	methodName = command.get ('method')
