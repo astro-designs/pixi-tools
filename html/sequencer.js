@@ -54,7 +54,11 @@ var gpioModeMap = {
 	'Special 2' : 3
 };
 
-function Control($row, id, sequencer) {
+var controls = [];
+var nextId = 0;
+
+function SequencerRow($row, sequencer, remove) {
+	this.remove = remove;
 	var $remove = $('<button>X</button>');
 	var $add    = $('<button>+</button>');
 	var timing = 1000;
@@ -166,28 +170,24 @@ function Control($row, id, sequencer) {
 		sequencer.addRow($row);
 	});
 
-	function remove() {
-		sequencer.removeControl(id);
-		$row.remove();
-	}
 	$remove.click(remove);
 }
 
-function Sequencer($parent) {
-	var controls = [];
-	var nextId = 0;
-	var $sequencer = this;
+function Sequencer($parent, remove) {
+	this.remove = remove;
+	var rows = [];
+	var sequencer = this;
 
 	function _addRow($previousRow) {
 		var $newRow = $('<tr>');
 		$newRow.insertAfter($previousRow);
-		var id = nextId++;
-		controls.push(new Control($newRow, id, $sequencer));
+		var id = ++nextId;
+		rows[id] = new SequencerRow($newRow, sequencer, function() {
+			delete rows[id];
+			$newRow.remove();
+		});
 	};
 	this.addRow = _addRow;
-	this.removeControl = function(id) {
-		delete controls[id];
-	};
 
 	var $table = $('<table>');
 	$parent.append($table);
@@ -197,14 +197,13 @@ function Sequencer($parent) {
 	var $row = addRow($tbody);
 	var $remove = $('<button>X</button>');
 	addHeaderCell($row, $remove);
-	$remove.click(function() {
-		$parent.remove();
-	});
+	$remove.click(function() {remove();});
 	var $add    = $('<button>+</button>');
 	addHeaderCell($row, $add);
 	$add.click(function() {
 		_addRow($row);
 	});
+
 	addHeaderCell($row).text('Type');
 	addHeaderCell($row).text('Pin');
 	addHeaderCell($row).text('Mode');
@@ -223,26 +222,39 @@ function Sequencer($parent) {
 		// TODO: if we want more accurate timing, it should be done at the backend,
 		// but the advantage of doing it here is that we can update the page directly
 		// instead of requiring some more complex notification system (web sockets?)
-		for (var i = 0; i < controls.length; i++) {
-			var control = controls[i];
-			if (control) {
-				control.clear();
-				window.setTimeout(control.fire, control.timing());
+		for (var i = 0; i < rows.length; i++) {
+			var row = rows[i];
+			if (row) {
+				row.clear();
+				window.setTimeout(row.fire, row.timing());
 			}
 		}
 	});
 }
 
 function addSequencer() {
-	$div = $('<div>');
-	new Sequencer($div);
+	var $div = $('<div>');
+	var id = ++nextId;
+	var seq = new Sequencer($div, function() {
+		delete controls[id];
+		$div.remove();
+	});
+	controls[id] = seq;
 	$div.insertAfter($('#addSequencer'));
 }
 
+function removeAll() {
+	for (item in controls) {
+		var control = controls[item];
+		control.remove();
+		delete controls[item];
+	}
+}
 
 function init() {
 	initPage();
 
+	$('#removeAll').click(removeAll);
 	$('#addSequencer').click(addSequencer);
 }
 
