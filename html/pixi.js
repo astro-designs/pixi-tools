@@ -39,16 +39,28 @@ function escapeHtml (text) {
     return pre.innerHTML;
 }
 
+function appendLog(html) {
+	log.innerHTML = html + log.innerHTML;
+}
+
 function print(text) {
-	log.innerHTML += escapeHtml (text) + '<br/>';
+	appendLog(escapeHtml (text) + '<br/>');
 }
 
 function printError (text) {
-	log.innerHTML += '<div class="errorLog">' + escapeHtml (text) + '</div>';
+	appendLog('<div class="errorLog">' + escapeHtml (text) + '</div>');
 }
 
 function dump(obj) {
-	log.innerHTML += JSON.stringify (obj) + '<br/>';
+	appendLog(JSON.stringify (obj) + '<br/>');
+}
+
+function clearLog() {
+	log.innerHTML = '';
+}
+
+function dateString() {
+	return new Date().toISOString();
 }
 
 function addTableItem(type, row, content, attributes) {
@@ -106,13 +118,13 @@ function logPostCommand (data, onSuccess, onError) {
 	postCommand(
 			data,
 			function (result) {
-				print (new Date() + ': Received successful response from: ' + data.method);
+				print (dateString() + ': Received successful response from: ' + data.method);
 				if (onSuccess)
 					onSuccess(result);
 			},
 			function (jqXHR, textStatus, errorThrown) {
 				error = data.method + ': ' + textStatus + ': ' + toJson (errorThrown);
-				printError (new Date() + ': Received error response from ' + error);
+				printError (dateString() + ': Received error response from ' + error);
 				if (onError != null)
 					onError (error);
 			}
@@ -122,4 +134,5 @@ function logPostCommand (data, onSuccess, onError) {
 
 function initPage() {
 	log = document.getElementById('log');
+	$('#clearLog').click(clearLog);
 }
