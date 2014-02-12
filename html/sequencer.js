@@ -57,7 +57,8 @@ var gpioModeMap = {
 var controls = [];
 var nextId = 0;
 
-function SequencerRow($row, sequencer, remove) {
+function SequencerRow($row, sequencer, remove, config) {
+	// TODO: apply config
 	this.remove = remove;
 	var $remove = $('<button>X</button>');
 	var $add    = $('<button>+</button>');
@@ -87,9 +88,15 @@ function SequencerRow($row, sequencer, remove) {
 	addCell($row, $fire);
 	addCell($row, $timing);
 	var $status = addCell($row);
-	
+
+	function getType() {
+		return $type.val();
+	}
 	function getPin() {
 		return parseInt($pin.val());
+	}
+	function getMode() {
+		return gpioModeMap[$mode.val()];
 	}
 	function getValue() {
 		return parseInt($value.val());
@@ -101,7 +108,7 @@ function SequencerRow($row, sequencer, remove) {
 		$status.text("");
 	}
 	function handleType() {
-		var val = $type.val();
+		var val = getType();
 		var isGpio = val.startsWith('GPIO');
 		$mode.attr('disabled', !isGpio);
 	}
@@ -111,7 +118,7 @@ function SequencerRow($row, sequencer, remove) {
 			return;
 		var gpio = parseInt(type[4]);
 		var pin = getPin();
-		var mode = gpioModeMap[$mode.val()];
+		var mode = getMode();
 		if (mode == null)
 			return;
 
@@ -171,21 +178,38 @@ function SequencerRow($row, sequencer, remove) {
 	});
 
 	$remove.click(remove);
+
+	this.getConfig = function() {
+		var config = {
+				'.class': 'SequencerRow',
+				'type': getType(),
+				'pin': getPin(),
+				'mode': getMode(),
+				'value': getValue(),
+				'timing': getTiming()
+		};
+		return config;
+	};
 }
 
-function Sequencer($parent, remove) {
+function Sequencer($parent, remove, config) {
 	this.remove = remove;
 	var rows = [];
 	var sequencer = this;
 
-	function _addRow($previousRow) {
+	function _addRow($previousRow, config) {
 		var $newRow = $('<tr>');
 		$newRow.insertAfter($previousRow);
 		var id = ++nextId;
-		rows[id] = new SequencerRow($newRow, sequencer, function() {
-			delete rows[id];
-			$newRow.remove();
-		});
+		rows[id] = new SequencerRow(
+				$newRow,
+				sequencer,
+				function() {
+					delete rows[id];
+					$newRow.remove();
+				},
+				config
+		);
 	};
 	this.addRow = _addRow;
 
@@ -230,17 +254,93 @@ function Sequencer($parent, remove) {
 			}
 		}
 	});
+
+	if (config != null) {
+		var rowConf = config['rows'];
+		for (id in rowConf) {
+			var conf = rowConf[id];
+			_addRow($row, conf);
+		}
+	}
+
+	this.getConfig = function() {
+		var rowConf = [];
+		var config = {'.class': 'Sequencer', 'rows': rowConf};
+		for (id in rows) {
+			var row = rows[id];
+			rowConf.push(row.getConfig());
+		}
+		return config;
+	};
+}
+
+var controlTypes = {
+	'Sequencer': Sequencer
+};
+
+var $configName;
+
+function loadConfig() {
+	var name = $configName.val();
+	logPostCommand ({
+			method: 'readData',
+			params: {
+				group: 'input',
+				name: name
+			}
+		},
+		function (result) {
+			print ('Loading: ' + name);
+			var config = fromJson(result);
+			for (var id in config) {
+				var controlConf = config[id];
+				var typename = controlConf['.class'];
+				var type = controlTypes[typename];
+				if (type)
+					addControl(type, controlConf);
+			}
+		}
+	);
+}
+
+function saveConfig() {
+	var name = $configName.val();
+	var config = [];
+	for (var id in controls) {
+		var control = controls[id];
+		config.push(control.getConfig());
+	}
+	logPostCommand ({
+			method: 'writeData',
+			params: {
+				group: 'input',
+				name: name,
+				data: toJson(config, null, " ")
+			}
+		},
+		function (result) {
+			print ('Saved: ' + name);
+		}
+	);
+}
+
+function addControl(type, config) {
+	var $div = $('<div>');
+	var id = ++nextId;
+	var seq = new Sequencer(
+			$div,
+			function() {
+				delete controls[id];
+				$div.remove();
+			},
+			config
+	);
+	controls[id] = seq;
+	$div.insertAfter($('#addSequencer'));
 }
 
 function addSequencer() {
-	var $div = $('<div>');
-	var id = ++nextId;
-	var seq = new Sequencer($div, function() {
-		delete controls[id];
-		$div.remove();
-	});
-	controls[id] = seq;
-	$div.insertAfter($('#addSequencer'));
+	addControl(Sequencer, null);
 }
 
 function removeAll() {
@@ -255,6 +355,9 @@ function init() {
 	initPage();
 
 	$('#removeAll').click(removeAll);
+	$configName = $('#configName');
+	$('#loadConfig').click(loadConfig);
+	$('#saveConfig').click(saveConfig);
 	$('#addSequencer').click(addSequencer);
 }
 
