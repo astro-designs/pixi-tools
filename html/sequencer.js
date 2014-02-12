@@ -167,10 +167,10 @@ function Control($row, id, sequencer) {
 	});
 
 	function remove() {
-		sequencer.remove(id);
+		sequencer.removeControl(id);
 		$row.remove();
 	}
-	$remove.click(remove); // TODO: remove from controls
+	$remove.click(remove);
 }
 
 function Sequencer($parent) {
@@ -185,7 +185,7 @@ function Sequencer($parent) {
 		controls.push(new Control($newRow, id, $sequencer));
 	};
 	this.addRow = _addRow;
-	this.remove = function(id) {
+	this.removeControl = function(id) {
 		delete controls[id];
 	};
 
@@ -195,7 +195,11 @@ function Sequencer($parent) {
 	var $tbody = $('<tbody>');
 	$table.append($tbody);
 	var $row = addRow($tbody);
-	addHeaderCell($row); // delete
+	var $remove = $('<button>X</button>');
+	addHeaderCell($row, $remove);
+	$remove.click(function() {
+		$parent.remove();
+	});
 	var $add    = $('<button>+</button>');
 	addHeaderCell($row, $add);
 	$add.click(function() {
