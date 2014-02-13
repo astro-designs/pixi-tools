@@ -1,7 +1,7 @@
 /*
     pixi-tools: a set of software to interface with the Raspberry Pi
     and PiXi-200 hardware
-    Copyright (C) 2013 Simon Cantrill
+    Copyright (C) 2014 Simon Cantrill
 
     pixi-tools is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -69,26 +69,6 @@ function Controller(pin, min, max, key) {
 	};
 }
 
-function Panel($parent, remove, config) {
-	var $panel = $('<textarea id="panel" rows="2" cols="40" placeholder="LCD panel text"></textarea>')
-
-	function sendText() {
-		var text = $panel.val();
-		postCommand (
-				{
-					method: 'lcdSetText',
-					params: {
-						text: text
-					}
-				}
-		);
-	}
-	$panel.bind('input propertychange', function (event) {
-		sendText();
-	});
-	$parent.append($panel);
-}
-
 var controllerX;
 var controllerY;
 
@@ -98,7 +78,7 @@ function init() {
 	$document = $(document);
 	canvas = document.getElementById('canvas');
 
-	new Panel($('#panelTitle'));
+	new LcdPanel($('#panelTitle'));
 
 	controllerX = new Controller(0, 60, 70, 'X');
 	controllerY = new Controller(1, 65, 75, 'Y');
