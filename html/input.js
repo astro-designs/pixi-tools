@@ -21,7 +21,6 @@
 var canvas;
 var $canvas;
 var $document
-var $panel;
 
 var gradientX;
 var gradientY;
@@ -70,6 +69,26 @@ function Controller(pin, min, max, key) {
 	};
 }
 
+function Panel($parent, remove, config) {
+	var $panel = $('<textarea id="panel" rows="2" cols="40" placeholder="LCD panel text"></textarea>')
+
+	function sendText() {
+		var text = $panel.val();
+		postCommand (
+				{
+					method: 'lcdSetText',
+					params: {
+						text: text
+					}
+				}
+		);
+	}
+	$panel.bind('input propertychange', function (event) {
+		sendText();
+	});
+	$parent.append($panel);
+}
+
 var controllerX;
 var controllerY;
 
@@ -77,11 +96,9 @@ function init() {
 	initPage();
 
 	$document = $(document);
-	$panel = $('#panel');
-	$panel.bind('input propertychange', function (event) {
-		sendText();
-	});
 	canvas = document.getElementById('canvas');
+
+	new Panel($('#panelTitle'));
 
 	controllerX = new Controller(0, 60, 70, 'X');
 	controllerY = new Controller(1, 65, 75, 'Y');
@@ -181,18 +198,6 @@ function draw(mouseX, mouseY) {
 	context.lineWidth = 1;
 	context.strokeStyle = "rgba(255, 255, 255, 0.5)";
 	context.stroke();
-}
-
-function sendText() {
-	var text = $panel.val();
-	postCommand (
-			{
-				method: 'lcdSetText',
-				params: {
-					text: text
-				}
-			}
-	);
 }
 
 
