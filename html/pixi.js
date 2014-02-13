@@ -19,8 +19,9 @@
 */
 
 var log;
-var toJson = JSON.stringify
-var fromJson = JSON.parse
+var toJson = JSON.stringify;
+var fromJson = JSON.parse;
+var controlTypes = {};
 
 if (typeof String.prototype.startsWith != 'function') {
 	String.prototype.startsWith = function (str){
@@ -84,6 +85,12 @@ function addRow(tbody) {
 	row = $('<tr>');
 	tbody.append(row);
 	return row;
+}
+function addOption($select, value) {
+	value = escapeHtml(value);
+	var $option = $('<option "' + value + '">' + value + '</option>')
+	$select.append($option);
+	return $option;
 }
 
 function postCommand (data, onSuccess, onError) {

@@ -54,6 +54,7 @@ var gpioModeMap = {
 	'Special 2' : 3
 };
 
+var $controlSelect;
 var controls = [];
 var nextId = 0;
 
@@ -192,7 +193,7 @@ function SequencerRow($row, sequencer, remove, config) {
 	};
 }
 
-function Sequencer($parent, remove, config) {
+function Sequencer(remove, config) {
 	this.remove = remove;
 	var rows = [];
 	var sequencer = this;
@@ -214,7 +215,7 @@ function Sequencer($parent, remove, config) {
 	this.addRow = _addRow;
 
 	var $table = $('<table>');
-	$parent.append($table);
+	this.$widget = $table;
 	$table.append($('<caption>Sequencer<caption>'));
 	var $tbody = $('<tbody>');
 	$table.append($tbody);
@@ -274,9 +275,7 @@ function Sequencer($parent, remove, config) {
 	};
 }
 
-var controlTypes = {
-	'Sequencer': Sequencer
-};
+controlTypes['Sequencer'] = Sequencer;
 
 var $configName;
 
@@ -327,20 +326,21 @@ function saveConfig() {
 function addControl(type, config) {
 	var $div = $('<div>');
 	var id = ++nextId;
-	var seq = new Sequencer(
-			$div,
+	var control = new type(
 			function() {
 				delete controls[id];
 				$div.remove();
 			},
 			config
 	);
-	controls[id] = seq;
-	$div.insertAfter($('#addSequencer'));
+	controls[id] = control;
+	$div.append(control.$widget);
+	$div.insertAfter($('#addControl'));
 }
 
-function addSequencer() {
-	addControl(Sequencer, null);
+function selectControl() {
+	var type = $controlSelect.val();
+	addControl(controlTypes[type], null);
 }
 
 function removeAll() {
@@ -358,7 +358,11 @@ function init() {
 	$configName = $('#configName');
 	$('#loadConfig').click(loadConfig);
 	$('#saveConfig').click(saveConfig);
-	$('#addSequencer').click(addSequencer);
+	$controlSelect = $('#controlSelect');
+	for (var key in controlTypes) {
+		addOption($controlSelect, key);
+	}
+	$('#addControl').click(selectControl);
 }
 
 jQuery(document).ready(init);

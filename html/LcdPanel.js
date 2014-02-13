@@ -18,7 +18,8 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-function LcdPanel($parent, remove, config) {
+function LcdPanel(remove, config) {
+	this.remove = remove;
 	var $panel = $('<textarea id="panel" rows="2" cols="40" placeholder="LCD panel text"></textarea>')
 
 	function sendText() {
@@ -35,5 +36,14 @@ function LcdPanel($parent, remove, config) {
 	$panel.bind('input propertychange', function (event) {
 		sendText();
 	});
-	$parent.append($panel);
+	this.$widget = $panel;
+
+	this.getConfig = function() {
+		var config = {
+				'.class': 'LcdPanel',
+		};
+		return config;
+	};
 }
+
+controlTypes['LcdPanel'] = LcdPanel;
