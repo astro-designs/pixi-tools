@@ -47,8 +47,7 @@ function saveConfig() {
 	var name = $configName.val();
 	var config = [];
 	for (var id in controls) {
-		var control = controls[id];
-		config.push(control.getConfig());
+		config.push(controls[id].control.getConfig());
 	}
 	logPostCommand ({
 			method: 'writeData',
@@ -69,13 +68,29 @@ function addControl(type, config) {
 	var id = ++nextId;
 	var control = new type(
 			function() {
-				delete controls[id];
-				$div.remove();
 			},
 			config
 	);
-	controls[id] = control;
-	$div.append(control.$widget);
+	var remove = function() {
+		if (control.destroy != null) {
+			control.destroy();
+		}
+		delete controls[id];
+		$div.remove();
+	};
+	controls[id] = {control: control, remove: remove};
+
+	var $left = $('<div style="float:left"/>');
+	var $close = $('<button>X</button>');
+	$close.click(remove);
+
+	$left.append($close);
+
+	var $right = $('<div>');
+	$right.append(control.$widget);
+
+	$div.append($left);
+	$div.append($right);
 	$div.insertAfter($('#addControl'));
 }
 
@@ -86,9 +101,7 @@ function selectControl() {
 
 function removeAll() {
 	for (item in controls) {
-		var control = controls[item];
-		control.remove();
-		delete controls[item];
+		controls[item].remove();
 	}
 }
 

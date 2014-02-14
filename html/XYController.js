@@ -63,9 +63,7 @@ function Controller($row, config) {
 	};
 }
 
-function XYController(remove, config) {
-	this.remove = remove;
-
+function XYController(config) {
 	this.getConfig = function() {
 		var config = {
 				'.class': 'XYController',

@@ -18,8 +18,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-function LcdPanel(remove, config) {
-	this.remove = remove;
+function LcdPanel(config) {
 	var $panel = $('<textarea id="panel" rows="2" cols="40" placeholder="LCD panel text"></textarea>')
 
 	function sendText() {

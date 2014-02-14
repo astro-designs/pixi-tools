@@ -193,8 +193,7 @@ function SequencerRow($row, sequencer, remove, config) {
 	};
 }
 
-function Sequencer(remove, config) {
-	this.remove = remove;
+function Sequencer(config) {
 	var rows = [];
 	var sequencer = this;
 
@@ -216,13 +215,10 @@ function Sequencer(remove, config) {
 
 	var $table = $('<table>');
 	this.$widget = $table;
-	$table.append($('<caption>Sequencer<caption>'));
 	var $tbody = $('<tbody>');
 	$table.append($tbody);
 	var $row = addRow($tbody);
-	var $remove = $('<button>X</button>');
-	addHeaderCell($row, $remove);
-	$remove.click(function() {remove();});
+	addHeaderCell($row);
 	var $add    = $('<button>+</button>');
 	addHeaderCell($row, $add);
 	$add.click(function() {
