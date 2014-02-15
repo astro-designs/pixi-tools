@@ -54,11 +54,9 @@ var gpioModeMap = {
 	'Special 2' : 3
 };
 
-var $controlSelect;
-var controls = [];
-var nextId = 0;
-
 function SequencerRow($row, sequencer, remove, config) {
+	var self = this;
+	this.$row = $row;
 	var conf = {
 			'type': 'Disabled',
 			'pin': 1,
@@ -175,7 +173,7 @@ function SequencerRow($row, sequencer, remove, config) {
 
 	$add.click(function() {
 		console.log(sequencer);
-		sequencer.addRow($row);
+		sequencer.addRow(self);
 	});
 
 	$remove.click(remove);
@@ -197,19 +195,32 @@ function Sequencer(config) {
 	var rows = [];
 	var sequencer = this;
 
-	function _addRow($previousRow, config) {
+	var _addRow = function(prevSeqRow, config) {
+		var $previousRow;
+		if (prevSeqRow != null)
+			$previousRow = prevSeqRow.$row;
+		else
+			$previousRow = $headerRow;
 		var $newRow = $('<tr>');
 		$newRow.insertAfter($previousRow);
-		var id = ++nextId;
-		rows[id] = new SequencerRow(
+		var seqRow = new SequencerRow(
 				$newRow,
 				sequencer,
 				function() {
-					delete rows[id];
 					$newRow.remove();
+					rows.splice(rows.indexOf(seqRow), 1);
+					console.log("remove row", rows);
 				},
 				config
 		);
+		if (prevSeqRow == null)
+			rows.unshift(seqRow);
+		else {
+			var index = rows.indexOf(prevSeqRow);
+			rows.splice(index+1, 0, seqRow);
+		}
+		console.log("added row", rows);
+		return seqRow;
 	};
 	this.addRow = _addRow;
 
@@ -217,21 +228,13 @@ function Sequencer(config) {
 	this.$widget = $table;
 	var $tbody = $('<tbody>');
 	$table.append($tbody);
-	var $row = addRow($tbody);
-	addHeaderCell($row);
+	var $headerRow = addRow($tbody);
+	addHeaderCell($headerRow);
 	var $add    = $('<button>+</button>');
-	addHeaderCell($row, $add);
-	$add.click(function() {
-		_addRow($row);
-	});
+	addHeaderCell($headerRow, $add);
+	$add.click(function() {_addRow();});
 
-	addHeaderCell($row).text('Type');
-	addHeaderCell($row).text('Pin');
-	addHeaderCell($row).text('Mode');
-	addHeaderCell($row).text('Value');
-	addHeaderCell($row).text('Trigger');
-	addHeaderCell($row).text('Timing / ms');
-	addHeaderCell($row).text('');
+	addHeaderCells($headerRow, ['Type', 'Pin', 'Mode', 'Value', 'Trigger', 'Timing / ms', '']);
 
 	var $lastRow = addRow($tbody);
 	var $run = $('<button>Fire timed sequence</button>');
@@ -254,18 +257,18 @@ function Sequencer(config) {
 
 	if (config != null) {
 		var rowConf = config['rows'];
+		var current = null;
 		for (id in rowConf) {
 			var conf = rowConf[id];
-			_addRow($row, conf);
+			current = this.addRow(current, conf);
 		}
 	}
 
 	this.getConfig = function() {
 		var rowConf = [];
 		var config = {'.class': 'Sequencer', 'rows': rowConf};
-		for (id in rows) {
-			var row = rows[id];
-			rowConf.push(row.getConfig());
+		for (var i = 0; i < rows.length; i++) {
+			rowConf.push(rows[i].getConfig());
 		}
 		return config;
 	};

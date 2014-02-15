@@ -21,6 +21,10 @@
 var $configName;
 var $configList;
 
+var $controlSelect;
+var controls = [];
+var nextId = 0;
+
 function loadConfig() {
 	var name = $configName.val();
 	logPostCommand ({

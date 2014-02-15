@@ -82,6 +82,10 @@ function addCell(row, content, attributes) {
 function addHeaderCell(row, content, attributes) {
 	return addTableItem('<th>', row, content, attributes);
 }
+function addHeaderCells(row, textList) {
+	for (var i = 0; i < textList.length; i++)
+		addTableItem('<th>', row, textList[i]);
+}
 function addRow(tbody) {
 	row = $('<tr>');
 	tbody.append(row);
