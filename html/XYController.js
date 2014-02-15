@@ -20,7 +20,7 @@
 
 function Controller($row, config) {
 	var attr = {valign: 'top'};
-	var number = '<input type="number"/>';
+	var number = '<input type="number" style="width:4em"/>';
 	this.$pin     = $(number);
 	this.$min     = $(number);
 	this.$max     = $(number);

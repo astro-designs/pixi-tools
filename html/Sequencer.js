@@ -71,13 +71,13 @@ function SequencerRow($row, sequencer, remove, config) {
 	var $remove = $('<button>X</button>');
 	var $add    = $('<button>+</button>');
 	var $type   = makeSelectFromList(types, conf.type);
-	var $pin    = $('<input type="number"/>');
+	var $pin    = $('<input type="number" style="width:4em"/>');
 	$pin.val(conf.pin);
 	var $mode = makeSelectFromList(gpioModes, conf.mode);
-	var $value  = $('<input type="number"/>');
+	var $value  = $('<input type="number" style="width:4em"/>');
 	$value.val(conf.value);
 	var $fire   = $('<button>Set now</button>');
-	var $timing = $('<input type="number" value="' + conf.timing + '">');
+	var $timing = $('<input type="number" style="width:6em" value="' + conf.timing + '">');
 	addCell($row, $remove, {align: "center"});
 	addCell($row, $add, {align: "center"});
 	addCell($row, $type);
@@ -237,9 +237,9 @@ function Sequencer(config) {
 	addHeaderCells($headerRow, ['Type', 'Pin', 'Mode', 'Value', 'Trigger', 'Timing / ms', '']);
 
 	var $lastRow = addRow($tbody);
-	var $run = $('<button>Fire timed sequence</button>');
-	addCell($lastRow, null, {colspan: "7"});
-	addCell($lastRow, $run);
+	var $run = $('<button style="width:100%">Fire timed sequence</button>');
+	addCell($lastRow, null, {colspan: "6"});
+	addCell($lastRow, $run, {colspan: "2"});
 	addCell($lastRow);
 
 	$run.click(function(event) {
