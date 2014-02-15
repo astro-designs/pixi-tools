@@ -21,13 +21,15 @@
 function LcdPanel(config) {
 	var $panel = $('<textarea id="panel" rows="2" cols="40" placeholder="LCD panel text"></textarea>')
 
+	function getText() {
+		return $panel.val();
+	}
 	function sendText() {
-		var text = $panel.val();
 		postCommand (
 				{
 					method: 'lcdSetText',
 					params: {
-						text: text
+						text: getText()
 					}
 				}
 		);
@@ -40,9 +42,16 @@ function LcdPanel(config) {
 	this.getConfig = function() {
 		var config = {
 				'.class': 'LcdPanel',
+				'text': getText()
 		};
 		return config;
 	};
+
+	if (config) {
+		var text = config.text;
+		if (text != null)
+			$panel.text(text);
+	}
 }
 
 controlTypes['LcdPanel'] = LcdPanel;

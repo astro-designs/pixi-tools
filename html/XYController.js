@@ -29,16 +29,35 @@ function Controller($row, config) {
 	addCell($row, this.$max);
 	this.$value   = addCell($row, '0');
 
-	this.$pin  .val(config['pin']);
-	this.$min  .val(config['min']);
-	this.$max  .val(config['max']);
-	this.$value.text(config['value']);
+	var pin   = config['pin'];
+	var min   = config['min'];
+	var max   = config['max'];
+	var value = config['value'];
+
+	this.$pin  .val(pin);
+	this.$min  .val(min);
+	this.$max  .val(max);
+	this.$value.text(value);
+
+	this.getState = function() {
+		pin   = parseInt(this.$pin.val());
+		min   = parseInt(this.$min.val());
+		max   = parseInt(this.$max.val());
+	}
+	this.getConfig = function() {
+		this.getState();
+		return {
+			pin: pin,
+			min: min,
+			max: max,
+			value: value
+		}
+	};
 
 	this.update = function(scaled) {
-		var pin     = parseInt(this.$pin.val());
-		var min     = parseInt(this.$min.val());
-		var max     = parseInt(this.$max.val());
-		var value = Math.round (min + (scaled * (max - min)));
+		this.getState();
+		value = Math.round (min + (scaled * (max - min)));
+
 		if (value == this.value)
 			return;
 
@@ -67,6 +86,8 @@ function XYController(config) {
 	this.getConfig = function() {
 		var config = {
 				'.class': 'XYController',
+				'x': controllerX.getConfig(),
+				'y': controllerY.getConfig()
 		};
 		return config;
 	};
@@ -97,10 +118,12 @@ function XYController(config) {
 			max: 70,
 			value: 65
 	};
+	updateObject(pinConf, config.x);
 	$row = addRow($tbody);
 	var controllerX = new Controller($row, pinConf);
 
 	pinConf['pin'] = 1;
+	jQuery.extend(pinConf, config.y);
 	$row = addRow($tbody);
 	var controllerY = new Controller($row, pinConf);
 

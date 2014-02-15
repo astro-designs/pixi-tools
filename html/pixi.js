@@ -21,6 +21,7 @@
 var log;
 var toJson = JSON.stringify;
 var fromJson = JSON.parse;
+var updateObject = jQuery.extend;
 var controlTypes = {};
 
 if (typeof String.prototype.startsWith != 'function') {
@@ -98,6 +99,19 @@ function setDatalist($datalist, values) {
 		var value = escapeHtml(values[i]);
 		$datalist.append('<option value="' + value + '"/>');
 	}
+}
+function makeSelectFromList(list, initValue) {
+	var $select = $('<select>');
+	var index = null;
+	for (var i = 0; i < list.length; i++)
+	{
+		var value = escapeHtml(list[i]);
+		var $option = $('<option value="' + value + '">' + value + '</option>');
+		$select.append($option);
+		if (value == initValue)
+			$option.attr('selected', true);
+	}
+	return $select;
 }
 
 function postCommand (data, onSuccess, onError) {

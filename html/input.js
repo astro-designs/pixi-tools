@@ -81,11 +81,7 @@ function updateConfigs() {
 function addControl(type, config) {
 	var $div = $('<div>');
 	var id = ++nextId;
-	var control = new type(
-			function() {
-			},
-			config
-	);
+	var control = new type(config);
 	var remove = function() {
 		if (control.destroy != null) {
 			control.destroy();

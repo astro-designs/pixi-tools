@@ -59,27 +59,27 @@ var controls = [];
 var nextId = 0;
 
 function SequencerRow($row, sequencer, remove, config) {
+	var conf = {
+			'type': 'Disabled',
+			'pin': 1,
+			'mode': 'unspecified',
+			'value': 0,
+			'timing': 1000
+	};
+	updateObject(conf, config);
+
 	// TODO: apply config
 	this.remove = remove;
 	var $remove = $('<button>X</button>');
 	var $add    = $('<button>+</button>');
-	var timing = 1000;
-	var $type  = $('<select>');
-	for (var i = 0; i < types.length; i++)
-	{
-		var type = types[i];
-		$type.append('<Option value="' + type + '">' + type + '</Option>');
-	}
-	var $pin    = $('<input type="number" value="0"/>');
-	var $mode   = $('<select>');
-	for (var i = 0; i < gpioModes.length; i++)
-	{
-		var mode = gpioModes[i];
-		$mode.append('<Option value="' + mode + '">' + mode + '</Option>');
-	}
-	var $value  = $('<input type="number" value="0"/>');
+	var $type   = makeSelectFromList(types, conf.type);
+	var $pin    = $('<input type="number"/>');
+	$pin.val(conf.pin);
+	var $mode = makeSelectFromList(gpioModes, conf.mode);
+	var $value  = $('<input type="number"/>');
+	$value.val(conf.value);
 	var $fire   = $('<button>Set now</button>');
-	var $timing = $('<input type="number" value="' + timing + '">');
+	var $timing = $('<input type="number" value="' + conf.timing + '">');
 	addCell($row, $remove, {align: "center"});
 	addCell($row, $add, {align: "center"});
 	addCell($row, $type);
@@ -97,7 +97,7 @@ function SequencerRow($row, sequencer, remove, config) {
 		return parseInt($pin.val());
 	}
 	function getMode() {
-		return gpioModeMap[$mode.val()];
+		return $mode.val();
 	}
 	function getValue() {
 		return parseInt($value.val());
@@ -119,7 +119,7 @@ function SequencerRow($row, sequencer, remove, config) {
 			return;
 		var gpio = parseInt(type[4]);
 		var pin = getPin();
-		var mode = getMode();
+		var modeInt = gpioModeMap[getMode()];
 		if (mode == null)
 			return;
 
