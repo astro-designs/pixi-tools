@@ -19,6 +19,7 @@
 */
 
 var $configName;
+var $configList;
 
 function loadConfig() {
 	var name = $configName.val();
@@ -61,6 +62,20 @@ function saveConfig() {
 			print ('Saved: ' + name);
 		}
 	);
+}
+
+function updateConfigs() {
+	logPostCommand ({
+		method: 'listDataGroup',
+		params: {
+			group: 'input'
+		}
+	},
+	function (result) {
+		setDatalist($configList, result);
+	}
+);
+
 }
 
 function addControl(type, config) {
@@ -110,6 +125,9 @@ function init() {
 
 	$('#removeAll').click(removeAll);
 	$configName = $('#configName');
+	$configList = $('#configList');
+	$configName.focus(updateConfigs);
+	updateConfigs();
 	$('#loadConfig').click(loadConfig);
 	$('#saveConfig').click(saveConfig);
 	$controlSelect = $('#controlSelect');

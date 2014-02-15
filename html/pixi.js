@@ -86,11 +86,18 @@ function addRow(tbody) {
 	tbody.append(row);
 	return row;
 }
-function addOption($select, value) {
+function addOption($parent, value) {
 	value = escapeHtml(value);
-	var $option = $('<option "' + value + '">' + value + '</option>')
-	$select.append($option);
+	var $option = $('<option value="' + value + '">' + value + '</option>')
+	$parent.append($option);
 	return $option;
+}
+function setDatalist($datalist, values) {
+	$datalist.html('');
+	for (var i = 0; i < values.length; i++) {
+		var value = escapeHtml(values[i]);
+		$datalist.append('<option value="' + value + '"/>');
+	}
 }
 
 function postCommand (data, onSuccess, onError) {
