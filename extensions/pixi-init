@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo "------ $0 starting ------"
+echo "time: $(date)"
+echo "FPGA build time: $(pio fpga-build-time)"
