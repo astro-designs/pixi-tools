@@ -21,7 +21,7 @@ from pixitools.pi import gpioSysGetPinState, gpioGetPinState, gpioMapRegisters, 
 from pixitools.pixi import pixiSpiOpen, registerWrite as _registerWrite, pixiGpioSetPinMode as _pixiGpioSetPinMode
 from pixitools.pixi import pixiGpioWritePin as _pixiGpioWritePin, pwmWritePin as _pwmWritePin, pwmWritePinPercent as _pwmWritePinPercent
 from pixitools.pixi import pixiFpgaGetBuildTime as _pixiFpgaGetBuildTime
-from pixitools.pixix import Lcd, Spi, check
+from pixitools.pixix import Lcd, Spi, check, globalSpi as getSpi
 from os.path import isdir, join
 from os import listdir, makedirs
 from os import getenv
@@ -100,13 +100,6 @@ def gpioSysGetStates():
 			states.append (state)
 	return states
 addCommand (gpioSysGetStates)
-
-spi = None
-def getSpi():
-	global spi
-	if not spi:
-		spi = Spi()
-	return spi.spi
 
 def registerWrite (address, value):
 	'Write to a PiXi register via SPI'

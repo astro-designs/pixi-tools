@@ -149,6 +149,13 @@ class Spi (object):
 	def registerWrite (self, address, value):
 		check (pixi.registerWrite (self.spi, address, value))
 
+spi = None
+def globalSpi():
+	global spi
+	if not spi:
+		spi = Spi()
+	return spi.spi
+
 ServoA1 = 0x40
 ServoA2 = 0x41
 ServoB1 = 0x46

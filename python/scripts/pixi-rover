@@ -3,47 +3,8 @@
 from __future__ import print_function
 
 import sys
+from pixitools.rover import *
 from time import sleep
-from pixitools.pi import SpiDevice, spiClose
-from pixitools.pixi import pixiSpiOpen, pixiGpioWritePin, pwmWritePin
-from pixitools.pixix import Spi
-
-forwards =  0
-reverse  =  1
-
-def prepare():
-	global spi
-	spi = Spi()
-	# enable motor
-	pixiGpioWritePin (spi.spi, 2, 0, 1)
-
-def pwmSet (pin, value):
-#	print ('pwmWritePin', pin, hex (value))
-	pwmWritePin (spi.spi, pin, value)
-
-motor = [0, 0x8000]
-def moveRover (leftSide, rightSide, speed):
-	pwm = (speed * 1023 / 100) & 0x000003ff
-	print ('moveRover', leftSide, rightSide, speed, pwm, hex (pwm))
-	# each side must be synchronised, but each side the motors are opposed:
-	fl = pwm + motor[    leftSide ]
-	bl = pwm + motor[not leftSide ]
-	fr = pwm + motor[    rightSide]
-	br = pwm + motor[not rightSide]
-
-	pwmSet (5, fr)
-	pwmSet (6, bl)
-	pwmSet (4, br)
-	pwmSet (7, fl) # Must write to this pin last!
-
-def moveForward  (speed):
-	moveRover (forwards, forwards, speed)
-def moveBackward (speed):
-	moveRover (reverse , reverse , speed)
-def turnLeft     (speed):
-	moveRover (reverse , forwards, speed)
-def turnRight    (speed):
-	moveRover (forwards, reverse , speed)
 
 def demo (speed = 100):
 	def rest():
@@ -57,34 +18,39 @@ def demo (speed = 100):
 	turnRight (speed)
 	rest()
 
-commands = {
-	'forward' : moveForward,
-	'backward': moveBackward,
-	'left'    : turnLeft,
-	'right'   : turnRight
-	}
+def run():
+	commands = {
+		'forward' : moveForward,
+		'backward': moveBackward,
+		'left'    : turnLeft,
+		'right'   : turnRight
+		}
 
-if len (sys.argv) == 2:
-	if sys.argv[1] == "demo":
-		prepare()
-		demo()
-		spi.close()
-	sys.exit (0)
-elif len (sys.argv) == 3:
-	cmd = sys.argv[1]
-	speed = int (sys.argv[2])
-	command = None
-	for direction, function in commands.items():
-		# allow direction to be 1 character or more:
-		if direction.startswith (cmd):
-			command = function
-			break
-	if command:
-		prepare()
-		command (speed)
-		spi.close()
+	if len (sys.argv) == 2:
+		if sys.argv[1] == "demo":
+			enableMotor()
+			demo()
 		sys.exit (0)
+	elif len (sys.argv) == 3:
+		cmd = sys.argv[1]
+		speed = int (sys.argv[2])
+		command = None
+		for direction, function in commands.items():
+			# allow direction to be 1 character or more:
+			if direction.startswith (cmd):
+				command = function
+				break
+		if command:
+			enableMotor()
+			command (speed)
+			sys.exit (0)
 
-print ("usage: %s demo" % sys.argv[0])
-print ("usage: %s f[orward]|b[ackward]|l[eft]|r[ight] speed" % sys.argv[0])
-sys.exit (1)
+	print ("usage: %s demo" % sys.argv[0])
+	print ("usage: %s f[orward]|b[ackward]|l[eft]|r[ight] speed" % sys.argv[0])
+	sys.exit (1)
+
+try:
+	run()
+finally:
+	enableMotor (False)
+#	spi.close()
