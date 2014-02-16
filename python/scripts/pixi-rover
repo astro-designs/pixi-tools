@@ -34,6 +34,16 @@ def run():
 	elif len (sys.argv) == 3:
 		cmd = sys.argv[1]
 		speed = int (sys.argv[2])
+		try:
+			speedL = int (cmd)
+			speedR = speed
+			enableMotor()
+			moveRoverX (speedL, speedR)
+			sleep (2)
+			sys.exit(0)
+		except ValueError:
+			# cmd is not an int
+			pass
 		command = None
 		for direction, function in commands.items():
 			# allow direction to be 1 character or more:
@@ -43,10 +53,12 @@ def run():
 		if command:
 			enableMotor()
 			command (speed)
+			sleep (2)
 			sys.exit (0)
 
 	print ("usage: %s demo" % sys.argv[0])
 	print ("usage: %s f[orward]|b[ackward]|l[eft]|r[ight] speed" % sys.argv[0])
+	print ("usage: %s speed-L speed-R" % sys.argv[0])
 	sys.exit (1)
 
 try:
