@@ -2,6 +2,11 @@ from __future__ import print_function
 
 from pixitools.pixi import pixiGpioWritePin, pwmWritePin
 from pixitools.pixix import globalSpi
+import logging
+
+log = logging.getLogger(__name__)
+info = log.info
+debug = log.debug
 
 spi = globalSpi()
 
@@ -15,8 +20,13 @@ pwmFr = 5
 pwmBl = 6
 pwmFl = 7
 
+motorEnabled = False
+
 def enableMotor (enable = True):
+	info ("Setting motor enable to %s", enable)
 	pixiGpioWritePin (spi, motorGpio, motorGpioPin, enable)
+	global motorEnabled
+	motorEnabled = enable
 
 def pwmSet (pin, value):
 #	print ('pwmWritePin', pin, hex (value))
@@ -61,3 +71,54 @@ def turnLeft     (speed):
 	moveRover (reverse , forwards, speed)
 def turnRight    (speed):
 	moveRover (forwards, reverse , speed)
+
+from threading import Timer
+
+def stopMotion():
+	enableMotor (False)
+
+failsafe = None
+
+def setMotion (x, y, enableFullMotion):
+	info ("Move rover request %f, %f", x, y)
+	if not motorEnabled:
+		enableMotor (True)
+	global failsafe
+	if failsafe:
+		failsafe.cancel();
+	failsafe = Timer (1, stopMotion)
+	failsafe.start()
+	x = int (x)
+	y = int (y)
+	if enableFullMotion:
+		return fullMotion (x, y)
+	else:
+		return limitedMotion (x, y)
+
+def fullMotion (x, y):
+	"Provides entirely independent left/right tracks"
+	speedL = y + x
+	speedR = y - x
+	speedL = min (100, (max (-100, speedL)))
+	speedR = min (100, (max (-100, speedR)))
+	moveRoverX (speedL, speedR)
+	return speedL, speedR
+
+def limitedMotion (x, y):
+	"Provides purely forward/reverse or rotational motion"
+	speedX = abs (x)
+	speedY = abs (y)
+	if speedY > speedX:
+		# forward/backward
+		if y < 0:
+			moveBackward (speedY)
+		else:
+			moveForward (speedY)
+		return y, y
+	else:
+		# rotation
+		if x < 0:
+			turnLeft (speedX)
+		else:
+			turnRight (speedX)
+		return x, -x
