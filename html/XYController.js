@@ -118,12 +118,14 @@ function XYController(config) {
 			max: 70,
 			value: 65
 	};
-	updateObject(pinConf, config.x);
+	if (config && config.x)
+		updateObject(pinConf, config.x);
 	$row = addRow($tbody);
 	var controllerX = new Controller($row, pinConf);
 
 	pinConf['pin'] = 1;
-	jQuery.extend(pinConf, config.y);
+	if (config && config.y)
+		updateObject(pinConf, config.y);
 	$row = addRow($tbody);
 	var controllerY = new Controller($row, pinConf);
 
