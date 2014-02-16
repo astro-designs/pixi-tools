@@ -222,4 +222,4 @@ function XYController(config) {
 	}
 }
 
-controlTypes['XYController'] = XYController;
+widgetTypes['XYController'] = XYController;

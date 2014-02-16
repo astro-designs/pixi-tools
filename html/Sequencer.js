@@ -274,4 +274,4 @@ function Sequencer(config) {
 	};
 }
 
-controlTypes['Sequencer'] = Sequencer;
+widgetTypes['Sequencer'] = Sequencer;

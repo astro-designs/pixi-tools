@@ -22,7 +22,7 @@ var log;
 var toJson = JSON.stringify;
 var fromJson = JSON.parse;
 var updateObject = jQuery.extend;
-var controlTypes = {};
+var widgetTypes = {};
 
 if (typeof String.prototype.startsWith != 'function') {
 	String.prototype.startsWith = function (str){

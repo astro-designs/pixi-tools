@@ -54,4 +54,4 @@ function LcdPanel(config) {
 	}
 }
 
-controlTypes['LcdPanel'] = LcdPanel;
+widgetTypes['LcdPanel'] = LcdPanel;

@@ -21,8 +21,8 @@
 var $configName;
 var $configList;
 
-var $controlSelect;
-var controls = [];
+var $widgetSelect;
+var widgets = [];
 var nextId = 0;
 
 function loadConfig() {
@@ -38,11 +38,11 @@ function loadConfig() {
 			print ('Loading: ' + name);
 			var config = fromJson(result);
 			for (var id in config) {
-				var controlConf = config[id];
-				var typename = controlConf['.class'];
-				var type = controlTypes[typename];
+				var widgetConfig = config[id];
+				var typename = widgetConfig['.class'];
+				var type = widgetTypes[typename];
 				if (type)
-					addControl(type, controlConf);
+					addWidget(type, widgetConfig);
 			}
 		}
 	);
@@ -51,8 +51,8 @@ function loadConfig() {
 function saveConfig() {
 	var name = $configName.val();
 	var config = [];
-	for (var id in controls) {
-		config.push(controls[id].control.getConfig());
+	for (var id in widgets) {
+		config.push(widgets[id].widget.getConfig());
 	}
 	logPostCommand ({
 			method: 'writeData',
@@ -82,18 +82,18 @@ function updateConfigs() {
 
 }
 
-function addControl(type, config) {
+function addWidget(type, config) {
 	var $div = $('<div>');
 	var id = ++nextId;
-	var control = new type(config);
+	var widget = new type(config);
 	var remove = function() {
-		if (control.destroy != null) {
-			control.destroy();
+		if (widget.destroy != null) {
+			widget.destroy();
 		}
-		delete controls[id];
+		delete widgets[id];
 		$div.remove();
 	};
-	controls[id] = {control: control, remove: remove};
+	widgets[id] = {widget: widget, remove: remove};
 
 	var $left = $('<div style="float:left"/>');
 	var $close = $('<button>X</button>');
@@ -102,21 +102,21 @@ function addControl(type, config) {
 	$left.append($close);
 
 	var $right = $('<div>');
-	$right.append(control.$widget);
+	$right.append(widget.$widget);
 
 	$div.append($left);
 	$div.append($right);
-	$div.insertAfter($('#addControl'));
+	$div.insertAfter($('#addWidget'));
 }
 
-function selectControl() {
-	var type = $controlSelect.val();
-	addControl(controlTypes[type], null);
+function selectWidget() {
+	var type = $widgetSelect.val();
+	addWidget(widgetTypes[type], null);
 }
 
 function removeAll() {
-	for (item in controls) {
-		controls[item].remove();
+	for (item in widgets) {
+		widgets[item].remove();
 	}
 }
 
@@ -130,11 +130,11 @@ function init() {
 	updateConfigs();
 	$('#loadConfig').click(loadConfig);
 	$('#saveConfig').click(saveConfig);
-	$controlSelect = $('#controlSelect');
-	for (var key in controlTypes) {
-		addOption($controlSelect, key);
+	$widgetSelect = $('#widgetSelect');
+	for (var key in widgetTypes) {
+		addOption($widgetSelect, key);
 	}
-	$('#addControl').click(selectControl);
+	$('#addWidget').click(selectWidget);
 }
 
 jQuery(document).ready(init);
