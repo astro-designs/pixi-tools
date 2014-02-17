@@ -18,7 +18,7 @@
 
 from __future__ import print_function
 from pixitools import pi, pixi
-from os import strerror
+from os import getenv, strerror
 from time import sleep
 import logging
 
@@ -155,6 +155,10 @@ def globalSpi():
 	if not spi:
 		spi = Spi()
 	return spi.spi
+
+if "no" == getenv ("TEST_HARDWARE"):
+	def globalSpi():
+		return None
 
 ServoA1 = 0x40
 ServoA2 = 0x41
