@@ -118,7 +118,7 @@ static inline int pwmWritePin (uint pin, uint dutyCycle) {
 	return pixi_pwmWritePin (&globalPixi, pin, dutyCycle);
 }
 
-///	Wrapper for @ref pwmWritePinPercent
+///	Wrapper for @ref pixi_pwmWritePinPercent
 static inline int pwmWritePinPercent (uint pin, double dutyCycle) {
 	return pixi_pwmWritePinPercent (&globalPixi, pin, dutyCycle);
 }
