@@ -66,7 +66,7 @@ function dateString() {
 }
 
 function addTableItem(type, row, content, attributes) {
-	var cell = $('<td>');
+	var cell = $(type);
 	if (content !== null) {
 		cell.append(content);
 	}
