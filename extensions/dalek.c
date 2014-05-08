@@ -19,13 +19,12 @@
 */
 
 #include <libpixi/pixi/simple.h>
+#include <libpixi/util/io.h>
 #include <libpixi/util/string.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termios.h>
-#include <unistd.h>
 
 #include "Command.h"
 #include "log.h"
@@ -40,34 +39,6 @@ static int pixi_dalek_speak(int voice);
 static int pixi_dalek_demo(int demo);
 static int pixi_dalek_remote(int demo);
 
-
-
-/// Disable line-buffering
-/// This can screw up your terminal, use the 'reset' command to fix it.
-static void ttyInputRaw (int fd)
-{
-	struct termios term;
-	int result = tcgetattr(fd, &term);
-	if (result < 0)
-		perror("tcgetattr");
-	term.c_lflag &= ~(ICANON | ECHO);
-	result = tcsetattr(fd, TCSAFLUSH, &term);
-	if (result < 0)
-		perror("tcgetattr");
-}
-
-/// Enable line-buffering
-static void ttyInputNormal (int fd)
-{
-	struct termios term;
-	int result = tcgetattr(fd, &term);
-	if (result < 0)
-		perror("tcgetattr");
-	term.c_lflag |= (ICANON | ECHO);
-	result = tcsetattr(fd, TCSAFLUSH, &term);
-	if (result < 0)
-		perror("tcgetattr");
-}
 
 static const char keyUp[]    = {0x1b, 0x5b, 0x41, 0};
 static const char keyDown[]  = {0x1b, 0x5b, 0x42, 0};
@@ -338,7 +309,7 @@ int pixi_dalek_remote(int demo)
 	int i;
 	char buf[16];
 	int count;
-	ttyInputRaw (STDIN_FILENO);
+	pixi_ttyInputRaw (STDIN_FILENO);
 	printf("press 'q' to quit\n");
 	while ((count = read(STDIN_FILENO, buf, sizeof(buf)-1)) > 0)
 	{
@@ -427,7 +398,7 @@ int pixi_dalek_remote(int demo)
 		}
 		printf("\n");
 	}
-	ttyInputNormal (STDIN_FILENO);
+	pixi_ttyInputNormal (STDIN_FILENO);
     return(demo);
 }	
 	
