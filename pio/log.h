@@ -26,6 +26,11 @@
 
 extern LogLevel pio_logLevel;
 
+/// Check if logging at @a level should be output.
+static inline bool pio_isLogLevelEnabled (LogLevel level) {
+	return level >= pio_logLevel;
+}
+
 /// Wraps LIBPIXI_GENERAL_LOG with confLevel=pio_logLevel
 #define PIO_LOG(         level,         ...) LIBPIXI_GENERAL_LOG          (pio_logLevel, level,         __VA_ARGS__)
 /// Wraps LIBPIXI_GENERAL_STRERROR_LOG with confLevel=pio_logLevel

@@ -53,6 +53,11 @@ const char* pixi_logLevelToStr (LogLevel level);
 void pixi_logPrint (LogLevel level, const char* format, ...) LIBPIXI_PRINTF_ARG(2);
 void pixi_logError (LogLevel level, int errnum, const char* format, ...) LIBPIXI_PRINTF_ARG(3);
 
+/// Check if logging at @a level should be output.
+static inline bool pixi_isLogLevelEnabled (LogLevel level) {
+	return level >= pixi_logLevel;
+}
+
 /// Logs a format string to stderr. example:
 /// <pre>LIBPIXI_GENERAL_LOG(pixi_logLevel, LogLevelError, "Unexpected value for gpio file %s: %s", fname, buf);</pre>
 /// Don't use this directly, use one of the wrapper macros like LIBPIXI_LOG_ERROR.
