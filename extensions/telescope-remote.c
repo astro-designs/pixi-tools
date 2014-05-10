@@ -134,6 +134,15 @@ static void writeDisplayChar (State* state, byte ch)
 }
 
 
+static void eraseToLineEnd (State* state)
+{
+	uint x = state->xPos;
+	uint y = state->yPos;
+	uint len = DisplayChars - x;
+	memset (state->display[y] + x, ' ', len);
+}
+
+
 static void readTelescope (State* state)
 {
 	byte buf[400];
@@ -164,7 +173,7 @@ static void readTelescope (State* state)
 			case 0x17: PIO_LOG_INFO("Waking up"); state->asleep = false; break;
 			case 'C' : PIO_LOG_INFO("Cursor on"); break;
 			case 'c' : PIO_LOG_INFO("Cursor off"); break;
-			case 'E' : PIO_LOG_INFO("Erase to end of line"); break; // TODO
+			case 'E' : eraseToLineEnd (state); displayUpdate = true; break;
 			case 'G' : newState = GotoX; break;
 			case 'L' : newState = LcdBright; break;
 			case 'l' : newState = KeyBright; break;
