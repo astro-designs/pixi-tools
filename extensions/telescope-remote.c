@@ -136,6 +136,7 @@ static void writeDisplayChar (State* state, byte ch)
 
 static void eraseToLineEnd (State* state)
 {
+	PIO_LOG_TRACE("Erase to line end");
 	uint x = state->xPos;
 	uint y = state->yPos;
 	uint len = DisplayChars - x;
@@ -203,7 +204,7 @@ static void readTelescope (State* state)
 			break;
 
 		case Beep:
-			PIO_LOG_ERROR("Beep duration %2X", ch);
+			PIO_LOG_INFO("Beep duration %2X", ch);
 			break;
 
 		case GotoX:
@@ -213,6 +214,7 @@ static void readTelescope (State* state)
 
 		case GotoY:
 			state->yPos = ch % DisplayLines;
+			PIO_LOG_DEBUG("Moving to %u,%u", state->xPos, state->yPos);
 			break;
 
 		case LcdBright:
