@@ -156,6 +156,74 @@ static Command spiMonitorCmd =
 	.function    = spiMonitorFn
 };
 
+
+static int scanSpi (uint channel)
+{
+	SpiDevice dev = SpiDeviceInit;
+	int result = pixi_spiOpen(channel, PixiSpiSpeed, &dev);
+	if (result < 0)
+	{
+		PIO_ERROR(-result, "Failed to setup SPI device %u", channel);
+		return result;
+	}
+
+	uint16 memory[256];
+	memset (memory, 0, sizeof (memory));
+	uint changes = 0;
+
+	while (true)
+	{
+		for (uint addr = 0; addr < 256; addr++)
+		{
+			uint data = 0;
+			// TODO: belongs in libpixi
+			uint8_t buffer[4] = {
+				addr,
+				PixiSpiEnableRead16,
+				(data & 0xFF00) >> 8,
+				(data & 0x00FF)
+			};
+			result = pixi_spiReadWrite(&dev, buffer, buffer, sizeof (buffer));
+			if (result < 0)
+				break;
+
+			data = (buffer[2] << 8) | buffer[3];
+			if (memory[addr] != data)
+			{
+				changes++;
+				memory[addr] = data;
+				printf("%08u: %3u 0x%04x\n", changes, addr, data);
+				fflush (stdout);
+			}
+		}
+	}
+	printf("\n");
+
+	pixi_spiClose (&dev);
+	if (result < 0)
+		PIO_ERROR(-result, "SPI read-write failed");
+
+	return result;
+}
+
+static int spiScanFn (uint argc, char*const*const argv)
+{
+	if (argc != 2)
+	{
+		PIO_LOG_ERROR ("usage: %s CHANNEL", argv[0]);
+		return -EINVAL;
+	}
+	uint channel = pixi_parseLong (argv[1]);
+
+	return scanSpi (channel);
+}
+static Command spiScanCmd =
+{
+	.name        = "spi-scan",
+	.description = "continually scan an SPI channel (all addresses)",
+	.function    = spiScanFn
+};
+
 static int monitorButtonsFn (uint argc, char*const*const argv)
 {
 	LIBPIXI_UNUSED(argv);
@@ -178,6 +246,7 @@ static const Command* commands[] =
 	&spiSetCmd,
 	&spiGetCmd,
 	&spiMonitorCmd,
+	&spiScanCmd,
 	&monitorButtonsCmd
 };
 
