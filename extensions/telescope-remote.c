@@ -19,6 +19,7 @@
 */
 
 #include <libpixi/pixi/simple.h>
+#include <libpixi/pixi/lcd.h>
 #include <libpixi/util/io.h>
 #include <libpixi/util/string.h>
 #include <ctype.h>
@@ -52,10 +53,26 @@ static int setupSerial (int serialFd)
 
 enum
 {
+	PollInterval = 40, // milliseconds
+
 	BufferLen  = 16,
 	BufferMask = BufferLen - 1,
 	DisplayChars = 40, // per line
-	DisplayLines = 2
+	DisplayLines = 2,
+
+	KeyPadRegister = 0x33,
+	KeyMask        = 0x07F,
+	KeyStateMask   = 0xF00,
+	KeyBufferEmpty = 0x100,
+	KeyBufferFull  = 0x200,
+	KeyPressed     = 0x400,
+	KeyReleased    = 0x800,
+
+	Rotary1Register = 0x61,
+	Rotary2Register = 0x60,
+	RotaryThreshold = 5,
+
+	KeyCount = 24
 };
 
 enum CmdState
@@ -82,6 +99,12 @@ enum CmdState
 
 typedef struct State
 {
+	LcdDevice device;
+	bool      usePixi;
+
+	uint8     rotary1;
+	uint8     rotary2;
+
 	int       inputFd;
 	int       serialFd;
 
@@ -101,6 +124,14 @@ static const char keyUp[]    = {0x1b, 0x5b, 0x41, 0};
 static const char keyDown[]  = {0x1b, 0x5b, 0x42, 0};
 static const char keyRight[] = {0x1b, 0x5b, 0x43, 0};
 static const char keyLeft[]  = {0x1b, 0x5b, 0x44, 0};
+
+
+static void initState (State* state)
+{
+	memset (state, 0, sizeof (State));
+	memset (state->display, ' ', sizeof state->display);
+	initLcdDevice (&state->device);
+}
 
 
 static void writeDisplayChar (State* state, byte ch)
@@ -291,6 +322,12 @@ static void appendBuffer (State* state, const char* buffer, size_t length)
 }
 
 
+static void appendChar (State* state, char value)
+{
+	appendBuffer (state, &value, 1);
+}
+
+
 static void readInput (State* state)
 {
 	PIO_LOG_TRACE("Keyboard input");
@@ -348,8 +385,66 @@ static void readInput (State* state)
 
 static void readKeypad (State* state)
 {
-	LIBPIXI_UNUSED(state);
-	// TODO
+	for (int i = 0; i < 20; i++) // avoid infinite loops
+	{
+		int reg = pixi_registerRead (&state->device.spi, KeyPadRegister);
+		if (reg & KeyBufferEmpty)
+			return;
+
+		PIO_LOG_DEBUG("Handling key register %03x", reg);
+		if (!(reg & (KeyReleased | KeyPressed)))
+			continue;
+
+		uint key = reg & KeyMask;
+		if (reg & KeyReleased)
+		{
+			PIO_LOG_DEBUG("Key %c released", key);
+			if (key >= '0' && key <= '9')
+				key += 0x80;
+			else
+				key += 0x20;
+		}
+		else
+			PIO_LOG_DEBUG("Key %c pressed", key);
+
+		char ch = key;
+		appendChar (state, ch);
+	}
+	PIO_LOG_FATAL("Excessive key events!");
+}
+
+
+static void readRotary (State* state)
+{
+	uint8 rotary1 = pixi_registerRead (&state->device.spi, Rotary1Register);
+	uint8 rotary2 = pixi_registerRead (&state->device.spi, Rotary2Register);
+	if (rotary1 != state->rotary1)
+	{
+		int8 delta = state->rotary1 - rotary1;
+		if (delta < - RotaryThreshold)
+		{
+			PIO_LOG_DEBUG("Rotary 1: %04x, change %d", rotary1, delta);
+			state->rotary1 = rotary1;
+			PIO_LOG_DEBUG("Scroll up");
+			// scroll up
+			char buf[2] = {'U', 'u'};
+			appendBuffer (state, buf, 2);
+		}
+		else if (delta > RotaryThreshold)
+		{
+			PIO_LOG_DEBUG("Rotary 1: %04x, change %d", rotary1, delta);
+			state->rotary1 = rotary1;
+			PIO_LOG_DEBUG("Scroll down");
+			// scroll down
+			char buf[2] = {'D', 'd'};
+			appendBuffer (state, buf, 2);
+		}
+	}
+	if (rotary2 != state->rotary2)
+	{
+		PIO_LOG_DEBUG("Rotary 2: %04x", rotary2);
+		state->rotary2 = rotary2;
+	}
 }
 
 
@@ -359,7 +454,6 @@ static int runRemote (State* state)
 	if (result < 0)
 		PIO_LOG_WARN("Failed to configure serial device, but continuing anyway");
 
-	const int waitMs = 300;
 	const int count = 2;
 	struct pollfd polls[count];
 
@@ -374,7 +468,7 @@ static int runRemote (State* state)
 			polls[1].events |= POLLOUT;
 		polls[0].revents = 0;
 		polls[1].revents = 0;
-		result = poll (polls, count, waitMs);
+		result = poll (polls, count, PollInterval);
 //		PIO_LOG_TRACE("poll result = %d", result);
 		if (result > 0)
 		{
@@ -384,6 +478,7 @@ static int runRemote (State* state)
 				readTelescope (state);
 		}
 		readKeypad (state);
+		readRotary (state);
 		if (polls[1].revents & POLLOUT)
 			writeTelescope (state);
 	} while (result >= 0 || errno == EINTR);
@@ -398,6 +493,9 @@ static int remoteFn (uint argc, char*const*const argv)
 		PIO_LOG_ERROR ("usage: %s SERIAL-DEVICE", argv[0]);
 		return -EINVAL;
 	}
+	State state;
+	initState (&state);
+
 	const char* device = argv[1];
 	int serialFd = pixi_open (device, O_RDWR | O_NONBLOCK, 0);
 	if (serialFd < 0)
@@ -405,18 +503,29 @@ static int remoteFn (uint argc, char*const*const argv)
 		PIO_ERROR(-serialFd, "Failed to open serial device");
 		return serialFd;
 	}
+	int result = pixi_lcdOpen (&state.device);
+	if (result < 0)
+	{
+		state.usePixi = false;
+		PIO_ERROR(-result, "Failed to open PiXi, but continuing anyway");
+	}
+	else
+	{
+		state.usePixi = true;
+		state.rotary1 = pixi_registerRead (&state.device.spi, Rotary1Register);
+		state.rotary2 = pixi_registerRead (&state.device.spi, Rotary2Register);
+	}
 
-	State state;
-	memset (&state, 0, sizeof state);
-	memset (state.display, ' ', sizeof state.display);
 	state.inputFd = STDIN_FILENO;
 	state.serialFd = serialFd;
 
 	pixi_ttyInputRaw (state.inputFd);
-	int result = runRemote (&state);
+	result = runRemote (&state);
 	pixi_ttyInputNormal (state.inputFd);
 
 	pixi_close (serialFd);
+	if (state.usePixi)
+		pixi_lcdClose (&state.device);
 	return result;
 }
 
