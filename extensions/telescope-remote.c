@@ -55,7 +55,7 @@ enum
 {
 	PollInterval = 40, // milliseconds
 
-	BufferLen  = 16,
+	BufferLen  = 256,
 	BufferMask = BufferLen - 1,
 	DisplayChars = 40, // per line
 	DisplayLines = 2,
@@ -126,10 +126,20 @@ static const char keyRight[] = {0x1b, 0x5b, 0x43, 0};
 static const char keyLeft[]  = {0x1b, 0x5b, 0x44, 0};
 
 
+static void clearDisplay (State* state)
+{
+	PIO_LOG_INFO("Clearing display");
+	printf ("Display size %zu", sizeof state->display);
+	memset (state->display, ' ', sizeof state->display);
+	state->xPos = 0;
+	state->yPos = 0;
+}
+
+
 static void initState (State* state)
 {
 	memset (state, 0, sizeof (State));
-	memset (state->display, ' ', sizeof state->display);
+	clearDisplay (state);
 	initLcdDevice (&state->device);
 }
 
@@ -139,9 +149,7 @@ static void writeDisplayChar (State* state, byte ch)
 	if (ch == 0x0C)
 	{
 		// form-feed
-		memset (state->display, ' ', sizeof state->display);
-		state->xPos = 0;
-		state->yPos = 0;
+		clearDisplay (state);
 		return;
 	}
 	if (ch >= 127 || !isprint (ch) || (isspace (ch) && ch != ' '))
@@ -184,6 +192,7 @@ static void readTelescope (State* state)
 	for (ssize_t i = 0; i < count; i++)
 	{
 		byte ch = buf[i];
+		PIO_LOG_TRACE("handle byte: %2x", ch);
 		int newState = Ready;
 		switch (state->cmdState)
 		{
@@ -367,6 +376,7 @@ static void readInput (State* state)
 		case 'S':
 		case 'E':
 		case 'W':
+		case 'U':
 		case 'D':
 		case 'L':
 		case '0':
