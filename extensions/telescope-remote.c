@@ -328,6 +328,17 @@ static void appendChar (State* state, char value)
 }
 
 
+static void keyPressRelease (State* state, char key)
+{
+	char buf[2] = {key, key};
+	if (key >= '0' && key <= '9')
+		buf[1] += 0x80;
+	else
+		buf[1] += 0x20;
+	appendBuffer (state, buf, sizeof (buf));
+}
+
+
 static void readInput (State* state)
 {
 	PIO_LOG_TRACE("Keyboard input");
@@ -346,7 +357,6 @@ static void readInput (State* state)
 	// Quick and dirty: handle only isolated characters and ignore escapes, etc
 	if (count == 1)
 	{
-		char out[2];
 		char ch = toupper (buf[0]);
 		switch (ch)
 		{
@@ -359,11 +369,6 @@ static void readInput (State* state)
 		case 'W':
 		case 'D':
 		case 'L':
-			out[0] = ch;
-			out[1] = ch + 0x20;
-			appendBuffer (state, out, 2);
-			break;
-
 		case '0':
 		case '1':
 		case '2':
@@ -374,10 +379,7 @@ static void readInput (State* state)
 		case '7':
 		case '8':
 		case '9':
-			out[0] = ch;
-			out[1] = ch + 0x80;
-			appendBuffer (state, out, 2);
-			break;
+			keyPressRelease (state, ch);
 		}
 	}
 }
@@ -398,14 +400,14 @@ static void readKeypad (State* state)
 		uint key = reg & KeyMask;
 		if (reg & KeyReleased)
 		{
-			PIO_LOG_DEBUG("Key %c released", key);
+			PIO_LOG_INFO("Key release: '%c'", key);
 			if (key >= '0' && key <= '9')
 				key += 0x80;
 			else
 				key += 0x20;
 		}
 		else
-			PIO_LOG_DEBUG("Key %c pressed", key);
+			PIO_LOG_INFO("Key press: '%c'", key);
 
 		char ch = key;
 		appendChar (state, ch);
@@ -425,19 +427,15 @@ static void readRotary (State* state)
 		{
 			PIO_LOG_DEBUG("Rotary 1: %04x, change %d", rotary1, delta);
 			state->rotary1 = rotary1;
-			PIO_LOG_DEBUG("Scroll up");
-			// scroll up
-			char buf[2] = {'U', 'u'};
-			appendBuffer (state, buf, 2);
+			PIO_LOG_INFO("Scroll up");
+			keyPressRelease (state, 'U');
 		}
 		else if (delta > RotaryThreshold)
 		{
 			PIO_LOG_DEBUG("Rotary 1: %04x, change %d", rotary1, delta);
 			state->rotary1 = rotary1;
-			PIO_LOG_DEBUG("Scroll down");
-			// scroll down
-			char buf[2] = {'D', 'd'};
-			appendBuffer (state, buf, 2);
+			PIO_LOG_INFO("Scroll down");
+			keyPressRelease (state, 'D');
 		}
 	}
 	if (rotary2 != state->rotary2)
