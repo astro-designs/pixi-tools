@@ -41,6 +41,11 @@ static int setupSerial (int serialFd)
 		PIO_ERRNO_ERROR("tcgetattr of serial device failed");
 		return result;
 	}
+
+	// Enable software flow control, otherwise we'll never receive
+	// the 0x13/DC3 bytes in the sleep message
+	term.c_iflag &= ~(IXON | IXOFF);
+
 	result = cfsetspeed (&term, B9600);
 	if (result < 0)
 		PIO_ERRNO_ERROR("cfsetspeed failed to set baud rate");
