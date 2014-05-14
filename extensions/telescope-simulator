@@ -1,0 +1,133 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+from sys import argv, exit
+from time import sleep
+from subprocess import check_output, Popen
+from os import execlp, fdopen, readlink, system
+from os.path import basename
+from pty import openpty
+from tty import setraw
+from socket import gethostname
+
+appName = basename (argv[0])
+logPrefix = appName + ':'
+
+hostname = gethostname()
+
+def log (*args):
+	print (logPrefix, *args)
+
+if len (argv) > 1:
+	# communicate via specified device
+	dev = argv[1]
+	log ("Opening:", dev)
+	con = open (dev, 'r+b', 0)
+	pio = None
+else:
+	# create a pty, and launch pio with that as its argument
+	ptmx, pty = openpty()
+	setraw (ptmx) # no buffering
+	ptyName = readlink ('/proc/self/fd/' + str (pty))
+	con = fdopen (ptmx, 'r+b', 0)
+	log ("created pty:", ptyName)
+
+	pio = Popen (["pio", "telescope-remote", ptyName])
+	sleep (1) # allow pio to start
+
+def sleepMode():
+	log ("Sending sleep command")
+	line2 ("Sleeping...")
+	con.write (b'\x1B\x13\x13\x13\x00')
+	con.flush()
+	log ("Sleeping")
+	sleep (3)
+	log ("Sending wake command")
+	con.write (b'\x1B\x17')
+	line2 ("Woken...")
+	con.flush()
+
+def hardwareMode():
+	global pio
+	if pio:
+		line2 ("Terminating pio")
+		pio.terminate()
+		pio = None
+
+		line2 (", going to runlevel 3")
+		# switch to a runlevel where there's no getty running on the serial port
+		system ("init 3")
+
+		line2 (", execing pio")
+		# replace this process with pio talking to hardware
+		execlp ("pio", "pio", "telescope-remote", "/dev/ttyAMA0")
+		line2 (", failed")
+	else:
+		line2 ("Exiting")
+		exit (123)
+
+def halt():
+	line2 ("Halting")
+	system ("halt")
+
+def reboot():
+	line2 ("Rebooting")
+	system ("reboot")
+
+pages = (
+	# 0         1         2         3         0         1         2         3
+	# 01234567890123456789012345678901234567890123456789012345678901234567890123456789
+	('telescope-simulator on ' + hostname, None),
+	('Sleep mode.                             Press enter to sleep for three seconds', sleepMode),
+	('Scope trigger. Press enter to switch    to real hardware mode', hardwareMode),
+	('Halt trigger.                           Press enter to halt the Raspberry Pi', halt),
+	('Reboot trigger.                         Press enter to reboot the Raspberry Pi', reboot)
+	)
+
+page = 0
+
+# shell command
+getAddresses = "echo -n $(/sbin/ifconfig | grep inet.addr | grep -vF 127.0.0.1 | sed -e 's,.*inet addr:,,' -e 's, .*,,')"
+
+def line2 (text):
+	# goto, clear to end of line
+	con.write (b'\x1BG\x00\x01\x1BE')
+	con.write (text)
+
+def setPage (num):
+	global page
+	page = num % len (pages)
+	log ("setPage", page)
+	text = pages[page][0]
+	con.write (b'\x0C')
+	con.write (text)
+	if page == 0:
+		try:
+			line2 (check_output (["sh", "-c", getAddresses]))
+		except Exception:
+			pass
+	con.flush()
+
+setPage (0)
+
+try:
+	log ('reading...')
+	while True:
+		data = con.read (1)
+		try:
+			pageChange = None
+			if data == 'u': # up
+				setPage (page - 1)
+			elif data == 'd': # down
+				setPage (page + 1)
+			elif data == 'r': # enter
+				func = pages[page][1]
+				if func:
+					func()
+		except Exception:
+			from traceback import print_exc
+			print_exc()
+finally:
+	# reset the terminal
+	system ("reset")
