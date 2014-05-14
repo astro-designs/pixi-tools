@@ -122,6 +122,7 @@ typedef struct State
 	char      display[DisplayLines][DisplayChars+1];
 	uint      xPos;
 	uint      yPos;
+	uint      numKeys; // bitmap
 } State;
 
 
@@ -367,9 +368,33 @@ static void appendBuffer (State* state, const char* buffer, size_t length)
 }
 
 
-static void appendChar (State* state, char value)
+static void appendChar (State* state, char key)
 {
-	appendBuffer (state, &value, 1);
+	if (key >= '0' && key <= '9')
+	{
+		int value = key - '0';
+		state->numKeys |= 1 << value;
+		PIO_LOG_DEBUG("numKeys: %x", state->numKeys);
+		// Three fingered salute: hold, 1, 6, 7 to halt the machine
+		if (state->numKeys == ((1<<1) | (1<<6) | (1<<7)))
+		{
+			PIO_LOG_WARN("Halting");
+			system ("halt");
+			if (state->usePixi)
+			{
+				pixi_lcdSetCursorPos (&state->device, 0, 1);
+				pixi_lcdWriteStr (&state->device, "Halting...");
+			}
+		}
+	}
+	else if (key >= ('0' + 0x80) && key <= ('9' + 0x80))
+	{
+		// Four fingered salute: hold, 1, 3, 7, 9 to halt the machine
+		int value = (key - 0x80) - '0';
+		state->numKeys &= ~(1 << value);
+		PIO_LOG_DEBUG("numKeys: %x", state->numKeys);
+	}
+	appendBuffer (state, &key, 1);
 }
 
 
