@@ -134,17 +134,24 @@ static const char keyLeft[]  = {0x1b, 0x5b, 0x44, 0};
 static void clearDisplay (State* state)
 {
 	PIO_LOG_INFO("Clearing display");
-	printf ("Display size %zu", sizeof state->display);
 	memset (state->display, ' ', sizeof state->display);
 	state->xPos = 0;
 	state->yPos = 0;
+
+	if (state->usePixi)
+	{
+		// pixi_lcdClear seems to cause problems
+		pixi_lcdSetCursorPos (&state->device, 0, 0);
+		state->display[0][DisplayChars] = 0;
+		pixi_lcdWriteStr (&state->device, state->display[0]);
+		pixi_lcdWriteStr (&state->device, state->display[0]);
+	}
 }
 
 
 static void initState (State* state)
 {
 	memset (state, 0, sizeof (State));
-	clearDisplay (state);
 	initLcdDevice (&state->device);
 }
 
@@ -175,6 +182,15 @@ static void writeDisplayChar (State* state, byte ch)
 	}
 	state->xPos = x;
 	state->yPos = y;
+
+	if (state->usePixi)
+	{
+		char str[2] = {ch, 0};
+		if (ch == 0)
+			str[0] = ' ';
+		pixi_lcdWriteStr (&state->device, str);
+	}
+
 }
 
 
@@ -185,6 +201,20 @@ static void eraseToLineEnd (State* state)
 	uint y = state->yPos;
 	uint len = DisplayChars - x;
 	memset (state->display[y] + x, ' ', len);
+	if (state->usePixi)
+	{
+		state->display[y][DisplayChars] = 0;
+		pixi_lcdWriteStr (&state->device, state->display[y] + x);
+		pixi_lcdSetCursorPos (&state->device, x, y);
+	}
+}
+
+
+static void sendGotoPos (State* state)
+{
+	if (!state->usePixi)
+		return;
+	pixi_lcdSetCursorPos (&state->device, state->xPos, state->yPos);
 }
 
 
@@ -259,6 +289,7 @@ static void readTelescope (State* state)
 
 		case GotoY:
 			state->yPos = ch % DisplayLines;
+			sendGotoPos (state);
 			PIO_LOG_DEBUG("Moving to %u,%u", state->xPos, state->yPos);
 			break;
 
@@ -402,6 +433,9 @@ static void readInput (State* state)
 
 static void readKeypad (State* state)
 {
+	if (!state->usePixi)
+		return;
+
 	for (int i = 0; i < 20; i++) // avoid infinite loops
 	{
 		int reg = pixi_registerRead (&state->device.spi, KeyPadRegister);
@@ -433,6 +467,9 @@ static void readKeypad (State* state)
 
 static void readRotary (State* state)
 {
+	if (!state->usePixi)
+		return;
+
 	uint8 rotary1 = pixi_registerRead (&state->device.spi, Rotary1Register);
 	uint8 rotary2 = pixi_registerRead (&state->device.spi, Rotary2Register);
 	if (rotary1 != state->rotary1)
@@ -528,6 +565,7 @@ static int remoteFn (uint argc, char*const*const argv)
 		state.rotary1 = pixi_registerRead (&state.device.spi, Rotary1Register);
 		state.rotary2 = pixi_registerRead (&state.device.spi, Rotary2Register);
 	}
+	clearDisplay (&state);
 
 	state.inputFd = STDIN_FILENO;
 	state.serialFd = serialFd;
