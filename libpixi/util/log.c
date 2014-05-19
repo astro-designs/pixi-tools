@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 LogLevel pixi_logLevel = LogLevelInfo;
@@ -37,6 +39,11 @@ static const char AnsiRed[]     = "\033[0;31m";
 static const char AnsiGreen[]   = "\033[0;33m";
 
 static const char* levelColors[LogLevelOff+1];
+
+static const long  maxLogSize   = 10 * 1024 * 1024;
+static const char* logFilename  = NULL;
+static FILE*       logFile      = NULL;
+static long        logSize      =  0;
 
 static const char* getLevelColor (LogLevel level)
 {
@@ -57,6 +64,39 @@ static bool useAnsiColors (void)
 	return isatty (STDERR_FILENO) > 0;
 }
 
+static void openLogFile (void)
+{
+	// TODO: locking for multi-threading
+	if (logFile)
+		fclose (logFile);
+	logFile = fopen (logFilename, "a");
+	if (!logFile)
+	{
+		LIBPIXI_ERROR(errno, "Failed to open log file %s", logFilename);
+		return;
+	}
+	logSize = ftell (logFile);
+}
+
+static void rotateLogFile (void)
+{
+	char oldName[1024];
+	int count = snprintf (oldName, sizeof (oldName), "%s.1", logFilename);
+	if (count >= (int) sizeof (oldName))
+	{
+		perror ("Error formatting log rotation filename");
+		return;
+	}
+	int result = rename (logFilename, oldName);
+	if (result < 0)
+	{
+		perror ("Error performing log rotation rename");
+		return;
+	}
+	openLogFile();
+}
+
+
 void pixi_logInit (LogLevel level)
 {
 	pixi_logLevel = level;
@@ -69,6 +109,10 @@ void pixi_logInit (LogLevel level)
 	levelColors[LogLevelError] = AnsiRed;
 	levelColors[LogLevelFatal] = AnsiBoldRed;
 	levelColors[LogLevelOff]   = AnsiReset;
+
+	logFilename = getenv ("LIBPIXI_LOG_FILE");
+	if (logFilename)
+		openLogFile();
 }
 
 LogLevel pixi_strToLogLevel (const char* levelStr, LogLevel defaultLevel)
@@ -102,6 +146,21 @@ const char* pixi_logLevelToStr (LogLevel level)
 	}
 }
 
+static void formatNow (char* buffer, size_t bufferSize)
+{
+	struct timeval now;
+	gettimeofday (&now, NULL);
+	struct tm tm;
+	size_t count = strftime (buffer, bufferSize, "%F %T", localtime_r (&now.tv_sec, &tm));
+	if (count == 0)
+	{
+		snprintf (buffer, bufferSize, "%s", "<strftime error>");
+		return;
+	}
+	int millis = now.tv_usec / 1000;
+	snprintf (buffer + count, bufferSize - count, ".%03d", millis);
+}
+
 static void logVPrintf (LogLevel level, const char* errorStr, const char* format, va_list formatArgs)
 {
 	char buffer[2048] = "";
@@ -132,6 +191,27 @@ static void logVPrintf (LogLevel level, const char* errorStr, const char* format
 		errorStr,
 		endColor
 		);
+	if (logFile)
+	{
+		if (logSize > maxLogSize)
+			rotateLogFile();
+		char timeStr[40] = "";
+		formatNow (timeStr, sizeof (timeStr));
+		int written = fprintf (logFile, "%s %s: %s%s%s\n",
+			timeStr,
+			lev,
+			buffer,
+			errorColon,
+			errorStr
+			);
+		if (written < 0)
+			perror ("Error writing to log file");
+		else
+		{
+			fflush (logFile);
+			logSize += written;
+		}
+	}
 }
 
 void pixi_logPrint (LogLevel level, const char* format, ...)
