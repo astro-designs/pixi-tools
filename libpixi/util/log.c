@@ -102,9 +102,36 @@ const char* pixi_logLevelToStr (LogLevel level)
 	}
 }
 
-static void prefixLog (LogLevel level)
+static void logVPrintf (LogLevel level, const char* errorStr, const char* format, va_list formatArgs)
 {
-	fprintf (stderr, "%s: %s: ", program_invocation_short_name, pixi_logLevelToStr (level));
+	char buffer[2048] = "";
+	int count = vsnprintf (buffer, sizeof (buffer), format, formatArgs);
+	if (count >= (int) sizeof (buffer))
+		fprintf (stderr, "Error: log entry is too long for format string [%s]\n", format);
+
+	const char* prog = program_invocation_short_name;
+	const char* lev  = pixi_logLevelToStr (level);
+	const char* startColor = getLevelColor (level);
+	const char* endColor   = "";
+	if (startColor)
+		endColor = levelColors[LogLevelOff];
+	else
+		startColor = "";
+	const char* errorColon = "";
+	if (errorStr)
+		errorColon = ": ";
+	else
+		errorStr = "";
+
+	fprintf (stderr, "%s%s: %s: %s%s%s%s\n",
+		startColor,
+		prog,
+		lev,
+		buffer,
+		errorColon,
+		errorStr,
+		endColor
+		);
 }
 
 void pixi_logPrint (LogLevel level, const char* format, ...)
@@ -112,15 +139,7 @@ void pixi_logPrint (LogLevel level, const char* format, ...)
 	va_list args;
 	va_start(args, format);
 
-	// TODO: fix thread safety
-	const char* color = getLevelColor (level);
-	if (color)
-		fputs (color, stderr);
-	prefixLog (level);
-	vfprintf (stderr, format, args);
-	if (color)
-		fputs (levelColors[LogLevelOff], stderr);
-	fputs ("\n", stderr);
+	logVPrintf (level, NULL, format, args);
 
 	va_end(args);
 }
@@ -130,17 +149,10 @@ void pixi_logError (LogLevel level, int errnum, const char* format, ...)
 	va_list args;
 	va_start(args, format);
 
-	// TODO: fix thread safety
-	const char* color = getLevelColor (level);
-	if (color)
-		fputs (color, stderr);
+	char buffer[256];
+	char* errorStr = strerror_r (errnum, buffer, sizeof (buffer));
 
-	prefixLog (level);
-	vfprintf (stderr, format, args);
-	fprintf (stderr, ": %s", strerror (errnum));
-	if (color)
-		fputs (levelColors[LogLevelOff], stderr);
-	fputs ("\n", stderr);
+	logVPrintf (level, errorStr, format, args);
 
 	va_end(args);
 }
