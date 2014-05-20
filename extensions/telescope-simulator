@@ -92,7 +92,7 @@ getAddresses = "echo -n $(/sbin/ifconfig | grep inet.addr | grep -vF 127.0.0.1 |
 
 def line2 (text):
 	# goto, clear to end of line
-	con.write (b'\x1BG\x00\x01\x1BE')
+	con.write (b'\x1BG\x01\x02\x1BE')
 	con.write (text)
 
 def setPage (num):

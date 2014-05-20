@@ -292,12 +292,12 @@ static void readTelescope (State* state)
 			break;
 
 		case GotoX:
-			state->xPos = ch % DisplayChars;
+			state->xPos = (ch-1) % DisplayChars;
 			newState = GotoY;
 			break;
 
 		case GotoY:
-			state->yPos = ch % DisplayLines;
+			state->yPos = (ch-1) % DisplayLines;
 			sendGotoPos (state);
 			PIO_LOG_DEBUG("Moving to %u,%u", state->xPos, state->yPos);
 			break;
