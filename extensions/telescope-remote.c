@@ -218,12 +218,20 @@ static void sendGotoPos (State* state)
 	pixi_lcdSetCursorPos (&state->device, state->xPos, state->yPos);
 }
 
+static const char printableChars[] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,./<>?;:'@#~][}{=-+_`!\"$^&*()";
 
 static void readTelescope (State* state)
 {
 	byte buf[400];
 	ssize_t count = pixi_read (state->serialFd, buf, sizeof (buf));
-	PIO_LOG_TRACE("Read %zd bytes from serial input", count);
+	if (pio_isLogLevelEnabled(LogLevelDebug))
+	{
+		char printable[1+(sizeof(buf)*3)];
+		pixi_hexEncode (buf, count, printable, sizeof (printable), '%', printableChars);
+		PIO_LOG_DEBUG("Received: as characters : [%s]", printable);
+		pixi_hexEncode (buf, count, printable, sizeof (printable), ' ', "");
+		PIO_LOG_DEBUG("Received: as hexadecimal: [%s]", printable);
+	}
 	bool displayUpdate = false;
 	for (ssize_t i = 0; i < count; i++)
 	{
@@ -370,6 +378,7 @@ static void appendBuffer (State* state, const char* buffer, size_t length)
 
 static void appendChar (State* state, char key)
 {
+	uchar keyVal = key;
 	if (key >= '0' && key <= '9')
 	{
 		int value = key - '0';
@@ -387,10 +396,10 @@ static void appendChar (State* state, char key)
 			}
 		}
 	}
-	else if (key >= ('0' + 0x80) && key <= ('9' + 0x80))
+	else if (keyVal >= ('0' + 0x80) && keyVal <= ('9' + 0x80))
 	{
 		// Four fingered salute: hold, 1, 3, 7, 9 to halt the machine
-		int value = (key - 0x80) - '0';
+		int value = (keyVal - 0x80) - '0';
 		state->numKeys &= ~(1 << value);
 		PIO_LOG_DEBUG("numKeys: %x", state->numKeys);
 	}
