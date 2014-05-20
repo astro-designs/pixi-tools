@@ -137,3 +137,44 @@ bool pixi_strGetProperty (char* text, char separator, Property* property)
 	property->value = pixi_strStrip (sep + 1);
 	return true;
 }
+
+static const char alphaNumeric[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+static const char hexChars[16] = "0123456789ABCDEF";
+
+size_t pixi_hexEncode (const void* input, size_t inputSize, char* output, size_t outputSize, char prefix, const char* printable)
+{
+	if (outputSize == 0)
+		return 0;
+	if (!output)
+		return 0;
+	output[0] = 0;
+	if (!input)
+		return 0;
+	if (!printable)
+		printable = alphaNumeric;
+	char* outputPtr = output;
+	size_t i = 0;
+	const uchar* uinput = input;
+	for ( ; i < inputSize; i++)
+	{
+		uchar ch = uinput[i];
+		if (strchr (printable, ch))
+		{
+			if (outputSize < 2)
+				break;
+			*outputPtr = ch;
+			outputPtr++;
+		}
+		else
+		{
+			if (outputSize < 4)
+				break;
+			outputPtr[0] = prefix;
+			outputPtr[1] = hexChars[ch >> 4];
+			outputPtr[2] = hexChars[ch & 0xF];
+			outputPtr += 3;
+		}
+	}
+	*outputPtr = 0;
+	return i;
+}

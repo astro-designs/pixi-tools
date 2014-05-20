@@ -83,6 +83,29 @@ typedef struct Property
 ///	will be returned. Otherwise false is returned.
 bool pixi_strGetProperty (char* text, char separator, Property* property);
 
+///	Hex encode @c input to @c output.  Basically, subsitute non-printable
+///	characters with a hex code.
+///	@param input input string
+///	@param inputSize length of input string
+///	@param output buffer for output string
+///	@param capacity of output buffer
+///	@param prefix hex prefix character
+///	@param printable characters that don't need conversion
+///	@return number of input characters processed. If less than @c inputSize, output buffer is too small.
+size_t pixi_hexEncode (const void* input, size_t inputSize, char* output, size_t outputSize, char prefix, const char* printable);
+
+///	Percent encode @c input to @c output.  Basically, subsitute non-alphanumeric
+///	characters with %XX hex code.
+///	@param input input string
+///	@param inputSize length of input string
+///	@param output buffer for output string
+///	@param capacity of output buffer
+///	@return number of input characters processed. If less than @c inputSize, output buffer is too small.
+static inline size_t pixi_percentEncode (const void* input, size_t inputSize, char* output, size_t outputSize)
+{
+	return pixi_hexEncode (input, inputSize, output, outputSize, '%', NULL);
+}
+
 ///@} defgroup
 
 LIBPIXI_END_DECLS
