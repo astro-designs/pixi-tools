@@ -157,33 +157,46 @@ static void initState (State* state)
 }
 
 
-static void writeDisplayChar (State* state, byte ch)
+static bool writeDisplayChar (State* state, byte ch)
 {
 	if (ch == 0x0C)
 	{
 		// form-feed
 		clearDisplay (state);
-		return;
+		return true;
 	}
-	if (ch >= 127 || !isprint (ch) || (isspace (ch) && ch != ' '))
+	bool update = true;
+	if (ch == '\n')
+	{
+		state->yPos = (state->yPos + 1) % DisplayLines;
+		update = false; // just moving
+	}
+	else if (ch == '\r')
+	{
+		state->xPos = 0;
+		update = false; // just moving
+	}
+	else if (ch >= 127 || !isprint (ch) || (isspace (ch) && ch != ' '))
 	{
 		PIO_LOG_ERROR("Unexpected display character %02x", ch);
 		ch = '?';
 	}
-	uint x = state->xPos;
-	uint y = state->yPos;
-	state->display[y][x] = ch;
-	x++;
-	if (x >= DisplayChars)
+	if (update)
 	{
-		x = 0;
-		y++;
-		if (y >= DisplayLines)
-			y = 0;
+		uint x = state->xPos;
+		uint y = state->yPos;
+		state->display[y][x] = ch;
+		x++;
+		if (x >= DisplayChars)
+		{
+			x = 0;
+			y++;
+			if (y >= DisplayLines)
+				y = 0;
+		}
+		state->xPos = x;
+		state->yPos = y;
 	}
-	state->xPos = x;
-	state->yPos = y;
-
 	if (state->usePixi)
 	{
 		char str[2] = {ch, 0};
@@ -191,7 +204,7 @@ static void writeDisplayChar (State* state, byte ch)
 			str[0] = ' ';
 		pixi_lcdWriteStr (&state->device, str);
 	}
-
+	return update;
 }
 
 
@@ -244,10 +257,7 @@ static void readTelescope (State* state)
 			if (ch == 0x1B)
 				newState = Escape;
 			else
-			{
-				writeDisplayChar (state, ch);
-				displayUpdate = true;
-			}
+				displayUpdate |= writeDisplayChar (state, ch);
 			break;
 
 		case Escape:

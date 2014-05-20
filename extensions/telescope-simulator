@@ -82,7 +82,9 @@ pages = (
 	('Sleep mode.                             Press enter to sleep for three seconds', sleepMode),
 	('Scope trigger. Press enter to switch    to real hardware mode', hardwareMode),
 	('Halt trigger.                           Press enter to halt the Raspberry Pi', halt),
-	('Reboot trigger.                         Press enter to reboot the Raspberry Pi', reboot)
+	('Reboot trigger.                         Press enter to reboot the Raspberry Pi', reboot),
+	('>>>>>> line-feed\n<<<', None),
+	('>>>>>> carriage-return\r<<<', None)
 	)
 
 page = 0
