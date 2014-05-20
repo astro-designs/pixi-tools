@@ -324,7 +324,8 @@ static void readTelescope (State* state)
 		// nul terminate lines
 		for (int i = 0; i < DisplayLines; i++)
 			state->display[i][DisplayChars] = 0;
-		printf ("\n|%s|\n|%s|\n", state->display[0], state->display[1]);
+		PIO_LOG_INFO("Display: |%s|", state->display[0]);
+		PIO_LOG_INFO("         |%s|", state->display[1]);
 	}
 }
 
