@@ -237,6 +237,11 @@ static void readTelescope (State* state)
 {
 	byte buf[400];
 	ssize_t count = pixi_read (state->serialFd, buf, sizeof (buf));
+	if (count < 0)
+	{
+		PIO_ERROR(-count, "Error reading from serial");
+		return;
+	}
 	if (pio_isLogLevelEnabled(LogLevelDebug))
 	{
 		char printable[1+(sizeof(buf)*3)];
