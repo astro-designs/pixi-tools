@@ -57,7 +57,7 @@ static int spiSetGet (char*const*const argv, int mode)
 	return result;
 }
 
-static int spiSetFn (uint argc, char*const*const argv)
+static int spiSetFn (uint argc, char* argv[])
 {
 	if (argc != 4)
 	{
@@ -74,7 +74,7 @@ static Command spiSetCmd =
 	.function    = spiSetFn
 };
 
-static int spiGetFn (uint argc, char*const*const argv)
+static int spiGetFn (uint argc, char* argv[])
 {
 	if (argc != 4)
 	{
@@ -137,7 +137,7 @@ static int monitorSpi (uint channel, uint address)
 	return result;
 }
 
-static int spiMonitorFn (uint argc, char*const*const argv)
+static int spiMonitorFn (uint argc, char* argv[])
 {
 	if (argc != 3)
 	{
@@ -206,7 +206,7 @@ static int scanSpi (uint channel)
 	return result;
 }
 
-static int spiScanFn (uint argc, char*const*const argv)
+static int spiScanFn (uint argc, char* argv[])
 {
 	if (argc != 2)
 	{
@@ -224,7 +224,7 @@ static Command spiScanCmd =
 	.function    = spiScanFn
 };
 
-static int monitorButtonsFn (uint argc, char*const*const argv)
+static int monitorButtonsFn (uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc != 1)

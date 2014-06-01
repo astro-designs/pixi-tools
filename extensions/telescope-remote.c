@@ -586,7 +586,7 @@ static int runRemote (State* state)
 	return 0;
 }
 
-static int remoteFn (uint argc, char*const*const argv)
+static int remoteFn (uint argc, char* argv[])
 {
 	if (argc != 2)
 	{

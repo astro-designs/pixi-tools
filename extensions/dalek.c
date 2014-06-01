@@ -403,7 +403,7 @@ int pixi_dalek_remote(int demo)
 }	
 	
 	
-static int dalekDemoFn (uint argc, char*const*const argv)
+static int dalekDemoFn (uint argc, char* argv[])
 {
 	if (argc != 1)
 	{
@@ -421,7 +421,7 @@ static Command dalekDemoCmd =
 	.function    = dalekDemoFn
 };
 
-static int dalekRemoteFn (uint argc, char*const*const argv)
+static int dalekRemoteFn (uint argc, char* argv[])
 {
 	if (argc != 1)
 	{
@@ -439,7 +439,7 @@ static Command dalekRemoteCmd =
 	.function    = dalekRemoteFn
 };
 
-static int dalekSpeakFn (uint argc, char*const*const argv)
+static int dalekSpeakFn (uint argc, char* argv[])
 {
 	if (argc != 1)
 	{
@@ -457,7 +457,7 @@ static Command dalekSpeakCmd =
 	.function    = dalekSpeakFn
 };
 
-static int dalekLookFn (uint argc, char*const*const argv)
+static int dalekLookFn (uint argc, char* argv[])
 {
 	if (argc != 3)
 	{

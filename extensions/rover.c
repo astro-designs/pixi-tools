@@ -86,7 +86,7 @@ static void rest (void) {
 	PIO_LOG_INFO("Power = %.3fv", readVoltage());
 }
 
-static int roverFn (uint argc, char*const*const argv)
+static int roverFn (uint argc, char* argv[])
 {
 	if (argc != 3)
 	{
@@ -117,7 +117,7 @@ static Command roverCmd =
 	.function    = roverFn
 };
 
-static int roverDemoFn (uint argc, char*const*const argv)
+static int roverDemoFn (uint argc, char* argv[])
 {
 	double speed = 100;
 	if (argc > 1)

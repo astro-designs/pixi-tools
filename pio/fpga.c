@@ -25,7 +25,7 @@
 
 static const char DefaultFpga[] = "/home/pixi-200/pixi.bin"; // TODO: belongs in ../share/pixi?
 
-static int fpgaLoadFn (uint argc, char*const*const argv)
+static int fpgaLoadFn (uint argc, char* argv[])
 {
 	if (argc > 2)
 	{
@@ -60,7 +60,7 @@ static Command fpgaLoadCmd =
 	.function    = fpgaLoadFn
 };
 
-static int fpgaGetVersionFn (uint argc, char*const*const argv)
+static int fpgaGetVersionFn (uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc != 1)
@@ -85,7 +85,7 @@ static Command fpgaGetVersionCmd =
 };
 
 
-static int fpgaGetBuildTimeFn (uint argc, char*const*const argv)
+static int fpgaGetBuildTimeFn (uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc != 1)

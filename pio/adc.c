@@ -24,7 +24,7 @@
 #include "log.h"
 #include <stdio.h>
 
-static int adcReadFn (uint argc, char*const*const argv)
+static int adcReadFn (uint argc, char* argv[])
 {
 	if (argc != 2)
 	{

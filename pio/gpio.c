@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static int gpioPinsFn (uint argc, char*const*const argv)
+static int gpioPinsFn (uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc > 1)
@@ -67,7 +67,7 @@ static Command gpioPinsCmd =
 	.function    = gpioPinsFn
 };
 
-static int listExportsFn (uint argc, char*const*const argv)
+static int listExportsFn (uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc > 1)
@@ -105,7 +105,7 @@ static Command listExportsCmd =
 };
 
 
-static int exportGpioFn (uint argc, char*const*const argv)
+static int exportGpioFn (uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc != 3)
@@ -139,7 +139,7 @@ static Command exportGpioCmd =
 };
 
 
-static int unexportGpioFn (uint argc, char*const*const argv)
+static int unexportGpioFn (uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc != 2)

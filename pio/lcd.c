@@ -23,7 +23,7 @@
 #include <libpixi/pixi/lcd.h>
 #include <libpixi/util/string.h>
 
-static int lcdInitFn (uint argc, char*const*const argv)
+static int lcdInitFn (uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 
@@ -49,7 +49,7 @@ static Command lcdInitCmd =
 	.function    = lcdInitFn
 };
 
-static int lcdBrightFn (uint argc, char*const*const argv)
+static int lcdBrightFn (uint argc, char* argv[])
 {
 	if (argc != 2)
 	{
@@ -74,7 +74,7 @@ static Command lcdBrightCmd =
 	.function    = lcdBrightFn
 };
 
-static int lcdClearFn (uint argc, char*const*const argv)
+static int lcdClearFn (uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 
@@ -100,7 +100,7 @@ static Command lcdClearCmd =
 	.function    = lcdClearFn
 };
 
-static int lcdPosFn (uint argc, char*const*const argv)
+static int lcdPosFn (uint argc, char* argv[])
 {
 	if (argc != 3)
 	{
@@ -126,7 +126,7 @@ static Command lcdPosCmd =
 	.function    = lcdPosFn
 };
 
-static int lcdWriteFn (uint argc, char*const*const argv)
+static int lcdWriteFn (uint argc, char* argv[])
 {
 	if (argc != 2)
 	{
@@ -150,7 +150,7 @@ static Command lcdWriteCmd =
 	.function    = lcdWriteFn
 };
 
-static int lcdPrintFn (uint argc, char*const*const argv)
+static int lcdPrintFn (uint argc, char* argv[])
 {
 	if (argc != 4)
 	{

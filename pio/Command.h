@@ -27,7 +27,7 @@
 
 
 /// @return >=0 on success, -errno on error
-typedef int (*CommandFn) (uint, char*const*const);
+typedef int (*CommandFn) (uint, char* []);
 
 typedef struct Command
 {
@@ -41,7 +41,7 @@ typedef struct CommandGroup
 	const char*                 name;     ///< name of the command group
 	uint                        count;    ///< size of @c commands array
 	const Command**             commands; ///< array of commands
-	const struct CommandGroup*  nextGroup;
+	const struct CommandGroup*  nextGroup;///< internal pointer to next command group
 } CommandGroup;
 
 extern CommandGroup gpioGroup;
