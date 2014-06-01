@@ -37,10 +37,10 @@ enum
 	LcdBrightness   = 0x0200
 };
 
-static int setGpioModeForLcd (void)
+static int setGpioModeForLcd (SpiDevice* spi)
 {
 	// TODO:
-	int result = pixi_pixiGpioSetMode (3, PixiGpioAllOutputVfdLcd);
+	int result = pixi_pixiGpioSetMode (spi, 3, PixiGpioAllOutputVfdLcd);
 	if (result < 0)
 		LIBPIXI_ERROR (-result, "Could not set GPIO 3 mode for LCD");
 	return result;
@@ -49,10 +49,10 @@ static int setGpioModeForLcd (void)
 int pixi_lcdOpen (LcdDevice* device)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
-	int result = setGpioModeForLcd();
+	int result = pixi_pixiSpiOpen (&device->spi);
 	if (result < 0)
 		return result;
-	return pixi_pixiSpiOpen (&device->spi);
+	return setGpioModeForLcd (&device->spi);
 }
 
 int pixi_lcdClose (LcdDevice* device)
