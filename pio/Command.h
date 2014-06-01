@@ -26,15 +26,19 @@
 #include <libpixi/libpixi.h>
 
 
+typedef struct Command Command;
 /// @return >=0 on success, -errno on error
-typedef int (*CommandFn) (uint, char* []);
+typedef int (*CommandFn) (const Command* command, uint, char* []);
 
-typedef struct Command
+struct Command
 {
-	const char*  name;
-	const char*  description;
-	CommandFn    function;
-} Command;
+	const char*  name;        ///< name of command
+	const char*  description; ///< one line description of command
+	const char*  usage;       ///< detailed usage message
+	CommandFn    function;    ///< implementation
+};
+
+int commandUsageError (const Command* command);
 
 typedef struct CommandGroup
 {

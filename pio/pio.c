@@ -45,6 +45,12 @@ int addCommandGroup (CommandGroup* group)
 	return 0;
 }
 
+int commandUsageError (const Command* command)
+{
+	PIO_LOG_ERROR (command->usage, command->name);
+	return -EINVAL;
+}
+
 static void displayHelp (const char* program)
 {
 	printf (
@@ -109,7 +115,7 @@ int main (int argc, char* argv[])
 			const Command* cmd = group->commands[i];
 			if (0 == strcasecmp (command, cmd->name))
 			{
-				result = cmd->function (argc - 1, argv + 1);
+				result = cmd->function (cmd, argc - 1, argv + 1);
 				return result < 0 ? 2 : 0;
 			}
 		}

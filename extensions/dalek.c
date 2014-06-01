@@ -403,13 +403,11 @@ int pixi_dalek_remote(int demo)
 }	
 	
 	
-static int dalekDemoFn (uint argc, char* argv[])
+static int dalekDemoFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 1)
-	{
-		PIO_LOG_ERROR ("usage: %s", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	pixiOpenOrDie();
 	pixi_dalek_demo (0);
 	return 0;
@@ -418,16 +416,15 @@ static Command dalekDemoCmd =
 {
 	.name        = "dalek-demo",
 	.description = "Run a sequence of moves to demonstrate the dalek",
+	.usage       = "usage: %s",
 	.function    = dalekDemoFn
 };
 
-static int dalekRemoteFn (uint argc, char* argv[])
+static int dalekRemoteFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 1)
-	{
-		PIO_LOG_ERROR ("usage: %s", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	pixiOpenOrDie();
 	pixi_dalek_remote (0);
 	return 0;
@@ -436,16 +433,15 @@ static Command dalekRemoteCmd =
 {
 	.name        = "dalek-remote",
 	.description = "Allows the Dalek to be controlled from the keyboard...",
+	.usage       = "usage: %s",
 	.function    = dalekRemoteFn
 };
 
-static int dalekSpeakFn (uint argc, char* argv[])
+static int dalekSpeakFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 1)
-	{
-		PIO_LOG_ERROR ("usage: %s", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	pixiOpenOrDie();
 	pixi_dalek_speak (0);
 	return 0;
@@ -454,16 +450,15 @@ static Command dalekSpeakCmd =
 {
 	.name        = "dalek-speak",
 	.description = "Make the dalek speak",
+	.usage       = "usage: %s",
 	.function    = dalekSpeakFn
 };
 
-static int dalekLookFn (uint argc, char* argv[])
+static int dalekLookFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 3)
-	{
-		PIO_LOG_ERROR ("usage: %s <alt> <az>", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	int start_alt = 0;
 	int start_az = 0;
 	int alt = pixi_parseLong (argv[1]);
@@ -477,6 +472,7 @@ static Command dalekLookCmd =
 {
 	.name        = "dalek-look",
 	.description = "Move the dalek's eye piece",
+	.usage       = "usage: %s <alt> <az>",
 	.function    = dalekLookFn
 };
 

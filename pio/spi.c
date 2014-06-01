@@ -57,13 +57,10 @@ static int spiSetGet (char*const*const argv, int mode)
 	return result;
 }
 
-static int spiSetFn (uint argc, char* argv[])
+static int spiSetFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 4)
-	{
-		PIO_LOG_ERROR ("usage: %s CHANNEL ADDRESS VALUE", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
 
 	return spiSetGet (argv, PixiSpiEnableWrite8); // FIXME: Write8?
 }
@@ -71,22 +68,22 @@ static Command spiSetCmd =
 {
 	.name        = "spi-set",
 	.description = "write a value to the pixi over spi",
+	.usage       = "usage: %s CHANNEL ADDRESS VALUE",
 	.function    = spiSetFn
 };
 
-static int spiGetFn (uint argc, char* argv[])
+static int spiGetFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 4)
-	{
-		PIO_LOG_ERROR ("usage: %s CHANNEL ADDRESS NULL-DATA", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	return spiSetGet (argv, PixiSpiEnableRead16); // FIXME: Read16?
 }
 static Command spiGetCmd =
 {
 	.name        = "spi-get",
 	.description = "read a value from the pixi over spi",
+	.usage       = "usage: %s CHANNEL ADDRESS NULL-DATA",
 	.function    = spiGetFn
 };
 
@@ -137,13 +134,11 @@ static int monitorSpi (uint channel, uint address)
 	return result;
 }
 
-static int spiMonitorFn (uint argc, char* argv[])
+static int spiMonitorFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 3)
-	{
-		PIO_LOG_ERROR ("usage: %s CHANNEL ADDRESS", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	uint channel = pixi_parseLong (argv[1]);
 	uint address = pixi_parseLong (argv[2]);
 
@@ -153,6 +148,7 @@ static Command spiMonitorCmd =
 {
 	.name        = "spi-monitor",
 	.description = "monitor an SPI channel/address",
+	.usage       = "usage: %s CHANNEL ADDRESS",
 	.function    = spiMonitorFn
 };
 
@@ -206,13 +202,11 @@ static int scanSpi (uint channel)
 	return result;
 }
 
-static int spiScanFn (uint argc, char* argv[])
+static int spiScanFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 2)
-	{
-		PIO_LOG_ERROR ("usage: %s CHANNEL", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	uint channel = pixi_parseLong (argv[1]);
 
 	return scanSpi (channel);
@@ -221,23 +215,23 @@ static Command spiScanCmd =
 {
 	.name        = "spi-scan",
 	.description = "continually scan an SPI channel (all addresses)",
+	.usage       = "usage: %s CHANNEL",
 	.function    = spiScanFn
 };
 
-static int monitorButtonsFn (uint argc, char* argv[])
+static int monitorButtonsFn (const Command* command, uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc != 1)
-	{
-		PIO_LOG_ERROR ("usage: %s", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	return monitorSpi (0, Pixi_Switch_in);
 }
 static Command monitorButtonsCmd =
 {
 	.name        = "monitor-buttons",
 	.description = "monitor the PiXi on-board buttons",
+	.usage       = "usage: %s",
 	.function    = monitorButtonsFn
 };
 

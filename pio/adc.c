@@ -24,13 +24,10 @@
 #include "log.h"
 #include <stdio.h>
 
-static int adcReadFn (uint argc, char* argv[])
+static int adcReadFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 2)
-	{
-		PIO_LOG_ERROR ("usage: %s CHANNEL", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
 
 	uint adcChannel = pixi_parseLong (argv[1]);
 
@@ -56,6 +53,7 @@ static Command adcReadCmd =
 {
 	.name        = "adc-read",
 	.description = "read an ADC channel",
+	.usage       = "usage: %s CHANNEL",
 	.function    = adcReadFn
 };
 

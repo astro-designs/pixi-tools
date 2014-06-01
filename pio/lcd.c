@@ -23,15 +23,13 @@
 #include <libpixi/pixi/lcd.h>
 #include <libpixi/util/string.h>
 
-static int lcdInitFn (uint argc, char* argv[])
+static int lcdInitFn (const Command* command, uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 
 	if (argc != 1)
-	{
-		PIO_LOG_ERROR ("usage: %s", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	LcdDevice device;
 	initLcdDevice (&device);
 	int result = pixi_lcdOpen (&device);
@@ -46,16 +44,15 @@ static Command lcdInitCmd =
 {
 	.name        = "lcd-init",
 	.description = "initialise the LCD",
+	.usage       = "usage: %s",
 	.function    = lcdInitFn
 };
 
-static int lcdBrightFn (uint argc, char* argv[])
+static int lcdBrightFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 2)
-	{
-		PIO_LOG_ERROR ("usage: %s BRIGHTNESS", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	LcdDevice device;
 	initLcdDevice (&device);
 	int result = pixi_lcdOpen (&device);
@@ -71,18 +68,17 @@ static Command lcdBrightCmd =
 {
 	.name        = "lcd-bright",
 	.description = "set the LCD brightness",
+	.usage       = "usage: %s BRIGHTNESS",
 	.function    = lcdBrightFn
 };
 
-static int lcdClearFn (uint argc, char* argv[])
+static int lcdClearFn (const Command* command, uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 
 	if (argc != 1)
-	{
-		PIO_LOG_ERROR ("usage: %s", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	LcdDevice device;
 	initLcdDevice (&device);
 	int result = pixi_lcdOpen (&device);
@@ -97,16 +93,15 @@ static Command lcdClearCmd =
 {
 	.name        = "lcd-clear",
 	.description = "clear the LCD text",
+	.usage       = "usage: %s",
 	.function    = lcdClearFn
 };
 
-static int lcdPosFn (uint argc, char* argv[])
+static int lcdPosFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 3)
-	{
-		PIO_LOG_ERROR ("usage: %s X Y", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	LcdDevice device;
 	initLcdDevice (&device);
 	int result = pixi_lcdOpen (&device);
@@ -123,16 +118,15 @@ static Command lcdPosCmd =
 {
 	.name        = "lcd-pos",
 	.description = "set the LCD cursor position",
+	.usage       = "usage: %s X Y",
 	.function    = lcdPosFn
 };
 
-static int lcdWriteFn (uint argc, char* argv[])
+static int lcdWriteFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 2)
-	{
-		PIO_LOG_ERROR ("usage: %s STRING", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	LcdDevice device;
 	initLcdDevice (&device);
 	int result = pixi_lcdOpen (&device);
@@ -147,16 +141,15 @@ static Command lcdWriteCmd =
 {
 	.name        = "lcd-write",
 	.description = "write (append) a string to the LCD",
+	.usage       = "usage: %s STRING",
 	.function    = lcdWriteFn
 };
 
-static int lcdPrintFn (uint argc, char* argv[])
+static int lcdPrintFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 4)
-	{
-		PIO_LOG_ERROR ("usage: %s X Y STRING", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	LcdDevice device;
 	initLcdDevice (&device);
 	int result = pixi_lcdOpen (&device);
@@ -175,6 +168,7 @@ static Command lcdPrintCmd =
 {
 	.name        = "lcd-print",
 	.description = "print a string on the LCD at a given position",
+	.usage       = "usage: %s X Y STRING",
 	.function    = lcdPrintFn
 };
 

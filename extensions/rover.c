@@ -86,13 +86,10 @@ static void rest (void) {
 	PIO_LOG_INFO("Power = %.3fv", readVoltage());
 }
 
-static int roverFn (uint argc, char* argv[])
+static int roverFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 3)
-	{
-		PIO_LOG_ERROR ("usage: %s f[orward]|b[ackward]|l[eft]|r[ight] speed", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
 
 	const char* move = argv[1];
 	double speed = atof (argv[2]);
@@ -114,12 +111,16 @@ static Command roverCmd =
 {
 	.name        = "rover",
 	.description = "Move the rover in a given way at a given speed",
+	.usage       = "usage: %s f[orward]|b[ackward]|l[eft]|r[ight] speed",
 	.function    = roverFn
 };
 
-static int roverDemoFn (uint argc, char* argv[])
+static int roverDemoFn (const Command* command, uint argc, char* argv[])
 {
 	double speed = 100;
+	if (argc > 2)
+		return commandUsageError (command);
+
 	if (argc > 1)
 		speed = atof (argv[1]);
 
@@ -136,6 +137,7 @@ static Command roverDemoCmd =
 {
 	.name        = "rover-demo",
 	.description = "Run a sequence of four moves to demonstrate the rover",
+	.usage       = "usage: %s [speed]",
 	.function    = roverDemoFn
 };
 

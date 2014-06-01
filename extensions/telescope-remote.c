@@ -586,13 +586,11 @@ static int runRemote (State* state)
 	return 0;
 }
 
-static int remoteFn (uint argc, char* argv[])
+static int remoteFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 2)
-	{
-		PIO_LOG_ERROR ("usage: %s SERIAL-DEVICE", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	State state;
 	initState (&state);
 
@@ -634,6 +632,7 @@ static Command remoteCmd =
 {
 	.name        = "telescope-remote",
 	.description = "Operate as a remote control",
+	.usage       = "usage: %s SERIAL-DEVICE",
 	.function    = remoteFn
 };
 

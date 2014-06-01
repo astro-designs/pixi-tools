@@ -24,14 +24,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static int gpioPinsFn (uint argc, char* argv[])
+static int gpioPinsFn (const Command* command, uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc > 1)
-	{
-		PIO_LOG_ERROR ("usage: %s", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
 
 	int result = pixi_gpioMapRegisters();
 	if (result < 0)
@@ -64,17 +61,15 @@ static Command gpioPinsCmd =
 {
 	.name        = "gpio-pins",
 	.description = "display state of gpio pins",
+	.usage       = "usage: %s",
 	.function    = gpioPinsFn
 };
 
-static int listExportsFn (uint argc, char* argv[])
+static int listExportsFn (const Command* command, uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc > 1)
-	{
-		PIO_LOG_ERROR ("usage: %s", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
 
 	GpioState states[64];
 	int result = pixi_gpioSysGetPinStates (states, ARRAY_COUNT(states));
@@ -101,18 +96,17 @@ static Command listExportsCmd =
 {
 	.name        = "exports",
 	.description = "display state of gpios",
+	.usage       = "usage: %s",
 	.function    = listExportsFn
 };
 
 
-static int exportGpioFn (uint argc, char* argv[])
+static int exportGpioFn (const Command* command, uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc != 3)
-	{
-		PIO_LOG_ERROR ("usage: %s PIN DIRECTION", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	int gpio = atoi (argv[1]);
 	const char* directionStr = argv[2];
 	Direction direction = pixi_gpioStrToDirection (directionStr);
@@ -135,18 +129,17 @@ static Command exportGpioCmd =
 {
 	.name        = "export",
 	.description = "export a gpio pin",
+	.usage       = "usage: %s PIN DIRECTION",
 	.function    = exportGpioFn
 };
 
 
-static int unexportGpioFn (uint argc, char* argv[])
+static int unexportGpioFn (const Command* command, uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc != 2)
-	{
-		PIO_LOG_ERROR ("usage: %s PIN", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	int gpio = atoi (argv[1]);
 	int result = pixi_gpioSysUnexportPin (gpio);
 	if (result < 0)
@@ -160,6 +153,7 @@ static Command unexportGpioCmd =
 {
 	.name        = "unexport",
 	.description = "unexport a gpio pin",
+	.usage       = "usage: %s PIN",
 	.function    = unexportGpioFn
 };
 

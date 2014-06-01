@@ -25,13 +25,11 @@
 
 static const char DefaultFpga[] = "/home/pixi-200/pixi.bin"; // TODO: belongs in ../share/pixi?
 
-static int fpgaLoadFn (uint argc, char* argv[])
+static int fpgaLoadFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc > 2)
-	{
-		PIO_LOG_ERROR ("usage: %s [FPGAFILE]", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	const char* filename = NULL;
 	if (argc > 1)
 		filename = argv[1];
@@ -57,17 +55,16 @@ static Command fpgaLoadCmd =
 {
 	.name        = "load-fpga",
 	.description = "load an FPGA image to the PiXi",
+	.usage       = "usage: %s [FPGAFILE]",
 	.function    = fpgaLoadFn
 };
 
-static int fpgaGetVersionFn (uint argc, char* argv[])
+static int fpgaGetVersionFn (const Command* command, uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc != 1)
-	{
-		PIO_LOG_ERROR ("usage: %s", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	int64 version = pixi_pixiFpgaGetVersion();
 	if (version < 0)
 	{
@@ -81,18 +78,17 @@ static Command fpgaGetVersionCmd =
 {
 	.name        = "fpga-version",
 	.description = "print the PiXi FPGA version",
+	.usage       = "usage: %s",
 	.function    = fpgaGetVersionFn
 };
 
 
-static int fpgaGetBuildTimeFn (uint argc, char* argv[])
+static int fpgaGetBuildTimeFn (const Command* command, uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc != 1)
-	{
-		PIO_LOG_ERROR ("usage: %s", argv[0]);
-		return -EINVAL;
-	}
+		return commandUsageError (command);
+
 	int64 version = pixi_pixiFpgaGetVersion();
 	if (version == 0)
 	{
@@ -126,6 +122,7 @@ static Command fpgaGetBuildTimeCmd =
 {
 	.name        = "fpga-build-time",
 	.description = "print the PiXi FPGA build time",
+	.usage       = "usage: %s",
 	.function    = fpgaGetBuildTimeFn
 };
 static const Command* commands[] =
