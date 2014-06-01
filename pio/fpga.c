@@ -19,11 +19,37 @@
 */
 
 #include <libpixi/pixi/fpga.h>
+#include <libpixi/pixi/spi.h>
 #include "Command.h"
 #include "log.h"
 #include <stdio.h>
 
 static const char DefaultFpga[] = "/home/pixi-200/pixi.bin"; // TODO: belongs in ../share/pixi?
+
+static int64 getVersion (void)
+{
+	SpiDevice spi = SpiDeviceInit;
+	int result = pixi_pixiSpiOpen (&spi);
+	if (result < 0)
+	{
+		PIO_ERROR(-result, "Error opening PiXi SPI connection");
+		return result;
+	}
+
+	int64 version = pixi_pixiFpgaGetVersion (&spi);
+	pixi_spiClose (&spi);
+	if (version < 0)
+	{
+		PIO_ERROR(-version, "Error getting FPGA version");
+		return version;
+	}
+	if (version == 0)
+	{
+		PIO_LOG_ERROR("Error getting FPGA version: value is zero");
+		return -EINVAL;
+	}
+	return version;
+}
 
 static int fpgaLoadFn (const Command* command, uint argc, char* argv[])
 {
@@ -42,7 +68,7 @@ static int fpgaLoadFn (const Command* command, uint argc, char* argv[])
 		return result;
 	}
 	printf ("FPGA loaded\n");
-	int64 version = pixi_pixiFpgaGetVersion();
+	int64 version = getVersion();
 	if (version < 0)
 	{
 		PIO_ERROR(-result, "Could not get loaded FPGA version");
@@ -65,7 +91,7 @@ static int fpgaGetVersionFn (const Command* command, uint argc, char* argv[])
 	if (argc != 1)
 		return commandUsageError (command);
 
-	int64 version = pixi_pixiFpgaGetVersion();
+	int64 version = getVersion();
 	if (version < 0)
 	{
 		PIO_ERROR(-version, "Error getting FPGA version");
@@ -89,7 +115,7 @@ static int fpgaGetBuildTimeFn (const Command* command, uint argc, char* argv[])
 	if (argc != 1)
 		return commandUsageError (command);
 
-	int64 version = pixi_pixiFpgaGetVersion();
+	int64 version = getVersion();
 	if (version == 0)
 	{
 		PIO_LOG_ERROR("Error getting FPGA version: value is zero");
