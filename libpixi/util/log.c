@@ -32,6 +32,9 @@
 LogLevel pixi_logLevel = LogLevelInfo;
 bool     pixi_logColors = false;
 
+const char* pixi_stdoutBold  = "";
+const char* pixi_stdoutReset = "";
+
 static const char AnsiReset[]   = "\033[0m";
 static const char AnsiBold[]    = "\033[1m";
 static const char AnsiBoldRed[] = "\033[1;31m";
@@ -56,12 +59,19 @@ static const char* getLevelColor (LogLevel level)
 
 static bool useAnsiColors (void)
 {
+	// TODO: this test is too crude
 	const char* term = getenv ("TERM");
 	if (!term)
 		return false;
 	if (!term[0] || 0 == strcasecmp (term, "dumb"))
 		return false;
-	return isatty (STDERR_FILENO) > 0;
+	bool result = isatty (STDERR_FILENO) > 0;
+	if (isatty (STDOUT_FILENO))
+	{
+		pixi_stdoutBold  = AnsiBold;
+		pixi_stdoutReset = AnsiReset;
+	}
+	return result;
 }
 
 static void openLogFile (void)

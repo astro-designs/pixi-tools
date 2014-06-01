@@ -45,6 +45,11 @@ typedef enum LogLevel
 
 extern LogLevel pixi_logLevel;
 extern bool     pixi_logColors;
+/// If stdout is colour capable terminal, this has
+/// the escape sequence to enable bold text, otherwise
+/// it is an empty string.
+extern const char* pixi_stdoutBold;
+extern const char* pixi_stdoutReset;
 
 void pixi_logInit (LogLevel level);
 LogLevel pixi_strToLogLevel (const char* levelStr, LogLevel defaultLevel);

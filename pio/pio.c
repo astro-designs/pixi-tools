@@ -68,7 +68,7 @@ static void displayHelp (const char* program, bool verbose)
 		for (uint i = 0; i < group->count; i++)
 		{
 			const Command* cmd = group->commands[i];
-			printf ("  %-20s  %s\n", cmd->name, cmd->description);
+			printf ("  %s%-20s%s  %s\n", pixi_stdoutBold, cmd->name, pixi_stdoutReset, cmd->description);
 			if (verbose && cmd->usage)
 			{
 				printf ("    ");
