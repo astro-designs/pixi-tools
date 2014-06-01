@@ -51,11 +51,14 @@ int commandUsageError (const Command* command)
 	return -EINVAL;
 }
 
-static void displayHelp (const char* program)
+static void displayHelp (const char* program, bool verbose)
 {
 	printf (
 		"pio: a program to interface with Raspberry Pi hardware\n"
 		"usage: %s COMMAND [ARGS]\n"
+		"\n"
+		"  -h, --help            display this help, then exit\n"
+		"      --version         display version information, then exit\n"
 		"\n",
 		program
 		);
@@ -66,6 +69,12 @@ static void displayHelp (const char* program)
 		{
 			const Command* cmd = group->commands[i];
 			printf ("  %-20s  %s\n", cmd->name, cmd->description);
+			if (verbose && cmd->usage)
+			{
+				printf ("    ");
+				printf (cmd->usage, cmd->name, cmd->description);
+				printf ("\n\n");
+			}
 		}
 	}
 }
@@ -76,7 +85,7 @@ int main (int argc, char* argv[])
 
 	if (argc < 2)
 	{
-		displayHelp (argv[0]);
+		displayHelp (argv[0], false);
 		return 1;
 	}
 
@@ -88,12 +97,20 @@ int main (int argc, char* argv[])
 		0 == strcasecmp (command, "help")
 		)
 	{
-		displayHelp (argv[0]);
+		displayHelp (argv[0], false);
 		return 0;
 	}
 
 	if (
-		0 == strcasecmp (command, "-v") ||
+		0 == strcasecmp (command, "--help-all") ||
+		0 == strcasecmp (command, "help-all")
+		)
+	{
+		displayHelp (argv[0], true);
+		return 0;
+	}
+
+	if (
 		0 == strcasecmp (command, "--version") ||
 		0 == strcasecmp (command, "version")
 		)

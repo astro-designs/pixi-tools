@@ -405,6 +405,7 @@ int pixi_dalek_remote(int demo)
 	
 static int dalekDemoFn (const Command* command, uint argc, char* argv[])
 {
+	LIBPIXI_UNUSED(argv);
 	if (argc != 1)
 		return commandUsageError (command);
 
@@ -422,6 +423,7 @@ static Command dalekDemoCmd =
 
 static int dalekRemoteFn (const Command* command, uint argc, char* argv[])
 {
+	LIBPIXI_UNUSED(argv);
 	if (argc != 1)
 		return commandUsageError (command);
 
@@ -439,6 +441,7 @@ static Command dalekRemoteCmd =
 
 static int dalekSpeakFn (const Command* command, uint argc, char* argv[])
 {
+	LIBPIXI_UNUSED(argv);
 	if (argc != 1)
 		return commandUsageError (command);
 
