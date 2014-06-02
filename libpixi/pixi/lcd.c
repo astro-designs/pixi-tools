@@ -37,37 +37,39 @@ enum
 	LcdBrightness   = 0x0200
 };
 
-static int setGpioModeForLcd (SpiDevice* spi)
+int pixi_lcdEnable (SpiDevice* spi)
 {
-	// TODO:
 	int result = pixi_pixiGpioSetMode (spi, 3, PixiGpioAllOutputVfdLcd);
 	if (result < 0)
-		LIBPIXI_ERROR (-result, "Could not set GPIO 3 mode for LCD");
+		LIBPIXI_ERROR (-result, "Could not set GPIO 3 mode to enable LCD");
 	return result;
 }
 
-int pixi_lcdOpen (LcdDevice* device)
+int pixi_lcdOpen (SpiDevice* device)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
-	int result = pixi_pixiSpiOpen (&device->spi);
+	int result = pixi_pixiSpiOpen (device);
 	if (result < 0)
 		return result;
-	return setGpioModeForLcd (&device->spi);
+	result = pixi_lcdEnable (device);
+	if (result < 0) // very unlikely at this point
+		pixi_spiClose (device);
+	return result;
 }
 
-int pixi_lcdClose (LcdDevice* device)
+int pixi_lcdClose (SpiDevice* device)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
-	return pixi_spiClose (&device->spi);
+	return pixi_spiClose (device);
 }
 
-static inline int lcdWrite (LcdDevice* device, uint value)
+static inline int lcdWrite (SpiDevice* device, uint value)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
-	return pixi_registerWrite (&device->spi, LcdAddress, value);
+	return pixi_registerWrite (device, LcdAddress, value);
 }
 
-int pixi_lcdInit (LcdDevice* device)
+int pixi_lcdInit (SpiDevice* device)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 
@@ -79,7 +81,7 @@ int pixi_lcdInit (LcdDevice* device)
 	return lcdWrite (device, LcdDisplayOn);
 }
 
-int pixi_lcdInit1 (LcdDevice* device)
+int pixi_lcdInit1 (SpiDevice* device)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 
@@ -91,7 +93,7 @@ int pixi_lcdInit1 (LcdDevice* device)
 	return lcdWrite (device, 0x000F);
 }
 
-int pixi_lcdSetBrightness (LcdDevice* device, uint value)
+int pixi_lcdSetBrightness (SpiDevice* device, uint value)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 
@@ -99,7 +101,7 @@ int pixi_lcdSetBrightness (LcdDevice* device, uint value)
 	return lcdWrite (device, LcdBrightness + (value & 0x03));
 }
 
-int pixi_lcdClear (LcdDevice* device)
+int pixi_lcdClear (SpiDevice* device)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 
@@ -109,7 +111,7 @@ int pixi_lcdClear (LcdDevice* device)
 }
 
 
-int pixi_lcdSetCursorPos (LcdDevice* device, uint x, uint y)
+int pixi_lcdSetCursorPos (SpiDevice* device, uint x, uint y)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 
@@ -118,7 +120,7 @@ int pixi_lcdSetCursorPos (LcdDevice* device, uint x, uint y)
 	return lcdWrite (device, value);
 }
 
-int pixi_lcdWriteStr (LcdDevice* device, const char* str)
+int pixi_lcdWriteStr (SpiDevice* device, const char* str)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 	LIBPIXI_PRECONDITION_NOT_NULL(str);

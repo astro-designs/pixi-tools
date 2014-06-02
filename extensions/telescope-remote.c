@@ -104,7 +104,7 @@ enum CmdState
 
 typedef struct State
 {
-	LcdDevice device;
+	SpiDevice device;
 	bool      usePixi;
 
 	uint8     rotary1;
@@ -153,7 +153,7 @@ static void clearDisplay (State* state)
 static void initState (State* state)
 {
 	memset (state, 0, sizeof (State));
-	initLcdDevice (&state->device);
+	state->device = SpiDeviceInit;
 }
 
 
@@ -488,7 +488,7 @@ static void readKeypad (State* state)
 
 	for (int i = 0; i < 20; i++) // avoid infinite loops
 	{
-		int reg = pixi_registerRead (&state->device.spi, KeyPadRegister);
+		int reg = pixi_registerRead (&state->device, KeyPadRegister);
 		if (reg & KeyBufferEmpty)
 			return;
 
@@ -520,8 +520,8 @@ static void readRotary (State* state)
 	if (!state->usePixi)
 		return;
 
-	uint8 rotary1 = pixi_registerRead (&state->device.spi, Rotary1Register);
-	uint8 rotary2 = pixi_registerRead (&state->device.spi, Rotary2Register);
+	uint8 rotary1 = pixi_registerRead (&state->device, Rotary1Register);
+	uint8 rotary2 = pixi_registerRead (&state->device, Rotary2Register);
 	if (rotary1 != state->rotary1)
 	{
 		int8 delta = state->rotary1 - rotary1;
@@ -610,8 +610,8 @@ static int remoteFn (const Command* command, uint argc, char* argv[])
 	else
 	{
 		state.usePixi = true;
-		state.rotary1 = pixi_registerRead (&state.device.spi, Rotary1Register);
-		state.rotary2 = pixi_registerRead (&state.device.spi, Rotary2Register);
+		state.rotary1 = pixi_registerRead (&state.device, Rotary1Register);
+		state.rotary2 = pixi_registerRead (&state.device, Rotary2Register);
 	}
 	clearDisplay (&state);
 

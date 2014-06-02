@@ -46,7 +46,7 @@ class Lcd (object):
 	def __init__(self, filename = None):
 		self.filename = filename # persistent state, since we cannot read from the panel
 		self.lcd = None
-		lcd = pixi.LcdDevice()
+		lcd = pixi.SpiDevice()
 		check (pixi.lcdOpen (lcd))
 		self.lcd = lcd
 		self.lines = [' ' * LcdLineLen, ' ' * LcdLineLen]

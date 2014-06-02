@@ -29,39 +29,34 @@ LIBPIXI_BEGIN_DECLS
 ///@defgroup PixiLcd PiXi-200 LCD panel interface
 ///@{
 
-typedef struct LcdDevice
-{
-	SpiDevice spi;
-} LcdDevice;
-
-static inline void initLcdDevice (LcdDevice* device)
-{
-	device->spi = SpiDeviceInit;
-}
-
-///	Open the LcdDevice.
+///	Enable the LCD device on the previously opened SpiDevice
 ///	Return 0 on success, -errno on error
-int pixi_lcdOpen (LcdDevice* device);
+int pixi_lcdEnable (SpiDevice* device);
+
+///	Open the PiXi (using pixi_pixiSpiOpen and enable the LCD
+///	(using pixi_lcdEnable).
+///	Return 0 on success, -errno on error
+int pixi_lcdOpen (SpiDevice* device);
 
 ///	Close an SPI device opened via pixi_spiOpen()
 ///	@return 0 on success, or -errno on error
-int pixi_lcdClose (LcdDevice* device);
+int pixi_lcdClose (SpiDevice* device);
 
 ///	Initialise the LCD panel
-int pixi_lcdInit (LcdDevice* device);
-int pixi_lcdInit1 (LcdDevice* device);
+int pixi_lcdInit (SpiDevice* device);
+int pixi_lcdInit1 (SpiDevice* device);
 
 ///	Set the brightness of the lcd. Valid values are in range [0,3]
-int pixi_lcdSetBrightness (LcdDevice* device, uint value);
+int pixi_lcdSetBrightness (SpiDevice* device, uint value);
 
 ///	Clear the text
-int pixi_lcdClear (LcdDevice* device);
+int pixi_lcdClear (SpiDevice* device);
 
 ///	Move cursor to @c x, @c y
-int pixi_lcdSetCursorPos (LcdDevice* device, uint x, uint y);
+int pixi_lcdSetCursorPos (SpiDevice* device, uint x, uint y);
 
 ///	Append @c str to the panel text
-int pixi_lcdWriteStr (LcdDevice* device, const char* str);
+int pixi_lcdWriteStr (SpiDevice* device, const char* str);
 
 ///@} defgroup
 

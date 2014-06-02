@@ -30,8 +30,7 @@ static int lcdInitFn (const Command* command, uint argc, char* argv[])
 	if (argc != 1)
 		return commandUsageError (command);
 
-	LcdDevice device;
-	initLcdDevice (&device);
+	SpiDevice device = SpiDeviceInit;
 	int result = pixi_lcdOpen (&device);
 	if (result < 0)
 		return result;
@@ -53,8 +52,7 @@ static int lcdBrightFn (const Command* command, uint argc, char* argv[])
 	if (argc != 2)
 		return commandUsageError (command);
 
-	LcdDevice device;
-	initLcdDevice (&device);
+	SpiDevice device = SpiDeviceInit;
 	int result = pixi_lcdOpen (&device);
 	if (result < 0)
 		return result;
@@ -79,8 +77,7 @@ static int lcdClearFn (const Command* command, uint argc, char* argv[])
 	if (argc != 1)
 		return commandUsageError (command);
 
-	LcdDevice device;
-	initLcdDevice (&device);
+	SpiDevice device = SpiDeviceInit;
 	int result = pixi_lcdOpen (&device);
 	if (result < 0)
 		return result;
@@ -102,8 +99,7 @@ static int lcdPosFn (const Command* command, uint argc, char* argv[])
 	if (argc != 3)
 		return commandUsageError (command);
 
-	LcdDevice device;
-	initLcdDevice (&device);
+	SpiDevice device = SpiDeviceInit;
 	int result = pixi_lcdOpen (&device);
 	if (result < 0)
 		return result;
@@ -127,8 +123,7 @@ static int lcdWriteFn (const Command* command, uint argc, char* argv[])
 	if (argc != 2)
 		return commandUsageError (command);
 
-	LcdDevice device;
-	initLcdDevice (&device);
+	SpiDevice device = SpiDeviceInit;
 	int result = pixi_lcdOpen (&device);
 	if (result < 0)
 		return result;
@@ -150,8 +145,7 @@ static int lcdPrintFn (const Command* command, uint argc, char* argv[])
 	if (argc != 4)
 		return commandUsageError (command);
 
-	LcdDevice device;
-	initLcdDevice (&device);
+	SpiDevice device = SpiDeviceInit;
 	int result = pixi_lcdOpen (&device);
 	if (result < 0)
 		return result;

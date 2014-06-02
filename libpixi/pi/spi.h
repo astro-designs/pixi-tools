@@ -36,9 +36,10 @@ typedef struct SpiDevice
 	int speed;       ///< /Hz
 	int delay;       ///< /microsecs
 	int bitsPerWord;
+	void*  reserved;
 } SpiDevice;
 
-#define SPI_DEVICE_INIT {-1, 0, 0, 0}
+#define SPI_DEVICE_INIT {-1, 0, 0, 0, NULL}
 static const SpiDevice SpiDeviceInit = SPI_DEVICE_INIT;
 
 ///	Open the SPI device @c channel, also setting @c speed.
