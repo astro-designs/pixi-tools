@@ -57,7 +57,8 @@ static void displayHelp (const char* program, bool verbose)
 		"pio: a program to interface with Raspberry Pi hardware\n"
 		"usage: %s COMMAND [ARGS]\n"
 		"\n"
-		"  -h, --help            display this help, then exit\n"
+		"  -h, --help            display help, then exit\n"
+		"      --help-all        display extended help, then exit\n"
 		"      --version         display version information, then exit\n"
 		"\n",
 		program
