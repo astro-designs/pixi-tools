@@ -27,12 +27,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static int spiSetGet (char*const*const argv, int mode)
+static int spiSetGet (bool writeMode, uint channel, uint address, uint data)
 {
-	uint channel = pixi_parseLong (argv[1]);
-	uint address = pixi_parseLong (argv[2]);
-	uint data    = pixi_parseLong (argv[3]);
-
 	SpiDevice dev = SpiDeviceInit;
 	int result = pixi_spiOpen(channel, PixiSpiSpeed, &dev);
 	if (result < 0)
@@ -43,7 +39,7 @@ static int spiSetGet (char*const*const argv, int mode)
 	// TODO: belongs in libpixi
 	uint8_t buffer[4] = {
 		address,
-		mode,
+		writeMode ? PixiSpiEnableWrite8 : PixiSpiEnableRead16, // FIXME: erm, check this
 		(data & 0xFF00) >> 8,
 		(data & 0x00FF)
 	};
@@ -54,36 +50,57 @@ static int spiSetGet (char*const*const argv, int mode)
 
 	data = (buffer[2] << 8) | buffer[3];
 	PIO_LOG_INFO("SPI returned: 0x%02x 0x%02x 0x%04x", buffer[0], buffer[1], data);
+	if (!writeMode)
+		printf ("%u\n", data);
 	return result;
 }
 
 static int spiSetFn (const Command* command, uint argc, char* argv[])
 {
-	if (argc != 4)
+	if (argc < 3 || argc > 4)
 		return commandUsageError (command);
 
-	return spiSetGet (argv, PixiSpiEnableWrite8); // FIXME: Write8?
+	uint channel = PixiSpiChannel;
+	uint address = 0;
+	uint data    = 0;
+	int arg = 1;
+	if (argc > 3)
+		channel = pixi_parseLong (argv[arg++]);
+	address = pixi_parseLong (argv[arg++]);
+	data    = pixi_parseLong (argv[arg++]);
+
+	return spiSetGet (true, channel, address, data);
 }
 static Command spiSetCmd =
 {
 	.name        = "spi-set",
 	.description = "write a value to the pixi over spi",
-	.usage       = "usage: %s CHANNEL ADDRESS VALUE",
+	.usage       = "usage: %s [CHANNEL] ADDRESS VALUE",
 	.function    = spiSetFn
 };
 
 static int spiGetFn (const Command* command, uint argc, char* argv[])
 {
-	if (argc != 4)
+	if (argc < 2 || argc > 4)
 		return commandUsageError (command);
 
-	return spiSetGet (argv, PixiSpiEnableRead16); // FIXME: Read16?
+	uint channel = PixiSpiChannel;
+	uint address = 0;
+	uint data    = 0;
+	int arg = 1;
+	if (argc > 2)
+		channel = pixi_parseLong (argv[arg++]);
+	address = pixi_parseLong (argv[arg++]);
+	if (argc > 3)
+		data    = pixi_parseLong (argv[arg++]);
+
+	return spiSetGet (false, channel, address, data);
 }
 static Command spiGetCmd =
 {
 	.name        = "spi-get",
 	.description = "read a value from the pixi over spi",
-	.usage       = "usage: %s CHANNEL ADDRESS NULL-DATA",
+	.usage       = "usage: %s [CHANNEL] ADDRESS [NULL-DATA]",
 	.function    = spiGetFn
 };
 
