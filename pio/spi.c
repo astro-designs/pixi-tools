@@ -170,7 +170,7 @@ static Command spiMonitorCmd =
 };
 
 
-static int scanSpi (uint channel)
+static int scanSpi (uint channel, uint low, uint high, uint sleepUs)
 {
 	SpiDevice dev = SpiDeviceInit;
 	int result = pixi_spiOpen(channel, PixiSpiSpeed, &dev);
@@ -186,7 +186,7 @@ static int scanSpi (uint channel)
 
 	while (true)
 	{
-		for (uint addr = 0; addr < 256; addr++)
+		for (uint addr = low; addr <= high; addr++)
 		{
 			uint data = 0;
 			// TODO: belongs in libpixi
@@ -196,6 +196,7 @@ static int scanSpi (uint channel)
 				(data & 0xFF00) >> 8,
 				(data & 0x00FF)
 			};
+			PIO_LOG_DEBUG("Reading address 0x%02x", addr);
 			result = pixi_spiReadWrite(&dev, buffer, buffer, sizeof (buffer));
 			if (result < 0)
 				break;
@@ -209,6 +210,8 @@ static int scanSpi (uint channel)
 				fflush (stdout);
 			}
 		}
+		if (sleepUs)
+			usleep (sleepUs);
 	}
 	printf("\n");
 
@@ -221,18 +224,28 @@ static int scanSpi (uint channel)
 
 static int spiScanFn (const Command* command, uint argc, char* argv[])
 {
-	if (argc != 2)
+	if (argc < 2 || argc > 5)
 		return commandUsageError (command);
 
-	uint channel = pixi_parseLong (argv[1]);
+	uint channel = 0;
+	uint low     = 0;
+	uint high    = 255;
+	uint sleepUs = 0;
+	channel = pixi_parseLong (argv[1]);
+	if (argc > 2)
+		low     = pixi_parseLong (argv[2]);
+	if (argc > 3)
+		high    = pixi_parseLong (argv[3]);
+	if (argc > 4)
+		sleepUs = pixi_parseLong (argv[4]);
 
-	return scanSpi (channel);
+	return scanSpi (channel, low, high, sleepUs);
 }
 static Command spiScanCmd =
 {
 	.name        = "spi-scan",
 	.description = "continually scan an SPI channel (all addresses)",
-	.usage       = "usage: %s CHANNEL",
+	.usage       = "usage: %s CHANNEL [LOW] [HIGH] [SLEEP-US]",
 	.function    = spiScanFn
 };
 
