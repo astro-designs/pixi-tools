@@ -206,7 +206,9 @@ static int scanSpi (uint channel, uint low, uint high, uint sleepUs)
 			{
 				changes++;
 				memory[addr] = data;
-				printf("%08u: %3u 0x%04x\n", changes, addr, data);
+				char time[26];
+				pixi_formatCurTime (time, sizeof (time));
+				printf("%s: 0x%02x 0x%04x [%u]\n", time, addr, data, changes);
 				fflush (stdout);
 			}
 		}
