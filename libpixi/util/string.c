@@ -22,7 +22,10 @@
 #include <libpixi/util/log.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <errno.h>
+#include <sys/time.h>
+#include <time.h>
 
 bool pixi_strEndsWith (const char* haystack, const char* needle)
 {
@@ -177,4 +180,30 @@ size_t pixi_hexEncode (const void* input, size_t inputSize, char* output, size_t
 	}
 	*outputPtr = 0;
 	return i;
+}
+
+int pixi_formatTimeval (const struct timeval* time, char* buffer, size_t bufferSize)
+{
+	LIBPIXI_PRECONDITION_NOT_NULL(time);
+
+	struct tm tm;
+	size_t count = strftime (buffer, bufferSize, "%F %T", localtime_r (&time->tv_sec, &tm));
+	if (count == 0)
+	{
+		snprintf (buffer, bufferSize, "%s", "<strftime error>");
+		return -errno;
+	}
+	else
+	{
+		int millis = time->tv_usec / 1000;
+		snprintf (buffer + count, bufferSize - count, ".%03d", millis);
+		return 0;
+	}
+}
+
+int pixi_formatCurTime (char* buffer, size_t bufferSize)
+{
+	struct timeval now;
+	gettimeofday (&now, NULL);
+	return pixi_formatTimeval (&now, buffer, bufferSize);
 }

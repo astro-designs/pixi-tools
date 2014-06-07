@@ -106,6 +106,14 @@ static inline size_t pixi_percentEncode (const void* input, size_t inputSize, ch
 	return pixi_hexEncode (input, inputSize, output, outputSize, '%', NULL);
 }
 
+struct timeval;
+
+///	Format @a time like "2014-06-07 09:43:03.567"
+int pixi_formatTimeval (const struct timeval* time, char* buffer, size_t bufferSize);
+
+///	Format the current time using pixi_formatTimeval
+int pixi_formatCurTime (char* buffer, size_t bufferSize);
+
 ///@} defgroup
 
 LIBPIXI_END_DECLS

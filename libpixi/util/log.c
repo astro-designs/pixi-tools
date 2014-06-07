@@ -19,14 +19,13 @@
 */
 
 #include <libpixi/util/log.h>
+#include <libpixi/util/string.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <sys/time.h>
-#include <time.h>
 #include <unistd.h>
 
 LogLevel pixi_logLevel = LogLevelInfo;
@@ -156,21 +155,6 @@ const char* pixi_logLevelToStr (LogLevel level)
 	}
 }
 
-static void formatNow (char* buffer, size_t bufferSize)
-{
-	struct timeval now;
-	gettimeofday (&now, NULL);
-	struct tm tm;
-	size_t count = strftime (buffer, bufferSize, "%F %T", localtime_r (&now.tv_sec, &tm));
-	if (count == 0)
-	{
-		snprintf (buffer, bufferSize, "%s", "<strftime error>");
-		return;
-	}
-	int millis = now.tv_usec / 1000;
-	snprintf (buffer + count, bufferSize - count, ".%03d", millis);
-}
-
 static void logVPrintf (LogLevel level, const char* errorStr, const char* format, va_list formatArgs)
 {
 	char buffer[2048] = "";
@@ -206,7 +190,7 @@ static void logVPrintf (LogLevel level, const char* errorStr, const char* format
 		if (logSize > maxLogSize)
 			rotateLogFile();
 		char timeStr[40] = "";
-		formatNow (timeStr, sizeof (timeStr));
+		pixi_formatCurTime (timeStr, sizeof (timeStr));
 		int written = fprintf (logFile, "%s %s: %s%s%s\n",
 			timeStr,
 			lev,
