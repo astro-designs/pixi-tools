@@ -43,6 +43,7 @@ typedef enum PixiGpioMode
 ///	Set the mode of the pixi gpio 1,2 or 3.
 ///	@param spi a previously opened PiXi connection
 ///	@param gpio GPIO device [1,3]
+///	@param mode GPIO mode
 ///	@return 0 on success, -errno on error
 int pixi_pixiGpioSetMode (SpiDevice* spi, uint gpio, PixiGpioMode mode);
 

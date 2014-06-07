@@ -88,7 +88,7 @@ bool pixi_strGetProperty (char* text, char separator, Property* property);
 ///	@param input input string
 ///	@param inputSize length of input string
 ///	@param output buffer for output string
-///	@param capacity of output buffer
+///	@param outputSize capacity of output buffer
 ///	@param prefix hex prefix character
 ///	@param printable characters that don't need conversion
 ///	@return number of input characters processed. If less than @c inputSize, output buffer is too small.
@@ -99,7 +99,7 @@ size_t pixi_hexEncode (const void* input, size_t inputSize, char* output, size_t
 ///	@param input input string
 ///	@param inputSize length of input string
 ///	@param output buffer for output string
-///	@param capacity of output buffer
+///	@param outputSize capacity of output buffer
 ///	@return number of input characters processed. If less than @c inputSize, output buffer is too small.
 static inline size_t pixi_percentEncode (const void* input, size_t inputSize, char* output, size_t outputSize)
 {
