@@ -161,7 +161,7 @@ size_t pixi_hexEncode (const void* input, size_t inputSize, char* output, size_t
 	for ( ; i < inputSize; i++)
 	{
 		uchar ch = uinput[i];
-		if (strchr (printable, ch))
+		if (ch && strchr (printable, ch))
 		{
 			if (outputSize < 2)
 				break;
