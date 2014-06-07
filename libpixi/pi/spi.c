@@ -92,16 +92,16 @@ int pixi_spiClose (SpiDevice* device)
 	return result;
 }
 
-int pixi_spiReadWrite (SpiDevice* device, const void* outputBuffer, void* inputBuffer, size_t bufferSize)
+int pixi_spiReadWrite (SpiDevice* device, const void* txBuffer, void* rxBuffer, size_t bufferSize)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 	LIBPIXI_PRECONDITION(device->fd >= 0);
-	LIBPIXI_PRECONDITION_NOT_NULL(outputBuffer);
-	LIBPIXI_PRECONDITION_NOT_NULL(inputBuffer);
+	LIBPIXI_PRECONDITION_NOT_NULL(txBuffer);
+	LIBPIXI_PRECONDITION_NOT_NULL(rxBuffer);
 
 	struct spi_ioc_transfer transfer = {
-		.tx_buf        = (intptr_t) outputBuffer,
-		.rx_buf        = (intptr_t) inputBuffer,
+		.tx_buf        = (intptr_t) txBuffer,
+		.rx_buf        = (intptr_t) rxBuffer,
 		.len           = bufferSize,
 		.speed_hz      = device->speed,
 		.delay_usecs   = device->delay,

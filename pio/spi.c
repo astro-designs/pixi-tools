@@ -188,20 +188,22 @@ static int scanSpi (uint channel, uint low, uint high, uint sleepUs)
 	{
 		for (uint addr = low; addr <= high; addr++)
 		{
-			uint data = 0;
 			// TODO: belongs in libpixi
-			uint8_t buffer[4] = {
-				addr,
-				PixiSpiEnableRead16,
-				(data & 0xFF00) >> 8,
-				(data & 0x00FF)
-			};
-			PIO_LOG_DEBUG("Reading address 0x%02x", addr);
-			result = pixi_spiReadWrite(&dev, buffer, buffer, sizeof (buffer));
+			uint8 txBuf[4] = {addr, PixiSpiEnableRead16, 0, 0};
+			uint8 rxBuf[4] = {0,0,0,0};
+			result = pixi_spiReadWrite(&dev, txBuf, rxBuf, sizeof (txBuf));
 			if (result < 0)
 				break;
 
-			data = (buffer[2] << 8) | buffer[3];
+			if (pio_isLogLevelEnabled (LogLevelDebug))
+			{
+				char txHex[16];
+				char rxHex[16];
+				pixi_hexEncode (txBuf, sizeof (txBuf), txHex, sizeof (txHex), ' ', "");
+				pixi_hexEncode (rxBuf, sizeof (rxBuf), rxHex, sizeof (rxHex), ' ', "");
+				PIO_LOG_DEBUG("SPI tx=[%s] rx=[%s]", txHex, rxHex);
+			}
+			uint data = (rxBuf[2] << 8) | rxBuf[3];
 			if (memory[addr] != data)
 			{
 				changes++;
