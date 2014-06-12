@@ -182,40 +182,9 @@ static void initUart (Uart* uart)
 	setUartReg (uart, InterruptEnableReg, 0); // disable interrupts
 }
 
-
-static uint uartLoop (Uart* uart)
+static int uartReadWriteMonitorFn (const Command* command, uint argc, char* argv[])
 {
-	PIO_LOG_INFO("Read loop");
-	while (true)
-	{
-		char buf[100];
-		ssize_t count = uartRead (uart, buf, sizeof (buf));
-		if (count > 0 && pio_isLogLevelEnabled(LogLevelDebug))
-		{
-			char printable[1+(sizeof(buf)*3)];
-			pixi_hexEncode (buf, count, printable, sizeof (printable), '%', printableChars);
-			PIO_LOG_DEBUG("Received: as characters : [%s]", printable);
-			pixi_hexEncode (buf, count, printable, sizeof (printable), ' ', "");
-			PIO_LOG_DEBUG("Received: as hexadecimal: [%s]", printable);
-
-			for (int i = 0; i < count; i++)
-			{
-				char text[20];
-				uint8 value = buf[i];
-				size_t chars = snprintf (text, sizeof (text), "RX %02X [%c]\n", value, value);
-				uartWrite (uart, text, chars);
-			}
-		}
-		else
-			usleep (3000);
-	}
-
-	return 0;
-}
-
-static int uartReadFn (const Command* command, uint argc, char* argv[])
-{
-	if (argc < 3 || argc > 4)
+	if (argc != 3)
 		return commandUsageError (command);
 
 	Uart uart;
@@ -224,18 +193,40 @@ static int uartReadFn (const Command* command, uint argc, char* argv[])
 
 	pixiOpenOrDie();
 	initUart (&uart);
-	if (argc > 3)
-		uartWrite (&uart, argv[3], strlen (argv[3]));
-	uartLoop (&uart);
+
+	const char* msg = "Starting read-write-loop\r\n";
+	uartWrite (&uart, msg, strlen (msg));
+
+	while (true)
+	{
+		char buf[100];
+		ssize_t count = uartRead (&uart, buf, sizeof (buf));
+		if (count > 0 && pio_isLogLevelEnabled(LogLevelDebug))
+		{
+			char printable[1+(sizeof(buf)*3)];
+			pixi_hexEncode (buf, count, printable, sizeof (printable), ' ', "");
+			PIO_LOG_DEBUG("Received [as hex]: [%s]", printable);
+			pixi_hexEncode (buf, count, printable, sizeof (printable), '%', printableChars);
+			char out[sizeof (printable) + 40];
+			size_t len = snprintf (out, sizeof (out), "Received: [%s]", printable);
+			PIO_LOG_INFO(out, printable);
+			strcat (out, "\r\n");
+			uartWrite (&uart, out, len + 2);
+		}
+		else
+			usleep (1000);
+	}
+	return 0;
+
 	pixiClose();
 	return 0;
 }
 static Command uartReadCmd =
 {
-	.name        = "uart-read",
+	.name        = "uart-read-write-monitor",
 	.description = "read from a UART channel",
 	.usage       = "usage: %s UART BAUDRATE",
-	.function    = uartReadFn
+	.function    = uartReadWriteMonitorFn
 };
 
 static const Command* commands[] =
