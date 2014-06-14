@@ -81,12 +81,113 @@ enum LineStatusBits
 	ErrorInRxFifo     = 1<<7
 };
 
+enum
+{
+	IoBufferSize = 4096,
+	IoBufferMask = IoBufferSize - 1
+};
+
+///	A lock-free queue buffer.
+///	Note that the effective capacity is one less than IoBufferSize
+///	because writePos==readPos means size==0, not size=IoBufferSize.
+typedef struct IoBuffer
+{
+	byte  buffer[IoBufferSize];
+	/*volatile*/ uint  writePos;
+	/*volatile*/ uint  readPos;
+} IoBuffer;
+
+static inline void ioInit (IoBuffer* buf)
+{
+	buf->writePos = 0;
+	buf->readPos = 0;
+}
+
+static inline bool ioIsEmpty (IoBuffer* buf)
+{
+	return (buf->readPos == buf->writePos);
+}
+
+static inline uint ioAvailable (IoBuffer* buf)
+{
+	uint readPos  = buf->readPos;
+	uint writePos = buf->writePos;
+	uint avail = readPos - writePos;
+	if (writePos > readPos)
+		avail += IoBufferSize;
+//	uint count = (inputPos - outputPos) & IoBufferMask;
+	return avail;
+}
+
+static inline uint ioContiguousAvailable (IoBuffer* buf)
+{
+	uint readPos  = buf->readPos;
+	uint writePos = buf->writePos;
+	if (writePos > readPos)
+		return writePos - readPos;
+	return IoBufferSize - readPos;
+}
+
+static inline int ioPush (IoBuffer* buf, byte value)
+{
+	uint readPos      = buf->readPos;
+	uint writePos     = buf->writePos;
+	uint nextWritePos = (writePos + 1) % IoBufferSize;
+	PIO_PRECONDITION(nextWritePos < IoBufferSize);
+	if (nextWritePos == readPos)
+		return -ENOBUFS;
+
+	buf->buffer[writePos] = value;
+	buf->writePos = nextWritePos;
+	return 0;
+}
+
+static inline int ioPop (IoBuffer* buf)
+{
+	uint readPos = buf->readPos;
+	if (readPos == buf->writePos)
+		return -ENODATA;
+	byte value = buf->buffer[readPos];
+	readPos = (readPos + 1) & IoBufferMask;
+	buf->readPos = readPos;
+	return value;
+}
+
+static inline uint ioWrite (IoBuffer* buf, const void* data, uint size)
+{
+	// TODO: rewrite in optimal fashion
+	const byte* bytes = data;
+	for (uint i = 0; i < size; i++)
+	{
+		int result = ioPush (buf, bytes[i]);
+		if (result < 0)
+			return 0;
+	}
+	return size;
+}
+
+static inline uint ioRead  (IoBuffer* buf, void* data, uint size)
+{
+	// TODO: rewrite in optimal fashion
+	byte* bytes = data;
+	for (uint i = 0; i < size; i++)
+	{
+		int value = ioPop (buf);
+		if (value < 0)
+			return i;
+		bytes[i] = value;
+	}
+	return size;
+}
+
+
 typedef struct Uart
 {
 	uint8   basePort;
 	uint    baudRate;
 	uint    lastStatus;
-	// buffers, etc.
+	IoBuffer  txBuf;
+	IoBuffer  rxBuf;
 } Uart;
 
 static inline int setUartReg (Uart* uart, UartRegister reg, uint8 value)
@@ -132,41 +233,50 @@ static uint getStatusReg (Uart* uart)
 //		if (status & DataReady        ) PIO_LOG_TRACE("   DataReady: at least one character in receive FIFO");
 //		if (status & EmptyTxHoldingReg) PIO_LOG_TRACE("   EmptyTxHoldingReg: transmitter FIFO is empty");
 //		if (status & EmptyTxReg       ) PIO_LOG_TRACE("   EmptyTxReg: transmitter FIFO and shift register is empty");
-		if (status & OverrunError     ) PIO_LOG_DEBUG("   OverrunError: receive FIFO was full, received character lost");
-		if (status & ParityError      ) PIO_LOG_DEBUG("   ParityError: top character in FIFO a was received with a parity error");
-		if (status & FramingError     ) PIO_LOG_DEBUG("   FramingError: top character in FIFO a was received without a valid stop bit");
-		if (status & BreakInterrupt   ) PIO_LOG_DEBUG("   BreakInterrupt: a break condition has been reached");
+		if (status & OverrunError     ) PIO_LOG_ERROR("   OverrunError: receive FIFO was full, received character lost");
+		if (status & ParityError      ) PIO_LOG_ERROR("   ParityError: top character in FIFO a was received with a parity error");
+		if (status & FramingError     ) PIO_LOG_ERROR("   FramingError: top character in FIFO a was received without a valid stop bit");
+		if (status & BreakInterrupt   ) PIO_LOG_WARN ("   BreakInterrupt: a break condition has been reached");
 		if (status & ErrorInRxFifo    ) PIO_LOG_DEBUG("   ErrorInRxFifo: at least one error in receiver FIFO");
 	}
 
 	return status;
-
 }
 
-static ssize_t uartWrite (Uart* uart, const char* buffer, size_t size)
+
+static void handleUart (Uart* uart)
 {
-	PIO_LOG_INFO("Writing %zu bytes", size);
-	const char* end = buffer + size;
-	while (buffer < end)
+	uint status;
+	do
 	{
-		while (!(getStatusReg (uart) & EmptyTxHoldingReg))
-			usleep(100);
-		setUartReg (uart, TxFifo, *buffer);
-		buffer++;
-	}
-	PIO_LOG_INFO("Wrote %zu bytes", size);
-	return size;
+		status = getStatusReg (uart);
+		if ((status & DataReady) && ioAvailable (&uart->rxBuf) < (IoBufferSize - 1))
+		{
+			byte value = getUartReg (uart, RxFifo);
+			ioPush (&uart->rxBuf, value);
+		}
+		if (status & EmptyTxHoldingReg)
+		{
+			int value = ioPop (&uart->txBuf);
+			if (value >= 0)
+				setUartReg (uart, TxFifo, value);
+		}
+	} while (((status & DataReady) && ioAvailable (&uart->rxBuf) < (IoBufferSize - 1))
+		|| ((status & EmptyTxHoldingReg) && !ioIsEmpty (&uart->txBuf)));
 }
 
-static ssize_t uartRead (Uart* uart, char* buffer, size_t size)
+static ssize_t uartWrite (Uart* uart, const void* buffer, size_t size)
 {
-	char* buf = buffer;
-	const char* limit = buffer + size;
-	while (buf < limit && (getStatusReg (uart) & DataReady)) {
-		*buf = getUartReg (uart, RxFifo);
-		buf++;
-	}
-	return buf - buffer;
+	PIO_LOG_DEBUG("Writing %zu bytes", size);
+	uint written = ioWrite (&uart->txBuf, buffer, size);
+	if (written < size)
+		PIO_LOG_ERROR("Overflow of %zu bytes in internal uart txBuf", size - written);
+	return written;
+}
+
+static ssize_t uartRead (Uart* uart, void* buffer, size_t size)
+{
+	return ioRead (&uart->rxBuf, buffer, size);
 }
 
 static const char printableChars[] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,./<>?;:'@#~][}{=-+_`!\"$^&*()";
@@ -174,6 +284,8 @@ static const char printableChars[] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcde
 
 static void initUart (Uart* uart)
 {
+	ioInit (&uart->rxBuf);
+	ioInit (&uart->txBuf);
 	setBaudRate (uart);
 	uart->lastStatus = -1;
 
@@ -199,22 +311,25 @@ static int uartReadWriteMonitorFn (const Command* command, uint argc, char* argv
 
 	while (true)
 	{
+		handleUart (&uart);
 		char buf[100];
 		ssize_t count = uartRead (&uart, buf, sizeof (buf));
-		if (count > 0 && pio_isLogLevelEnabled(LogLevelDebug))
+		if (count > 0)
 		{
 			char printable[1+(sizeof(buf)*3)];
-			pixi_hexEncode (buf, count, printable, sizeof (printable), ' ', "");
-			PIO_LOG_DEBUG("Received [as hex]: [%s]", printable);
+			if (pio_isLogLevelEnabled (LogLevelDebug))
+			{
+				pixi_hexEncode (buf, count, printable, sizeof (printable), ' ', "");
+				PIO_LOG_DEBUG("Received [as hex]: [%s]", printable);
+			}
 			pixi_hexEncode (buf, count, printable, sizeof (printable), '%', printableChars);
 			char out[sizeof (printable) + 40];
-			size_t len = snprintf (out, sizeof (out), "Received: [%s]", printable);
-			PIO_LOG_INFO(out, printable);
-			strcat (out, "\r\n");
+			PIO_LOG_DEBUG("Received: [%s]", printable);
+			size_t len = snprintf (out, sizeof (out), "Received: [%s]\r\n", printable);
 			uartWrite (&uart, out, len + 2);
 		}
 		else
-			usleep (1000);
+			usleep (40);
 	}
 	return 0;
 
