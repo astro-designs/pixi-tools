@@ -23,6 +23,7 @@
 #include "Command.h"
 #include "log.h"
 #include <stdio.h>
+#include <sys/time.h>
 
 
 /// Uart address map
@@ -36,8 +37,10 @@ typedef enum UartRegister
 	InterruptIdReg     = 2, ///< read
 	FifoControlReg     = 2, ///< write
 	LineControlReg     = 3, ///< read/write
-	ModemStatusReg     = 4, ///< read
-	LineStatusReg      = 5  ///< read
+	ModemControlReg    = 4, ///< read
+	LineStatusReg      = 5, ///< read
+	ModemStatusReg     = 6, ///< read
+	ScratchReg         = 7, ///< read/write
 } UartRegister;
 
 /// FifoControlReg values
@@ -211,9 +214,14 @@ static inline void setControlReg (Uart* uart, uint8 value)
 	setUartReg (uart, LineControlReg, value);
 }
 
+static uint getBaudDivisor (uint baudRate)
+{
+	return (25 * 1000 * 1000) / (16 * baudRate);
+}
+
 static void setBaudRate (Uart* uart)
 {
-	uint divisor = (25 * 1000 * 1000) / (16 * uart->baudRate);
+	uint divisor = getBaudDivisor (uart->baudRate);
 	PIO_LOG_INFO("Setting uart baud rate of %u [%u]", uart->baudRate, divisor);
 	uint control = getControlReg (uart);
 	setControlReg (uart, control | DivisorLatchAccess);
@@ -234,8 +242,8 @@ static uint getStatusReg (Uart* uart)
 //		if (status & EmptyTxHoldingReg) PIO_LOG_TRACE("   EmptyTxHoldingReg: transmitter FIFO is empty");
 //		if (status & EmptyTxReg       ) PIO_LOG_TRACE("   EmptyTxReg: transmitter FIFO and shift register is empty");
 		if (status & OverrunError     ) PIO_LOG_ERROR("   OverrunError: receive FIFO was full, received character lost");
-		if (status & ParityError      ) PIO_LOG_ERROR("   ParityError: top character in FIFO a was received with a parity error");
-		if (status & FramingError     ) PIO_LOG_ERROR("   FramingError: top character in FIFO a was received without a valid stop bit");
+		if (status & ParityError      ) PIO_LOG_ERROR("   ParityError: top character in FIFO was received with a parity error");
+		if (status & FramingError     ) PIO_LOG_ERROR("   FramingError: top character in FIFO was received without a valid stop bit");
 		if (status & BreakInterrupt   ) PIO_LOG_WARN ("   BreakInterrupt: a break condition has been reached");
 		if (status & ErrorInRxFifo    ) PIO_LOG_DEBUG("   ErrorInRxFifo: at least one error in receiver FIFO");
 	}
@@ -286,8 +294,8 @@ static void initUart (Uart* uart)
 {
 	ioInit (&uart->rxBuf);
 	ioInit (&uart->txBuf);
-	setBaudRate (uart);
 	uart->lastStatus = -1;
+	setBaudRate (uart);
 
 	setUartReg (uart, FifoControlReg, RxFifoTriggerLevel1Byte | EnableFifos | RxFifoReset | TxFifoReset);
 	setUartReg (uart, LineControlReg, WordLength8);
@@ -331,24 +339,118 @@ static int uartReadWriteMonitorFn (const Command* command, uint argc, char* argv
 		else
 			usleep (40);
 	}
-	return 0;
-
 	pixiClose();
 	return 0;
 }
-static Command uartReadCmd =
+static Command uartReadWriteMonitorCmd =
 {
-	.name        = "uart-read-write-monitor",
-	.description = "read from a UART channel",
+	.name        = "uart-rw-monitor",
+	.description = "read writing from a UART, writing back a description of input",
 	.usage       = "usage: %s UART BAUDRATE",
 	.function    = uartReadWriteMonitorFn
 };
 
-static const Command* commands[] =
+static void verboseInit (Uart* uart)
 {
-	&uartReadCmd,
+	ioInit (&uart->rxBuf);
+	ioInit (&uart->txBuf);
+	uart->lastStatus = -1;
+	PIO_LOG_INFO("Testing UART at address 0x%02x", uart->basePort);
+	uint control = getControlReg (uart);
+	PIO_LOG_INFO("Control register = 0x%02x, setting divisor latch access", control);
+	setControlReg (uart, control | DivisorLatchAccess);
+	uint divisor = getBaudDivisor (uart->baudRate);
+	PIO_LOG_INFO("Setting baud rate divisor to 0x%02x", divisor);
+	uint8 lo = divisor;
+	uint8 hi = divisor >> 8;
+	setUartReg (uart, DivisorLatchLow , lo);
+	setUartReg (uart, DivisorLatchHigh, hi);
+	uint8 lo2 = getUartReg (uart, DivisorLatchLow);
+	uint8 hi2 = getUartReg (uart, DivisorLatchHigh);
+	if (lo == lo2 && hi == hi2)
+		PIO_LOG_INFO("Baud rate verified");
+	else
+		PIO_LOG_INFO("Baud rate read back is wrong [0x%02x, 0x%02x]", lo2, hi2);
+	setControlReg (uart, control & ~DivisorLatchAccess);
+
+	lo2 = getUartReg (uart, DivisorLatchLow);
+	hi2 = getUartReg (uart, DivisorLatchHigh);
+	if (lo == lo2 && hi == hi2)
+		PIO_LOG_WARN("With divisor latch access disabled, same values from baud-rate registers");
+
+	setUartReg (uart, FifoControlReg, RxFifoTriggerLevel1Byte | EnableFifos | RxFifoReset | TxFifoReset);
+	setUartReg (uart, LineControlReg, WordLength8);
+	setUartReg (uart, InterruptEnableReg, 0); // disable interrupts
+}
+
+static void testScratch (Uart* uart)
+{
+	setUartReg (uart, ScratchReg, 0x55);
+	bool ok = (0x55 == getUartReg (uart, ScratchReg));
+	setUartReg (uart, ScratchReg, 0xaa);
+	ok |= (0xaa == getUartReg (uart, ScratchReg));
+	if (ok)
+		PIO_LOG_INFO("Scratch register verified");
+	else
+		PIO_LOG_ERROR("Scratch register write/read failure");
+}
+
+static void testWrite (Uart* uart)
+{
+	PIO_LOG_INFO("Testing writes for approximately 2 seconds");
+
+	const uint writes = 2 * (uart->baudRate / 10);
+	uint statusReads = 0;
+
+	struct timeval start;
+	gettimeofday (&start, NULL);
+	for (uint i = 0; i < writes; i++)
+	{
+		uint status;
+		do
+		{
+			statusReads++;
+		} while (!(EmptyTxHoldingReg & (status = getStatusReg (uart))));
+		setUartReg (uart, TxFifo, i & 0xFF);
+	}
+	struct timeval end;
+	gettimeofday (&end, NULL);
+	uint startUs = start.tv_usec + (start.tv_sec * 1000000);
+	uint endUs   = end  .tv_usec + (end  .tv_sec * 1000000);
+	double sec   = (endUs - startUs) / 1000000.0;
+	PIO_LOG_INFO("Finished 2 seconds of worth of writes in %.6f seconds", sec);
+	PIO_LOG_INFO("Required %u status register reads for %u output bytes", statusReads, writes);
+}
+
+static int uartTestFn (const Command* command, uint argc, char* argv[])
+{
+	if (argc != 3)
+		return commandUsageError (command);
+
+	Uart uart;
+	uart.basePort = pixi_parseLong (argv[1]);
+	uart.baudRate = pixi_parseLong (argv[2]);
+
+	pixiOpenOrDie();
+	verboseInit (&uart);
+	testScratch (&uart);
+	testWrite (&uart);
+	pixiClose();
+	return 0;
+}
+static Command uartTestCmd =
+{
+	.name        = "uart-test",
+	.description = "do a brief test of a UART channel",
+	.usage       = "usage: %s UART BAUDRATE",
+	.function    = uartTestFn
 };
 
+static const Command* commands[] =
+{
+	&uartReadWriteMonitorCmd,
+	&uartTestCmd,
+};
 
 static CommandGroup pixiUartGroup =
 {
