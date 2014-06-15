@@ -350,8 +350,9 @@ static Command uartReadWriteMonitorCmd =
 	.function    = uartReadWriteMonitorFn
 };
 
-static void verboseInit (Uart* uart)
+static uint verboseInit (Uart* uart)
 {
+	uint result = 0;
 	ioInit (&uart->rxBuf);
 	ioInit (&uart->txBuf);
 	uart->lastStatus = -1;
@@ -370,29 +371,42 @@ static void verboseInit (Uart* uart)
 	if (lo == lo2 && hi == hi2)
 		PIO_LOG_INFO("Baud rate verified");
 	else
-		PIO_LOG_INFO("Baud rate read back is wrong [0x%02x, 0x%02x]", lo2, hi2);
+	{
+		result |= 4;
+		PIO_LOG_ERROR("Baud rate read back is wrong [0x%02x, 0x%02x]", lo2, hi2);
+	}
 	setControlReg (uart, control & ~DivisorLatchAccess);
 
 	lo2 = getUartReg (uart, DivisorLatchLow);
 	hi2 = getUartReg (uart, DivisorLatchHigh);
 	if (lo == lo2 && hi == hi2)
+	{
+		result |= 2;
 		PIO_LOG_WARN("With divisor latch access disabled, same values from baud-rate registers");
+	}
 
 	setUartReg (uart, FifoControlReg, RxFifoTriggerLevel1Byte | EnableFifos | RxFifoReset | TxFifoReset);
 	setUartReg (uart, LineControlReg, WordLength8);
 	setUartReg (uart, InterruptEnableReg, 0); // disable interrupts
+	return result;
 }
 
-static void testScratch (Uart* uart)
+static uint testScratch (Uart* uart)
 {
 	setUartReg (uart, ScratchReg, 0x55);
 	bool ok = (0x55 == getUartReg (uart, ScratchReg));
 	setUartReg (uart, ScratchReg, 0xaa);
 	ok |= (0xaa == getUartReg (uart, ScratchReg));
 	if (ok)
+	{
 		PIO_LOG_INFO("Scratch register verified");
+		return 0;
+	}
 	else
+	{
 		PIO_LOG_ERROR("Scratch register write/read failure");
+		return 8;
+	}
 }
 
 static void testWrite (Uart* uart)
@@ -432,11 +446,11 @@ static int uartTestFn (const Command* command, uint argc, char* argv[])
 	uart.baudRate = pixi_parseLong (argv[2]);
 
 	pixiOpenOrDie();
-	verboseInit (&uart);
-	testScratch (&uart);
+	uint result = verboseInit (&uart);
+	result |= testScratch (&uart);
 	testWrite (&uart);
 	pixiClose();
-	return 0;
+	return result ? -EIO : 0;
 }
 static Command uartTestCmd =
 {
