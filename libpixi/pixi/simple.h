@@ -103,6 +103,11 @@ static inline int registerWrite (uint address, ushort value) {
 	return pixi_registerWrite (&globalPixi, address, value);
 }
 
+///	Wrapper for @ref pixi_multiRegisterOp
+static inline int multiRegisterOp (RegisterOp* operations, uint opCount) {
+	return pixi_multiRegisterOp (&globalPixi, operations, opCount);
+}
+
 ///	Wrapper for @ref pixi_pixiGpioSetPinMode
 static inline int gpioSetPinMode (uint gpioController, uint pin, uint mode) {
 	return pixi_pixiGpioSetPinMode (&globalPixi, gpioController, pin, mode);

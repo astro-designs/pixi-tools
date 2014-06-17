@@ -20,6 +20,8 @@
 
 #include <libpixi/pixi/spi.h>
 #include <libpixi/util/log.h>
+#include <linux/spi/spidev.h>
+#include <sys/ioctl.h>
 
 int pixi_pixiSpiOpen (SpiDevice* device) {
 	int result = pixi_spiOpen (PixiSpiChannel, PixiSpiSpeed, device);
@@ -66,4 +68,36 @@ int pixi_registerWriteMasked (SpiDevice* device, uint address, ushort value, ush
 	if (result < 0)
 		return result;
 	return previous;
+}
+
+int pixi_multiRegisterOp (SpiDevice* device, RegisterOp* operations, uint opCount)
+{
+	LIBPIXI_PRECONDITION_NOT_NULL(operations);
+	LIBPIXI_PRECONDITION(opCount < 256);
+
+	struct spi_ioc_transfer transfers[opCount];
+	for (uint i = 0; i < opCount; i++)
+	{
+		operations[i]._valueHi = operations[i].value >> 8;
+		operations[i]._valueLo = operations[i].value;
+		transfers[i].tx_buf        = (intptr_t) &operations[i].address;
+		transfers[i].rx_buf        = transfers[i].tx_buf;
+		transfers[i].len           = 4;
+		transfers[i].speed_hz      = device->speed;
+		transfers[i].delay_usecs   = device->delay;
+		transfers[i].bits_per_word = device->bitsPerWord;
+		transfers[i].cs_change     = 1;
+	}
+	LIBPIXI_LOG_TRACE("pixi_multiRegisterOp of fd=%d, count=%u", device->fd, opCount);
+	int result = ioctl (device->fd, SPI_IOC_MESSAGE(opCount), &transfers);
+	if (result < 0)
+	{
+		int err = errno;
+		LIBPIXI_ERRNO_ERROR("pixi_multiRegisterOp failed");
+		return -err;
+	}
+	for (uint i = 0; i < opCount; i++)
+		operations[i].value = (((uint) operations[i]._valueHi) << 8 ) | operations[i]._valueLo;
+
+	return 0;
 }

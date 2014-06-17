@@ -60,6 +60,21 @@ int pixi_registerWrite (SpiDevice* device, uint address, ushort value);
 ///	@return the previous register value, or -errno on error
 int pixi_registerWriteMasked (SpiDevice* device, uint address, ushort value, ushort mask);
 
+typedef struct RegisterOp
+{
+	uint8   address;    ///< PiXi register address
+	uint8   function;   ///< e.g. PixiSpiEnableRead16 / PixiSpiEnableWrite16
+	uint8   _valueHi;   ///< internal
+	uint8   _valueLo;   ///< internal
+	uint8   _reserved1; ///< internal
+	uint8   _reserved2; ///< internal
+	uint    value;      ///< read/write value
+} RegisterOp;
+
+///	Perform multiple register read/write operations in a single kernel call
+///	@return 0 on success, or -errno on error
+int pixi_multiRegisterOp (SpiDevice* device, RegisterOp* operations, uint opCount);
+
 ///@} defgroup
 
 LIBPIXI_END_DECLS
