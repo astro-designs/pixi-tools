@@ -35,3 +35,8 @@
 %include <libpixi/libpixi.h>
 %include <libpixi/pi/gpio.h>
 %include <libpixi/pi/spi.h>
+
+%pythoncode %{
+import pixitools
+pixitools._rewrap (vars(), vars (_pi))
+%}

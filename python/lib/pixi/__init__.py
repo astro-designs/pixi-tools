@@ -17,6 +17,34 @@
 #    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 import logging
+from os import strerror
+from functools import update_wrapper
 
 def basicLogging (level = logging.INFO):
 	logging.basicConfig (level = level)
+
+class PixiToolsError (RuntimeError):
+	def __init__(self, functionName, result):
+		super (PixiToolsError, self).__init__(functionName + " failed: " + strerror (-result))
+		self.result = result
+
+def _makeWrapper (name, wrapped):
+	def wrapper (*args):
+		result = wrapped (*args)
+		if result < 0:
+			raise PixiToolsError (name, result)
+		return result
+	update_wrapper (wrapper, wrapped)
+	return wrapper
+
+def _rewrap (wrapper, wrapped):
+	"""Converts int returning functions to exception raising"""
+	for name, obj in wrapper.items():
+		# select pure python wrappers
+		if callable (obj):
+			try:
+				wrappedFn = wrapped[name]
+				if isinstance (wrappedFn.__doc__, str) and ' -> int' in wrappedFn.__doc__:
+					wrapper[name] = _makeWrapper (name, wrappedFn)
+			except KeyError:
+				pass

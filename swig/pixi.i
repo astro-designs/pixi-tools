@@ -43,3 +43,8 @@
 %include <libpixi/pixi/pwm.h>
 %include <libpixi/pixi/fpga.h>
 %include <libpixi/pixi/registers.h>
+
+%pythoncode %{
+import pixitools
+pixitools._rewrap (vars(), vars (_pixi))
+%}
