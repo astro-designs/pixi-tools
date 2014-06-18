@@ -22,6 +22,7 @@
 
 // strip pixi_ prefix for python symbols
 %rename("%(strip:[pixi_])s") "";
+%feature("autodoc", "3");
 
 %{
 #include <libpixi/common.h>
