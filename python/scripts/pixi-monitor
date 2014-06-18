@@ -9,16 +9,16 @@ from threading import Thread, RLock
 from pixitools.pi import SpiDevice, spiClose
 from pixitools.pixi import pixiAdcOpen, pixiSpiOpen, pixiAdcRead, pixiSpiOpen, registerRead, Pixi_Switch_in
 from pixitools import pixix
-from pixitools.pixix import check, Lcd
+from pixitools.pixix import Lcd
 
 format = "%H:%M:%S"
 persistent = "/run/shm/pixi-display"
 
 adc = SpiDevice()
-check (pixiAdcOpen (adc))
+pixiAdcOpen (adc)
 
 spi = SpiDevice()
-check (pixiSpiOpen (spi))
+pixiSpiOpen (spi)
 
 lcd = Lcd() #persistent)
 #lcd.clear()

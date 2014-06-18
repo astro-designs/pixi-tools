@@ -21,7 +21,7 @@ from pixitools.pi import gpioSysGetPinState, gpioGetPinState, gpioMapRegisters, 
 from pixitools.pixi import pixiSpiOpen, registerWrite as _registerWrite, pixiGpioSetPinMode as _pixiGpioSetPinMode
 from pixitools.pixi import pixiGpioWritePin as _pixiGpioWritePin, pwmWritePin as _pwmWritePin, pwmWritePinPercent as _pwmWritePinPercent
 from pixitools.pixi import pixiFpgaGetBuildTime as _pixiFpgaGetBuildTime
-from pixitools.pixix import Lcd, Spi, check, globalSpi as getSpi
+from pixitools.pixix import Lcd, Spi, globalSpi as getSpi
 from pixitools.rover import setMotion
 from os.path import isdir, join
 from os import listdir, makedirs
@@ -120,27 +120,27 @@ addCommand (lcdSetText)
 
 def gpioWritePin (gpioController, pin, value):
 	'Set the output value of a PiXi GPIO pin'
-	check (_pixiGpioWritePin (getSpi(), gpioController, pin, value))
+	_pixiGpioWritePin (getSpi(), gpioController, pin, value)
 addCommand (gpioWritePin)
 
 def gpioSetMode (gpioController, pin, mode):
 	'Set the mode of a PiXi GPIO pin'
-	check (_pixiGpioSetPinMode (getSpi(), gpioController, pin, mode))
+	_pixiGpioSetPinMode (getSpi(), gpioController, pin, mode)
 addCommand (gpioSetMode)
 
 def pwmWritePin (pwm, dutyCycle):
 	'Set the state of the PiXi PWM'
-	check (_pwmWritePin (getSpi(), pwm, dutyCycle))
+	_pwmWritePin (getSpi(), pwm, dutyCycle)
 addCommand (pwmWritePin)
 
 def pwmWritePinPercent (pwm, dutyCycle):
 	'Set the state of the PiXi PWM'
-	check (_pwmWritePinPercent (getSpi(), pwm, dutyCycle))
+	_pwmWritePinPercent (getSpi(), pwm, dutyCycle)
 addCommand (pwmWritePinPercent)
 
 def pixiFpgaGetBuildTime():
 	'Get the build time of the PiXi FPGA as seconds-since-epoch'
-	return check (_pixiFpgaGetBuildTime())
+	return _pixiFpgaGetBuildTime()
 addCommand (pixiFpgaGetBuildTime)
 
 def validateNameParam (paramName, name):

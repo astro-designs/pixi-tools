@@ -26,17 +26,6 @@ log = logging.getLogger(__name__)
 info = log.info
 debug = log.debug
 
-class PixiError (RuntimeError):
-	def __init__(self, result):
-		super (PixiError, self).__init__("PixiError: " + strerror (-result))
-		self.result = result
-
-# Note: check() is temporary until we switch to a c++ based library for swig wrapping
-def check (result):
-	if result < 0:
-		raise PixiError (result)
-	return result
-
 def pause():
 	sleep (0.1)
 
@@ -47,7 +36,7 @@ class Lcd (object):
 		self.filename = filename # persistent state, since we cannot read from the panel
 		self.lcd = None
 		lcd = pixi.SpiDevice()
-		check (pixi.lcdOpen (lcd))
+		pixi.lcdOpen (lcd)
 		self.lcd = lcd
 		self.lines = [' ' * LcdLineLen, ' ' * LcdLineLen]
 		self.loadState()
@@ -73,27 +62,27 @@ class Lcd (object):
 	def close (self):
 		lcd = self.lcd
 		if lcd:
-			check (pixi.lcdClose (lcd))
+			pixi.lcdClose (lcd)
 			self.lcd = None
 
 	def write (self, text):
 #		info ("Writing panel text [%s]", text)
-		check (pixi.lcdWriteStr (self.lcd, text))
+		pixi.lcdWriteStr (self.lcd, text)
 		pause()
 
 	def flush (self):
 		pass
 
 	def clear (self):
-		check (pixi.lcdClear (self.lcd))
+		pixi.lcdClear (self.lcd)
 		pause()
 
 	def setCursorPos (self, x, y):
-		check (pixi.lcdSetCursorPos (self.lcd, x, y))
+		pixi.lcdSetCursorPos (self.lcd, x, y)
 		pause()
 
 	def setBrightness (self, brightness):
-		check (pixi.lcdSetBrightness (self.lcd, brightness))
+		pixi.lcdSetBrightness (self.lcd, brightness)
 		pause()
 
 	def setText (self, text):
@@ -134,7 +123,7 @@ class Spi (object):
 	def __init__(self):
 		self.spi = None
 		spi = pi.SpiDevice()
-		check (pixi.pixiSpiOpen (spi))
+		pixi.pixiSpiOpen (spi)
 		self.spi = spi
 
 	def __del__(self):
@@ -143,11 +132,11 @@ class Spi (object):
 	def close (self):
 		spi = self.spi
 		if spi:
-			check (pi.spiClose (spi))
+			pi.spiClose (spi)
 			self.spi = None
 
 	def registerWrite (self, address, value):
-		check (pixi.registerWrite (self.spi, address, value))
+		pixi.registerWrite (self.spi, address, value)
 
 spi = None
 def globalSpi():
