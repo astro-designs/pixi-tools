@@ -23,14 +23,26 @@
 #include <linux/spi/spidev.h>
 #include <sys/ioctl.h>
 
-int pixi_pixiSpiOpen (SpiDevice* device) {
-	int result = pixi_spiOpen (PixiSpiChannel, PixiSpiSpeed, device);
+static SpiDevice pixiSpi = SPI_DEVICE_INIT;
+
+int pixi_openPixi (void)
+{
+	// TODO: instead rejecting if previously open,
+	// do ref-counting of open count?
+	LIBPIXI_PRECONDITION(pixiSpi.fd < 0);
+	int result = pixi_spiOpen (PixiSpiChannel, PixiSpiSpeed, &pixiSpi);
 	if (result < 0)
 		LIBPIXI_ERROR(-result, "Cannot open SPI channel to pixi");
 	return result;
 }
 
-static int readWriteValue16 (SpiDevice* device, uint function, uint address, uint16 value)
+int pixi_closePixi (void)
+{
+	LIBPIXI_PRECONDITION(pixiSpi.fd >= 0);
+	return pixi_spiClose (&pixiSpi);
+}
+
+static int readWriteValue16 (uint function, uint address, uint16 value)
 {
 	uint8_t buffer[4] = {
 		address,
@@ -38,40 +50,41 @@ static int readWriteValue16 (SpiDevice* device, uint function, uint address, uin
 		(value & 0xFF00) >> 8,
 		(value & 0x00FF)
 	};
-	int result = pixi_spiReadWrite(device, buffer, buffer, sizeof (buffer));
+	int result = pixi_spiReadWrite (&pixiSpi, buffer, buffer, sizeof (buffer));
 	if (result < 0)
 		return result;
 	return (buffer[2] << 8) | buffer[3];
 }
 
-int pixi_registerRead (SpiDevice* device, uint address)
+int pixi_registerRead (uint address)
 {
-	int result = readWriteValue16 (device, PixiSpiEnableRead16, address, 0);
+	int result = readWriteValue16 (PixiSpiEnableRead16, address, 0);
 	LIBPIXI_LOG_DEBUG("pixi_registerRead address=0x%02x result=%d", address, result);
 	return result;
 }
 
-int pixi_registerWrite (SpiDevice* device, uint address, ushort value)
+int pixi_registerWrite (uint address, ushort value)
 {
-	int result = readWriteValue16 (device, PixiSpiEnableWrite16, address, value);
+	int result = readWriteValue16 (PixiSpiEnableWrite16, address, value);
 	LIBPIXI_LOG_DEBUG("pixi_registerWrite address=0x%02x value=0x%04x result=%d", address, value, result);
 	return result;
 }
 
-int pixi_registerWriteMasked (SpiDevice* device, uint address, ushort value, ushort mask)
+int pixi_registerWriteMasked (uint address, ushort value, ushort mask)
 {
-	int previous = pixi_registerRead (device, address);
+	int previous = pixi_registerRead (address);
 	if (previous < 0)
 		return previous;
 	ushort masked = (value & mask) | (previous & ~mask);
-	int result = pixi_registerWrite (device, address, masked);
+	int result = pixi_registerWrite (address, masked);
 	if (result < 0)
 		return result;
 	return previous;
 }
 
-int pixi_multiRegisterOp (SpiDevice* device, RegisterOp* operations, uint opCount)
+int pixi_multiRegisterOp (RegisterOp* operations, uint opCount)
 {
+	LIBPIXI_PRECONDITION(pixiSpi.fd >= 0);
 	LIBPIXI_PRECONDITION_NOT_NULL(operations);
 	LIBPIXI_PRECONDITION(opCount < 256);
 
@@ -83,13 +96,13 @@ int pixi_multiRegisterOp (SpiDevice* device, RegisterOp* operations, uint opCoun
 		transfers[i].tx_buf        = (intptr_t) &operations[i].address;
 		transfers[i].rx_buf        = transfers[i].tx_buf;
 		transfers[i].len           = 4;
-		transfers[i].speed_hz      = device->speed;
-		transfers[i].delay_usecs   = device->delay;
-		transfers[i].bits_per_word = device->bitsPerWord;
+		transfers[i].speed_hz      = pixiSpi.speed;
+		transfers[i].delay_usecs   = pixiSpi.delay;
+		transfers[i].bits_per_word = pixiSpi.bitsPerWord;
 		transfers[i].cs_change     = 1;
 	}
-	LIBPIXI_LOG_TRACE("pixi_multiRegisterOp of fd=%d, count=%u", device->fd, opCount);
-	int result = ioctl (device->fd, SPI_IOC_MESSAGE(opCount), &transfers);
+	LIBPIXI_LOG_TRACE("pixi_multiRegisterOp of fd=%d, count=%u", pixiSpi.fd, opCount);
+	int result = ioctl (pixiSpi.fd, SPI_IOC_MESSAGE(opCount), &transfers);
 	if (result < 0)
 	{
 		int err = errno;

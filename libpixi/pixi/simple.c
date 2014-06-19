@@ -20,5 +20,4 @@
 
 #include <libpixi/pixi/simple.h>
 
-SpiDevice globalPixi = SPI_DEVICE_INIT;
 SpiDevice globalPixiAdc = SPI_DEVICE_INIT;

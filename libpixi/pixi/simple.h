@@ -32,19 +32,18 @@
 ///@defgroup PiXiSimple PiXi simple interface
 ///@{
 
-extern SpiDevice globalPixi;
 extern SpiDevice globalPixiAdc;
 
 ///	Open the global SPI channel to the PiXi.
 ///	@return PiXi FPGA version on success, or -errno on error
 static inline int64 pixiOpen (void) {
-	int result = pixi_pixiSpiOpen (&globalPixi);
+	int result = pixi_openPixi();
 	if (result < 0)
 	{
 		LIBPIXI_ERROR(-result, "Failed to open PiXi SPI channel");
 		return result;
 	}
-	int64 version = pixi_pixiFpgaGetVersion (&globalPixi);
+	int64 version = pixi_pixiFpgaGetVersion();
 	if (version <= 0)
 		LIBPIXI_LOG_ERROR("Failed to get valid PiXi FPGA version, got: %d", (int) result);
 	return version;
@@ -64,7 +63,7 @@ static inline int64 pixiOpenOrDie (void) {
 
 ///	Close the global SPI channel to the PiXi.
 static inline int pixiClose (void) {
-	return pixi_spiClose (&globalPixi);
+	return pixi_closePixi();
 }
 
 ///	Open the global SPI channel to the PiXi ADC.
@@ -95,37 +94,37 @@ static inline int pixiAdcClose (void) {
 
 ///	Wrapper for @ref pixi_registerRead
 static inline int registerRead (uint address) {
-	return pixi_registerRead (&globalPixi, address);
+	return pixi_registerRead (address);
 }
 
 ///	Wrapper for @ref pixi_registerWrite
 static inline int registerWrite (uint address, ushort value) {
-	return pixi_registerWrite (&globalPixi, address, value);
+	return pixi_registerWrite (address, value);
 }
 
 ///	Wrapper for @ref pixi_multiRegisterOp
 static inline int multiRegisterOp (RegisterOp* operations, uint opCount) {
-	return pixi_multiRegisterOp (&globalPixi, operations, opCount);
+	return pixi_multiRegisterOp (operations, opCount);
 }
 
 ///	Wrapper for @ref pixi_pixiGpioSetPinMode
 static inline int gpioSetPinMode (uint gpioController, uint pin, uint mode) {
-	return pixi_pixiGpioSetPinMode (&globalPixi, gpioController, pin, mode);
+	return pixi_pixiGpioSetPinMode (gpioController, pin, mode);
 }
 
 ///	Wrapper for @ref pixi_pixiGpioWritePin
 static inline int gpioWritePin (uint gpioController, uint pin, uint value) {
-	return pixi_pixiGpioWritePin (&globalPixi, gpioController, pin, value);
+	return pixi_pixiGpioWritePin (gpioController, pin, value);
 }
 
 ///	Wrapper for @ref pixi_pwmWritePin
 static inline int pwmWritePin (uint pin, uint dutyCycle) {
-	return pixi_pwmWritePin (&globalPixi, pin, dutyCycle);
+	return pixi_pwmWritePin (pin, dutyCycle);
 }
 
 ///	Wrapper for @ref pixi_pwmWritePinPercent
 static inline int pwmWritePinPercent (uint pin, double dutyCycle) {
-	return pixi_pwmWritePinPercent (&globalPixi, pin, dutyCycle);
+	return pixi_pwmWritePinPercent (pin, dutyCycle);
 }
 
 ///	Wrapper for @ref pixi_pixiAdcRead

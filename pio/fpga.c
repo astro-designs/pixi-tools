@@ -28,16 +28,15 @@ static const char DefaultFpga[] = "/home/pixi-200/pixi.bin"; // TODO: belongs in
 
 static int64 getVersion (void)
 {
-	SpiDevice spi = SpiDeviceInit;
-	int result = pixi_pixiSpiOpen (&spi);
+	int result = pixi_openPixi();
 	if (result < 0)
 	{
 		PIO_ERROR(-result, "Error opening PiXi SPI connection");
 		return result;
 	}
 
-	int64 version = pixi_pixiFpgaGetVersion (&spi);
-	pixi_spiClose (&spi);
+	int64 version = pixi_pixiFpgaGetVersion();
+	pixi_closePixi();
 	if (version < 0)
 	{
 		PIO_ERROR(-version, "Error getting FPGA version");
@@ -159,7 +158,7 @@ static const Command* commands[] =
 };
 
 
-static CommandGroup pixiSpiGroup =
+static CommandGroup pixiFpgaGroup =
 {
 	.name      = "pixi-fpga",
 	.count     = ARRAY_COUNT(commands),
@@ -169,5 +168,5 @@ static CommandGroup pixiSpiGroup =
 
 static void PIO_CONSTRUCTOR (101) initGroup (void)
 {
-	addCommandGroup (&pixiSpiGroup);
+	addCommandGroup (&pixiFpgaGroup);
 }

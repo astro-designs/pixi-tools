@@ -104,7 +104,6 @@ enum CmdState
 
 typedef struct State
 {
-	SpiDevice device;
 	bool      usePixi;
 
 	uint8     rotary1;
@@ -142,10 +141,10 @@ static void clearDisplay (State* state)
 	if (state->usePixi)
 	{
 		// pixi_lcdClear seems to cause problems
-		pixi_lcdSetCursorPos (&state->device, 0, 0);
+		pixi_lcdSetCursorPos (0, 0);
 		state->display[0][DisplayChars] = 0;
-		pixi_lcdWriteStr (&state->device, state->display[0]);
-		pixi_lcdWriteStr (&state->device, state->display[0]);
+		pixi_lcdWriteStr (state->display[0]);
+		pixi_lcdWriteStr (state->display[0]);
 	}
 }
 
@@ -153,7 +152,6 @@ static void clearDisplay (State* state)
 static void initState (State* state)
 {
 	memset (state, 0, sizeof (State));
-	state->device = SpiDeviceInit;
 }
 
 
@@ -202,7 +200,7 @@ static bool writeDisplayChar (State* state, byte ch)
 		char str[2] = {ch, 0};
 		if (ch == 0)
 			str[0] = ' ';
-		pixi_lcdWriteStr (&state->device, str);
+		pixi_lcdWriteStr (str);
 	}
 	return update;
 }
@@ -218,8 +216,8 @@ static void eraseToLineEnd (State* state)
 	if (state->usePixi)
 	{
 		state->display[y][DisplayChars] = 0;
-		pixi_lcdWriteStr (&state->device, state->display[y] + x);
-		pixi_lcdSetCursorPos (&state->device, x, y);
+		pixi_lcdWriteStr (state->display[y] + x);
+		pixi_lcdSetCursorPos (x, y);
 	}
 }
 
@@ -228,7 +226,7 @@ static void sendGotoPos (State* state)
 {
 	if (!state->usePixi)
 		return;
-	pixi_lcdSetCursorPos (&state->device, state->xPos, state->yPos);
+	pixi_lcdSetCursorPos (state->xPos, state->yPos);
 }
 
 static const char printableChars[] = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz,./<>?;:'@#~][}{=-+_`!\"$^&*()";
@@ -407,8 +405,8 @@ static void appendChar (State* state, char key)
 			system ("halt");
 			if (state->usePixi)
 			{
-				pixi_lcdSetCursorPos (&state->device, 0, 1);
-				pixi_lcdWriteStr (&state->device, "Halting...");
+				pixi_lcdSetCursorPos (0, 1);
+				pixi_lcdWriteStr ("Halting...");
 			}
 		}
 	}
@@ -488,7 +486,7 @@ static void readKeypad (State* state)
 
 	for (int i = 0; i < 20; i++) // avoid infinite loops
 	{
-		int reg = pixi_registerRead (&state->device, KeyPadRegister);
+		int reg = pixi_registerRead (KeyPadRegister);
 		if (reg & KeyBufferEmpty)
 			return;
 
@@ -520,8 +518,8 @@ static void readRotary (State* state)
 	if (!state->usePixi)
 		return;
 
-	uint8 rotary1 = pixi_registerRead (&state->device, Rotary1Register);
-	uint8 rotary2 = pixi_registerRead (&state->device, Rotary2Register);
+	uint8 rotary1 = pixi_registerRead (Rotary1Register);
+	uint8 rotary2 = pixi_registerRead (Rotary2Register);
 	if (rotary1 != state->rotary1)
 	{
 		int8 delta = state->rotary1 - rotary1;
@@ -601,7 +599,7 @@ static int remoteFn (const Command* command, uint argc, char* argv[])
 		PIO_ERROR(-serialFd, "Failed to open serial device");
 		return serialFd;
 	}
-	int result = pixi_lcdOpen (&state.device);
+	int result = pixi_lcdOpen();
 	if (result < 0)
 	{
 		state.usePixi = false;
@@ -610,8 +608,8 @@ static int remoteFn (const Command* command, uint argc, char* argv[])
 	else
 	{
 		state.usePixi = true;
-		state.rotary1 = pixi_registerRead (&state.device, Rotary1Register);
-		state.rotary2 = pixi_registerRead (&state.device, Rotary2Register);
+		state.rotary1 = pixi_registerRead (Rotary1Register);
+		state.rotary2 = pixi_registerRead (Rotary2Register);
 	}
 	clearDisplay (&state);
 
@@ -624,7 +622,7 @@ static int remoteFn (const Command* command, uint argc, char* argv[])
 
 	pixi_close (serialFd);
 	if (state.usePixi)
-		pixi_lcdClose (&state.device);
+		pixi_closePixi();
 	return result;
 }
 

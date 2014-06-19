@@ -53,17 +53,15 @@ static int digitalRead (int pin)
 	return pixi_gpioReadPin(pin);
 }
 
-int64 pixi_pixiFpgaGetVersion (SpiDevice* spi)
+int64 pixi_pixiFpgaGetVersion (void)
 {
-	LIBPIXI_PRECONDITION_NOT_NULL(spi);
-
-	int h = pixi_registerRead (spi, Pixi_FPGA_build_time2);
+	int h = pixi_registerRead (Pixi_FPGA_build_time2);
 	if (h < 0)
 		return h;
-	int m = pixi_registerRead (spi, Pixi_FPGA_build_time1);
+	int m = pixi_registerRead (Pixi_FPGA_build_time1);
 	if (m < 0)
 		return m;
-	int l = pixi_registerRead (spi, Pixi_FPGA_build_time0);
+	int l = pixi_registerRead (Pixi_FPGA_build_time0);
 	if (l < 0)
 		return l;
 	LIBPIXI_LOG_DEBUG("Got PiXi FPGA version %04x,%04x,%04x", h, m, l);
@@ -238,11 +236,9 @@ int pixi_pixiFpgaLoadFile (const char* filename)
 	return result;
 }
 
-int64 pixi_pixiFpgaGetBuildTime (SpiDevice* spi)
+int64 pixi_pixiFpgaGetBuildTime (void)
 {
-	LIBPIXI_PRECONDITION_NOT_NULL(spi);
-
-	int64 version = pixi_pixiFpgaGetVersion (spi);
+	int64 version = pixi_pixiFpgaGetVersion();
 	if (version < 0)
 		return version;
 	int64 build = pixi_pixiFpgaVersionToTime (version);

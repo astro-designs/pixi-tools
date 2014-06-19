@@ -2,7 +2,6 @@
 #define libpixi_pixi_pwm_h__included
 
 
-#include <libpixi/pixi/spi.h>
 #include <libpixi/common.h>
 
 LIBPIXI_BEGIN_DECLS
@@ -11,18 +10,16 @@ LIBPIXI_BEGIN_DECLS
 ///@{
 
 ///	Set the state of the PiXi PWM controller
-///	@param device PiXi SPI device
 ///	@param pwm PWM device [0,7]
 ///	@param dutyCycle PWM duty cycle [0,1023]
 ///	@return 0 on success, -errno on error
-int pixi_pwmWritePin (SpiDevice* device, uint pwm, uint dutyCycle);
+int pixi_pwmWritePin (uint pwm, uint dutyCycle);
 
 ///	Set the state of the PiXi PWM controller
-///	@param device PiXi SPI device
 ///	@param pwm PWM device [0,7]
 ///	@param dutyCycle PWM duty cycle percent [0,100]
 ///	@return 0 on success, -errno on error
-int pixi_pwmWritePinPercent (SpiDevice* device, uint pwm, double dutyCycle);
+int pixi_pwmWritePinPercent (uint pwm, double dutyCycle);
 
 ///@} defgroup
 

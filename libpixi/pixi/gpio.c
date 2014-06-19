@@ -26,32 +26,32 @@
 // TODO: named constants for addresses
 // TODO: check with Mark that these are really doing the right thing
 
-static int setGpioMode (SpiDevice* spi, PixiGpioMode mode, int addr1, int addr2, int addr3)
+static int setGpioMode (PixiGpioMode mode, int addr1, int addr2, int addr3)
 {
 	uint16_t value = mode;
-	pixi_registerWrite (spi, addr1, value);
-	int result = pixi_registerWrite (spi, addr2, value);
+	pixi_registerWrite (addr1, value);
+	int result = pixi_registerWrite (addr2, value);
 	if (addr3 >= 0)
-		result = pixi_registerWrite (spi, addr3, value);
+		result = pixi_registerWrite (addr3, value);
 	if (result < 0)
 		LIBPIXI_ERROR(-result, "pixi_registerWrite");
 	return result;
 }
 
-int pixi_pixiGpioSetMode (SpiDevice* spi, uint gpio, PixiGpioMode mode)
+int pixi_pixiGpioSetMode (uint gpio, PixiGpioMode mode)
 {
 	LIBPIXI_PRECONDITION(gpio >= 1 && gpio <= 3);
 
 	switch (gpio)
 	{
-	case 1: return setGpioMode (spi, mode, Pixi_GPIO1_00_07_mode, Pixi_GPIO1_08_15_mode, Pixi_GPIO1_16_23_mode);
-	case 2: return setGpioMode (spi, mode, Pixi_GPIO2_00_07_mode, Pixi_GPIO2_08_15_mode, -1);
-	case 3: return setGpioMode (spi, mode, Pixi_GPIO3_00_07_mode, Pixi_GPIO3_08_15_mode, -1);
+	case 1: return setGpioMode (mode, Pixi_GPIO1_00_07_mode, Pixi_GPIO1_08_15_mode, Pixi_GPIO1_16_23_mode);
+	case 2: return setGpioMode (mode, Pixi_GPIO2_00_07_mode, Pixi_GPIO2_08_15_mode, -1);
+	case 3: return setGpioMode (mode, Pixi_GPIO3_00_07_mode, Pixi_GPIO3_08_15_mode, -1);
 	}
 	return -EINVAL; // unreachable
 }
 
-int pixi_pixiGpioSetPinMode (SpiDevice* spi, uint gpioController, uint pin, uint mode)
+int pixi_pixiGpioSetPinMode (uint gpioController, uint pin, uint mode)
 {
 	LIBPIXI_PRECONDITION(gpioController >= 1 && gpioController <= 3);
 	LIBPIXI_PRECONDITION(mode < 4);
@@ -76,13 +76,13 @@ int pixi_pixiGpioSetPinMode (SpiDevice* spi, uint gpioController, uint pin, uint
 	LIBPIXI_LOG_DEBUG("Setting GPIO controller=%u pin=%u mode=%u [address=0x%x regValue=0x%x]",
 		gpioController, pin, mode, address, regValue);
 
-	int result = pixi_registerWriteMasked (spi, address, regValue, regMask);
+	int result = pixi_registerWriteMasked (address, regValue, regMask);
 	if (result < 0)
 		LIBPIXI_ERROR(-result, "pixi_pixiWriteValueMasked");
 	return result;
 }
 
-int pixi_pixiGpioWritePin (SpiDevice* spi, uint gpioController, uint pin, uint value)
+int pixi_pixiGpioWritePin (uint gpioController, uint pin, uint value)
 {
 	LIBPIXI_PRECONDITION(gpioController >= 1 && gpioController <= 3);
 	LIBPIXI_PRECONDITION(value <= 1);
@@ -109,7 +109,7 @@ int pixi_pixiGpioWritePin (SpiDevice* spi, uint gpioController, uint pin, uint v
 
 	// FIXME: writeMasked does not really make sense if any pins are in input mode.
 	// Should instead store all register states internally.
-	int result = pixi_registerWriteMasked (spi, address, regValue, regMask);
+	int result = pixi_registerWriteMasked (address, regValue, regMask);
 	if (result < 0)
 		LIBPIXI_ERROR(-result, "pixi_pixiWriteValueMasked");
 	return result;

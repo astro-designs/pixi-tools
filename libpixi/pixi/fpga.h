@@ -23,7 +23,6 @@
 
 
 #include <libpixi/util/file.h>
-#include <libpixi/pi/spi.h>
 #include <time.h>
 
 LIBPIXI_BEGIN_DECLS
@@ -40,18 +39,16 @@ int pixi_pixiFpgaLoadFile (const char* filename);
 int pixi_pixiFpgaLoadBuffer (const Buffer* buffer);
 
 ///	Get the version of the FPGA from the PiXi.
-///	@param spi a previously opened PiXi connection
 ///	@return >=0 on success, -errno on error.
-int64 pixi_pixiFpgaGetVersion (SpiDevice* spi);
+int64 pixi_pixiFpgaGetVersion (void);
 
 ///	Convert an FPGA version to a time_t compatible value.
 ///	@return >=0 on success, -errno on error.
 int64 pixi_pixiFpgaVersionToTime (int64 version);
 
 ///	More or less: pixi_pixiFpgaVersionToTime (pixi_pixiFpgaGetVersion())
-///	@param spi a previously opened PiXi connection
 ///	@return >=0 on success, -errno on error.
-int64 pixi_pixiFpgaGetBuildTime (SpiDevice* spi);
+int64 pixi_pixiFpgaGetBuildTime (void);
 
 ///@} defgroup
 

@@ -43,22 +43,26 @@ enum
 	PixiSpiEnableRead16  = 0x80
 };
 
-///	Open the Pi SPI channel to the pixi. When done with @c device,
-///	call pixi_spiClose().
+///	Open the Pi SPI channel to the pixi. When finished,
+///	call pixi_pixiClose().
 ///	@return 0 on success, or -errno on error
-int pixi_pixiSpiOpen (SpiDevice* device);
+int pixi_openPixi (void);
+
+///	Close the Pi SPI channel to the pixi.
+///	@return 0 on success, or -errno on error
+int pixi_closePixi (void);
 
 ///	Read a @c value from a PiXi register.
 ///	@return the register value on success, or -errno on error
-int pixi_registerRead (SpiDevice* device, uint address);
+int pixi_registerRead (uint address);
 
 ///	Write a @c value to a PiXi register.
 ///	@return the read back value on success, or -errno on error
-int pixi_registerWrite (SpiDevice* device, uint address, ushort value);
+int pixi_registerWrite (uint address, ushort value);
 
 ///	Perform a read/write to set the part of a register specified by @c mask to @c value.
 ///	@return the previous register value, or -errno on error
-int pixi_registerWriteMasked (SpiDevice* device, uint address, ushort value, ushort mask);
+int pixi_registerWriteMasked (uint address, ushort value, ushort mask);
 
 typedef struct RegisterOp
 {
@@ -73,7 +77,7 @@ typedef struct RegisterOp
 
 ///	Perform multiple register read/write operations in a single kernel call
 ///	@return 0 on success, or -errno on error
-int pixi_multiRegisterOp (SpiDevice* device, RegisterOp* operations, uint opCount);
+int pixi_multiRegisterOp (RegisterOp* operations, uint opCount);
 
 ///@} defgroup
 
