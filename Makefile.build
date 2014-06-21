@@ -22,6 +22,9 @@ python_rootdir   = $(DESTDIR:%=--root=%)
 
 CP = cp
 
+INSTALL_EXEC = install -v
+INSTALL_DATA = install -v -m 0644
+
 common_CFLAGS = -std=c99 -D_GNU_SOURCE
 
 toolsdir = $(topdir)/tools
@@ -196,7 +199,7 @@ install-exec: $(APPS)
 	$(ECHO) installing executables
 	$(CMD)mkdir -p $(DESTDIR)$(bindir)
 	$(CMD)for target in $(APPS); do \
-		install -v $$target $(DESTDIR)$(bindir)/ || exit 1 ; \
+		$(INSTALL_EXEC) $$target $(DESTDIR)$(bindir)/ || exit 1 ; \
 	done
 
 uninstall-exec:
@@ -208,7 +211,7 @@ uninstall-exec:
 install-libraries: $(LIBS)
 	$(ECHO) installing libraries
 	$(CMD)mkdir -p $(DESTDIR)$(libdir)
-	$(CMD)install -v $(libpixi) $(DESTDIR)$(libdir)/libpixi.so.$(libpixi_ABI)
+	$(CMD)$(INSTALL_EXEC) $(libpixi) $(DESTDIR)$(libdir)/libpixi.so.$(libpixi_ABI)
 	$(CMD)ln -sf libpixi.so.$(libpixi_ABI) $(DESTDIR)$(libdir)/libpixi.so
 
 uninstall-libraries:
@@ -220,7 +223,7 @@ install-headers:
 	$(CMD)cd $(topdir) && for target in $(HEADERS); do \
 		targetinclude=$(DESTDIR)$(includedir)/$$(dirname $$target); \
 		mkdir -p -v $$targetinclude || exit 1; \
-		install -v -m 0644 $$target $$targetinclude || exit 1 ; \
+		$(INSTALL_DATA) $$target $$targetinclude || exit 1 ; \
 	done
 
 uninstall-headers:
@@ -242,10 +245,10 @@ install-python: $(PYTHON_EXTS) $(PYTHON_MODS) pylibdir
 	$(ECHO) installing python modules
 	$(CMD)mkdir -p $(DESTDIR)$(pylibdir)/$(pythonPackage)
 	$(CMD)for target in $(PYTHON_EXTS); do \
-		install -v $$target $(DESTDIR)$(pylibdir)/$(pythonPackage)/ || exit 1 ; \
+		$(INSTALL_EXEC) $$target $(DESTDIR)$(pylibdir)/$(pythonPackage)/ || exit 1 ; \
 	done
 	$(CMD)for target in $(PYTHON_MODS); do \
-		install -m 0644 -v $$target $(DESTDIR)$(pylibdir)/$(pythonPackage)/ || exit 1 ; \
+		$(INSTALL_DATA) $$target $(DESTDIR)$(pylibdir)/$(pythonPackage)/ || exit 1 ; \
 	done
 
 uninstall-python: pylibdir
