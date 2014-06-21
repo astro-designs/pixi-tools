@@ -107,10 +107,10 @@ $(pixisim): $(libpixi) $(pixisim_OBJECTS)
 
 $(pio): $(libpixi) $(pio_OBJECTS)
 
-$(_pi): build_CFLAGS = $(common_CFLAGS) $(PYTHON_CFLAGS)
+$(_pi): build_CFLAGS = $(common_CFLAGS) $(PYTHON_CFLAGS) -Wno-missing-prototypes -Wno-missing-declarations
 $(_pi): $(libpixi) $(_pi_OBJECTS)
 
-$(_pixi): build_CFLAGS = $(common_CFLAGS) $(PYTHON_CFLAGS)
+$(_pixi): build_CFLAGS = $(common_CFLAGS) $(PYTHON_CFLAGS) -Wno-missing-prototypes -Wno-missing-declarations
 $(_pixi): $(libpixi) $(_pixi_OBJECTS)
 
 swig/%.c: swig/%.i
