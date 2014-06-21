@@ -21,7 +21,8 @@
 
 from __future__ import print_function
 
-import pixitools.pi
+from pixitools.pi import initLib
+from pixitools.pixi import openPixi
 from pixitools import basicLogging
 from pixitools.httpd import Server
 from os import chdir, getcwd
@@ -44,10 +45,11 @@ if len (sys.argv) > 2:
 
 basicLogging()
 
-pixitools.pi.initLib()
+initLib()
 
 print ("Changing directory to:", dname)
 chdir (dname)
 httpd = Server (port)
+openPixi()
 print ("Starting PiXi web-server on port", port)
 httpd.serve_forever()

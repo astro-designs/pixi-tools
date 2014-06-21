@@ -17,11 +17,11 @@
 #    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 from pixitools import pi
-from pixitools.pi import gpioSysGetPinState, gpioGetPinState, gpioMapRegisters, gpioUnmapRegisters, gpioDirectionToStr, gpioEdgeToStr, GpioState, SpiDevice
-from pixitools.pixi import pixiSpiOpen, registerWrite as _registerWrite, pixiGpioSetPinMode as _pixiGpioSetPinMode
+from pixitools.pi import gpioSysGetPinState, gpioGetPinState, gpioMapRegisters, gpioUnmapRegisters, gpioDirectionToStr, gpioEdgeToStr, GpioState
+from pixitools.pixi import openPixi, registerWrite as _registerWrite, pixiGpioSetPinMode as _pixiGpioSetPinMode
 from pixitools.pixi import pixiGpioWritePin as _pixiGpioWritePin, pwmWritePin as _pwmWritePin, pwmWritePinPercent as _pwmWritePinPercent
 from pixitools.pixi import pixiFpgaGetBuildTime as _pixiFpgaGetBuildTime
-from pixitools.pixix import Lcd, Spi, globalSpi as getSpi
+from pixitools.pixix import Lcd
 from pixitools.rover import setMotion
 from os.path import isdir, join
 from os import listdir, makedirs
@@ -104,7 +104,7 @@ addCommand (gpioSysGetStates)
 
 def registerWrite (address, value):
 	'Write to a PiXi register via SPI'
-	if _registerWrite (getSpi(), address, value) < 0:
+	if _registerWrite (address, value) < 0:
 		raise CommandError ("Failed to write SPI value")
 addCommand (registerWrite)
 
@@ -120,22 +120,22 @@ addCommand (lcdSetText)
 
 def gpioWritePin (gpioController, pin, value):
 	'Set the output value of a PiXi GPIO pin'
-	_pixiGpioWritePin (getSpi(), gpioController, pin, value)
+	_pixiGpioWritePin (gpioController, pin, value)
 addCommand (gpioWritePin)
 
 def gpioSetMode (gpioController, pin, mode):
 	'Set the mode of a PiXi GPIO pin'
-	_pixiGpioSetPinMode (getSpi(), gpioController, pin, mode)
+	_pixiGpioSetPinMode (gpioController, pin, mode)
 addCommand (gpioSetMode)
 
 def pwmWritePin (pwm, dutyCycle):
 	'Set the state of the PiXi PWM'
-	_pwmWritePin (getSpi(), pwm, dutyCycle)
+	_pwmWritePin (pwm, dutyCycle)
 addCommand (pwmWritePin)
 
 def pwmWritePinPercent (pwm, dutyCycle):
 	'Set the state of the PiXi PWM'
-	_pwmWritePinPercent (getSpi(), pwm, dutyCycle)
+	_pwmWritePinPercent (pwm, dutyCycle)
 addCommand (pwmWritePinPercent)
 
 def pixiFpgaGetBuildTime():

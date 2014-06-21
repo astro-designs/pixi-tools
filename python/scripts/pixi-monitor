@@ -7,7 +7,7 @@ from subprocess import call
 from time import localtime, sleep, strftime
 from threading import Thread, RLock
 from pixitools.pi import SpiDevice, spiClose
-from pixitools.pixi import pixiAdcOpen, pixiSpiOpen, pixiAdcRead, pixiSpiOpen, registerRead, Pixi_Switch_in
+from pixitools.pixi import pixiAdcOpen, pixiAdcRead, openPixi, registerRead, Pixi_Switch_in
 from pixitools import pixix
 from pixitools.pixix import Lcd
 
@@ -17,10 +17,8 @@ persistent = "/run/shm/pixi-display"
 adc = SpiDevice()
 pixiAdcOpen (adc)
 
-spi = SpiDevice()
-pixiSpiOpen (spi)
-
-lcd = Lcd() #persistent)
+openPixi()
+lcd = Lcd()
 #lcd.clear()
 lcdLock = RLock()
 
@@ -100,7 +98,7 @@ class ButtonReader (Thread):
 	def run (self):
 		prev = -1
 		while True:
-			value = registerRead (spi, Pixi_Switch_in)
+			value = registerRead (Pixi_Switch_in)
 			if value != prev:
 				buttons = parseButtons (value)
 				if buttons == panicButtons:

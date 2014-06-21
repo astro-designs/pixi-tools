@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import sys
+from pixitools.pixi import openPixi
 from pixitools.rover import *
 from time import sleep
 
@@ -61,8 +62,8 @@ def run():
 	print ("usage: %s speed-L speed-R" % sys.argv[0])
 	sys.exit (1)
 
+openPixi()
 try:
 	run()
 finally:
 	enableMotor (False)
-#	spi.close()

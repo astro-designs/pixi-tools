@@ -1,14 +1,11 @@
 from __future__ import print_function
 
 from pixitools.pixi import pixiGpioWritePin, pwmWritePin
-from pixitools.pixix import globalSpi
 import logging
 
 log = logging.getLogger(__name__)
 info = log.info
 debug = log.debug
-
-spi = globalSpi()
 
 forwards =  0
 reverse  =  1
@@ -24,13 +21,13 @@ motorEnabled = False
 
 def enableMotor (enable = True):
 	info ("Setting motor enable to %s", enable)
-	pixiGpioWritePin (spi, motorGpio, motorGpioPin, enable)
+	pixiGpioWritePin (motorGpio, motorGpioPin, enable)
 	global motorEnabled
 	motorEnabled = enable
 
 def pwmSet (pin, value):
 #	print ('pwmWritePin', pin, hex (value))
-	pwmWritePin (spi, pin, value)
+	pwmWritePin (pin, value)
 
 motorFlags = [0, 0x8000] # forward, reverse
 

@@ -34,10 +34,7 @@ LcdLineLen = 40
 class Lcd (object):
 	def __init__(self, filename = None):
 		self.filename = filename # persistent state, since we cannot read from the panel
-		self.lcd = None
-		lcd = pixi.SpiDevice()
-		pixi.lcdOpen (lcd)
-		self.lcd = lcd
+		pixi.lcdEnable()
 		self.lines = [' ' * LcdLineLen, ' ' * LcdLineLen]
 		self.loadState()
 
@@ -60,29 +57,26 @@ class Lcd (object):
 			pass
 
 	def close (self):
-		lcd = self.lcd
-		if lcd:
-			pixi.lcdClose (lcd)
-			self.lcd = None
+		pass #pixi.closePixi()
 
 	def write (self, text):
 #		info ("Writing panel text [%s]", text)
-		pixi.lcdWriteStr (self.lcd, text)
+		pixi.lcdWriteStr (text)
 		pause()
 
 	def flush (self):
 		pass
 
 	def clear (self):
-		pixi.lcdClear (self.lcd)
+		pixi.lcdClear()
 		pause()
 
 	def setCursorPos (self, x, y):
-		pixi.lcdSetCursorPos (self.lcd, x, y)
+		pixi.lcdSetCursorPos (x, y)
 		pause()
 
 	def setBrightness (self, brightness):
-		pixi.lcdSetBrightness (self.lcd, brightness)
+		pixi.lcdSetBrightness (brightness)
 		pause()
 
 	def setText (self, text):
@@ -118,36 +112,6 @@ class Lcd (object):
 		self.setCursorPos (0, 0)
 		self.write (lines[0] + lines[1])
 		self.saveState()
-
-class Spi (object):
-	def __init__(self):
-		self.spi = None
-		spi = pi.SpiDevice()
-		pixi.pixiSpiOpen (spi)
-		self.spi = spi
-
-	def __del__(self):
-		self.close()
-
-	def close (self):
-		spi = self.spi
-		if spi:
-			pi.spiClose (spi)
-			self.spi = None
-
-	def registerWrite (self, address, value):
-		pixi.registerWrite (self.spi, address, value)
-
-spi = None
-def globalSpi():
-	global spi
-	if not spi:
-		spi = Spi()
-	return spi.spi
-
-if "no" == getenv ("TEST_HARDWARE"):
-	def globalSpi():
-		return None
 
 ServoA1 = 0x40
 ServoA2 = 0x41

@@ -20,16 +20,19 @@
 
 
 from __future__ import print_function
-from pixitools import pixi, pixix
+from pixitools import pixix
+from pixitools.pi import getLibVersion
+from pixitools.pixi import openPixi
 from time import sleep
 
+openPixi()
 lcd = pixix.Lcd()
 echo = lcd.echo
 
 lcd.clear()
 lcd.setBrightness (0)
 
-echo ("libpixi version " + pixi.getLibVersion())
+echo ("libpixi version " + getLibVersion())
 echo ("pixi-demo")
 
 for n in range (3, 0, -1):
@@ -40,15 +43,12 @@ for n in range (3):
 	sleep (0.1)
 	lcd.setBrightness (n)
 
-import pixix
-spi = pixix.Spi()
-
 def servo (address):
-	return lambda value: spi.write16 (address, value)
+	return lambda value: registerWrite (address, value)
 
 class Servo (object):
 	def __init__ (self, address, values = [50, 52]):
-		self.move = lambda value: spi.write16 (address, value)
+		self.move = lambda value: registerWrite (address, value)
 		self.address = address
 		self.index  = 0
 		self.values = values
