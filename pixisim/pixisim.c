@@ -22,6 +22,7 @@
 //	Overrides some functions in libpixi - it's intended to be built as a
 //	shared library and loaded using LD_PRELOAD.
 
+#include <libpixi/libpixi.h>
 #include <libpixi/pixi/spi.h>
 #include <libpixi/util/file.h>
 #include <libpixi/util/log.h>
@@ -31,6 +32,11 @@
 
 static uint16 registers[256];
 static uint16 version[3] = {0x1213, 0x0007, 0x1031};
+
+int pixi_getPiBoardVersion (void)
+{
+	return 2;
+}
 
 int pixi_spiOpen (uint channel, uint speed, SpiDevice* device)
 {
