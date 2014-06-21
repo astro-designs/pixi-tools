@@ -45,18 +45,28 @@ typedef enum LogLevel
 
 extern LogLevel pixi_logLevel;
 extern bool     pixi_logColors;
+extern bool     pixi_logFileContext;
 /// If stdout is colour capable terminal, this has
 /// the escape sequence to enable bold text, otherwise
 /// it is an empty string.
 extern const char* pixi_stdoutBold;
 extern const char* pixi_stdoutReset;
 
+typedef struct LogContext
+{
+	LogLevel     level;
+	const char*  file;
+	int          line;
+	void*        reserved1;
+	void*        reserved2;
+} LogContext;
+
 void pixi_logInit (LogLevel level);
 LogLevel pixi_strToLogLevel (const char* levelStr, LogLevel defaultLevel);
 const char* pixi_logLevelToStr (LogLevel level);
 
-void pixi_logPrint (LogLevel level, const char* format, ...) LIBPIXI_PRINTF_ARG(2);
-void pixi_logError (LogLevel level, int errnum, const char* format, ...) LIBPIXI_PRINTF_ARG(3);
+void pixi_logPrint (const LogContext* context, const char* format, ...) LIBPIXI_PRINTF_ARG(2);
+void pixi_logError (const LogContext* context, int errnum, const char* format, ...) LIBPIXI_PRINTF_ARG(3);
 
 /// Check if logging at @a level should be output.
 static inline bool pixi_isLogLevelEnabled (LogLevel level) {
@@ -66,13 +76,19 @@ static inline bool pixi_isLogLevelEnabled (LogLevel level) {
 /// Logs a format string to stderr. example:
 /// <pre>LIBPIXI_GENERAL_LOG(pixi_logLevel, LogLevelError, "Unexpected value for gpio file %s: %s", fname, buf);</pre>
 /// Don't use this directly, use one of the wrapper macros like LIBPIXI_LOG_ERROR.
-#define LIBPIXI_GENERAL_LOG(         confLevel, level,         ...) \
-	do {if ((level) >= confLevel) {pixi_logPrint (level,         __VA_ARGS__);}} while (0)
+#define LIBPIXI_GENERAL_LOG(confLevel, entryLevel, ...) \
+	do {if ((entryLevel) >= confLevel) {\
+		LogContext context = {.level = entryLevel	, .file = __FILE__, .line = __LINE__, .reserved1 = 0, .reserved2 = 0};\
+		pixi_logPrint (&context, __VA_ARGS__);\
+	}} while (0)
 /// Like LIBPIXI_GENERAL_LOG, but adds a suffix along the lines of perror(): (": %s", strerror(errnum)). example:
 /// <pre>LIBPIXI_GENERAL_STRERROR_LOG(pixi_logLevel, LogLevelError, errno, "Could not open file %", fname);</pre>
 /// Don't use this directly, use one of the wrapper macros like LIBPIXI_ERROR.
-#define LIBPIXI_GENERAL_STRERROR_LOG(confLevel, level, errnum, ...) \
-	do {if ((level) >= confLevel) {pixi_logError (level, errnum, __VA_ARGS__);}} while (0)
+#define LIBPIXI_GENERAL_STRERROR_LOG(confLevel, entryLevel, errnum, ...) \
+	do {if ((entryLevel) >= confLevel) {\
+		LogContext context = {.level = entryLevel, .file = __FILE__, .line = __LINE__, .reserved1 = 0, .reserved2 = 0};\
+		pixi_logError (&context, errnum, __VA_ARGS__);\
+	}} while (0)
 
 /// Wraps LIBPIXI_GENERAL_LOG with confLevel=pixi_logLevel
 #define LIBPIXI_LOG(         level,         ...) LIBPIXI_GENERAL_LOG          (pixi_logLevel, level,         __VA_ARGS__)

@@ -30,6 +30,7 @@
 
 LogLevel pixi_logLevel = LogLevelInfo;
 bool     pixi_logColors = false;
+bool     pixi_logFileContext = false;
 
 const char* pixi_stdoutBold  = "";
 const char* pixi_stdoutReset = "";
@@ -112,12 +113,15 @@ void pixi_logInit (LogLevel level)
 
 	// TODO: this check is a bit too crude:
 	pixi_logColors = useAnsiColors();
-	if (!pixi_logColors)
-		return;
-	levelColors[LogLevelWarn]  = AnsiGreen;
-	levelColors[LogLevelError] = AnsiRed;
-	levelColors[LogLevelFatal] = AnsiBoldRed;
-	levelColors[LogLevelOff]   = AnsiReset;
+	if (pixi_logColors)
+	{
+		levelColors[LogLevelWarn]  = AnsiGreen;
+		levelColors[LogLevelError] = AnsiRed;
+		levelColors[LogLevelFatal] = AnsiBoldRed;
+		levelColors[LogLevelOff]   = AnsiReset;
+	}
+	const char* ctx = getenv ("LIBPIXI_LOG_CODE_CONTEXT");
+	pixi_logFileContext = (ctx && 0 == strcasecmp (ctx, "yes"));
 
 	logFilename = getenv ("LIBPIXI_LOG_FILE");
 	if (logFilename)
@@ -155,16 +159,24 @@ const char* pixi_logLevelToStr (LogLevel level)
 	}
 }
 
-static void logVPrintf (LogLevel level, const char* errorStr, const char* format, va_list formatArgs)
+static void logVPrintf (const LogContext* context, const char* errorStr, const char* format, va_list formatArgs)
 {
 	char buffer[2048] = "";
 	int count = vsnprintf (buffer, sizeof (buffer), format, formatArgs);
 	if (count >= (int) sizeof (buffer))
 		fprintf (stderr, "Error: log entry is too long for format string [%s]\n", format);
 
+	const char* file = "";
+	char line[18] = "";
+	if (pixi_logFileContext && context->file)
+	{
+		file = context->file;
+		snprintf (line, sizeof (line), ":%d: ", context->line);
+	}
+
 	const char* prog = program_invocation_short_name;
-	const char* lev  = pixi_logLevelToStr (level);
-	const char* startColor = getLevelColor (level);
+	const char* lev  = pixi_logLevelToStr (context->level);
+	const char* startColor = getLevelColor (context->level);
 	const char* endColor   = "";
 	if (startColor)
 		endColor = levelColors[LogLevelOff];
@@ -176,7 +188,9 @@ static void logVPrintf (LogLevel level, const char* errorStr, const char* format
 	else
 		errorStr = "";
 
-	fprintf (stderr, "%s%s: %s: %s%s%s%s\n",
+	fprintf (stderr, "%s%s%s%s: %s: %s%s%s%s\n",
+		file,
+		line,
 		startColor,
 		prog,
 		lev,
@@ -191,8 +205,10 @@ static void logVPrintf (LogLevel level, const char* errorStr, const char* format
 			rotateLogFile();
 		char timeStr[40] = "";
 		pixi_formatCurTime (timeStr, sizeof (timeStr));
-		int written = fprintf (logFile, "%s %s: %s%s%s\n",
+		int written = fprintf (logFile, "%s %s%s%s: %s%s%s\n",
 			timeStr,
+			file,
+			line,
 			lev,
 			buffer,
 			errorColon,
@@ -208,17 +224,17 @@ static void logVPrintf (LogLevel level, const char* errorStr, const char* format
 	}
 }
 
-void pixi_logPrint (LogLevel level, const char* format, ...)
+void pixi_logPrint (const LogContext* context, const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
 
-	logVPrintf (level, NULL, format, args);
+	logVPrintf (context, NULL, format, args);
 
 	va_end(args);
 }
 
-void pixi_logError (LogLevel level, int errnum, const char* format, ...)
+void pixi_logError (const LogContext* context, int errnum, const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -226,7 +242,7 @@ void pixi_logError (LogLevel level, int errnum, const char* format, ...)
 	char buffer[256];
 	char* errorStr = strerror_r (errnum, buffer, sizeof (buffer));
 
-	logVPrintf (level, errorStr, format, args);
+	logVPrintf (context, errorStr, format, args);
 
 	va_end(args);
 }
