@@ -78,7 +78,7 @@ static inline bool pixi_isLogLevelEnabled (LogLevel level) {
 /// Don't use this directly, use one of the wrapper macros like LIBPIXI_LOG_ERROR.
 #define LIBPIXI_GENERAL_LOG(confLevel, entryLevel, ...) \
 	do {if ((entryLevel) >= confLevel) {\
-		LogContext context = {.level = entryLevel	, .file = __FILE__, .line = __LINE__, .reserved1 = 0, .reserved2 = 0};\
+		LogContext context = {entryLevel, __FILE__, __LINE__, 0, 0};\
 		pixi_logPrint (&context, __VA_ARGS__);\
 	}} while (0)
 /// Like LIBPIXI_GENERAL_LOG, but adds a suffix along the lines of perror(): (": %s", strerror(errnum)). example:
@@ -86,7 +86,7 @@ static inline bool pixi_isLogLevelEnabled (LogLevel level) {
 /// Don't use this directly, use one of the wrapper macros like LIBPIXI_ERROR.
 #define LIBPIXI_GENERAL_STRERROR_LOG(confLevel, entryLevel, errnum, ...) \
 	do {if ((entryLevel) >= confLevel) {\
-		LogContext context = {.level = entryLevel, .file = __FILE__, .line = __LINE__, .reserved1 = 0, .reserved2 = 0};\
+		LogContext context = {entryLevel, __FILE__, __LINE__, 0, 0};\
 		pixi_logError (&context, errnum, __VA_ARGS__);\
 	}} while (0)
 
