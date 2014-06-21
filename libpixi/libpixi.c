@@ -39,7 +39,13 @@ static void LIBPIXI_CONSTRUCTOR (1) initLib (void)
 
 int pixi_initLib (void)
 {
-	return pixi_getPiBoardVersion();
+	int version = pixi_getPiBoardVersion();
+	if (version < 0)
+	{
+		LIBPIXI_ERROR_FATAL(-version, "initLib failure: pixi_getPiBoardVersion failed");
+		return version;
+	}
+	return 0;
 }
 
 const char* pixi_getLibVersion (void)
