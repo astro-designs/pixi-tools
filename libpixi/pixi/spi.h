@@ -73,6 +73,7 @@ typedef struct RegisterOp
 	uint8   _reserved1; ///< internal
 	uint8   _reserved2; ///< internal
 	uint    value;      ///< read/write value
+	ulong   userData;   ///< Ignored: available for client code
 } RegisterOp;
 
 ///	Perform multiple register read/write operations in a single kernel call
