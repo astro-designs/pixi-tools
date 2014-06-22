@@ -188,13 +188,28 @@ static inline uint ioRead  (IoBuffer* buf, void* data, uint size)
 
 typedef struct Uart
 {
-	uint8     basePort;
+	uint8     address;
 	uint      baudRate;
-	uint      lastStatus;
+	uint      status;
+	uint      prevStatus;
+	uint      operations; ///< LineStatusBits that were use in operation
+	uint      softErrors; ///< Bitmap of software errors, such as OverrunError;
 	IoBuffer  txBuf;
 	IoBuffer  rxBuf;
 } Uart;
 
+///	Open a UART at the given address, set the baud-rate and clear buffers.
+int pixi_uartOpen (Uart* uart, uint address, uint baudRate);
+
+///	Open a UART at the given address, set the baud-rate and clear buffers.
+int pixi_uartDebugOpen (Uart* uart, uint address, uint baudRate);
+
+///	Get the status of @c count uarts, processing data read/write as requird.
+int pixi_uartProcess (Uart* uarts, uint count);
+
+uint getBaudDivisor (uint baudRate);
+
+int setBaudRate (Uart* uart);
 
 ///@} defgroup
 
