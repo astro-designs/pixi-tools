@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 LogLevel pixi_logLevel = LogLevelInfo;
+LogLevel pixi_appLogLevel = LogLevelInfo;
 bool     pixi_logColors = false;
 bool     pixi_logFileContext = false;
 
