@@ -118,8 +118,8 @@ static inline uint ioAvailable (IoBuffer* buf)
 {
 	uint readPos  = buf->readPos;
 	uint writePos = buf->writePos;
-	uint avail = readPos - writePos;
-	if (writePos > readPos)
+	uint avail = writePos - readPos;
+	if (writePos < readPos)
 		avail += IoBufferSize;
 //	uint count = (inputPos - outputPos) & IoBufferMask;
 	return avail;
@@ -140,6 +140,7 @@ static inline int ioPush (IoBuffer* buf, byte value)
 	uint writePos     = buf->writePos;
 	uint nextWritePos = (writePos + 1) % IoBufferSize;
 	LIBPIXI_PRECONDITION(nextWritePos < IoBufferSize);
+//	LIBPIXI_LOG_TRACE("push readPos=0x%02x, writePos=0x%02x nextWritePos=0x%02x", readPos, writePos, nextWritePos);
 	if (nextWritePos == readPos)
 		return -ENOBUFS;
 
@@ -162,12 +163,12 @@ static inline int ioPop (IoBuffer* buf)
 static inline uint ioWrite (IoBuffer* buf, const void* data, uint size)
 {
 	// TODO: rewrite in optimal fashion
-	const byte* bytes = data;
+	const byte* bytes = (byte*) data;
 	for (uint i = 0; i < size; i++)
 	{
 		int result = ioPush (buf, bytes[i]);
 		if (result < 0)
-			return 0;
+			return i;
 	}
 	return size;
 }
@@ -175,7 +176,7 @@ static inline uint ioWrite (IoBuffer* buf, const void* data, uint size)
 static inline uint ioRead  (IoBuffer* buf, void* data, uint size)
 {
 	// TODO: rewrite in optimal fashion
-	byte* bytes = data;
+	byte* bytes = (byte*) data;
 	for (uint i = 0; i < size; i++)
 	{
 		int value = ioPop (buf);

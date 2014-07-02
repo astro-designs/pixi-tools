@@ -178,6 +178,7 @@ int pixi_uartProcess (Uart* uarts, uint count)
 		checkErrors (ut);
 		if ((status & DataReady) && ioAvailable (&ut->rxBuf) < (IoBufferSize - 1))
 		{
+//			LIBPIXI_LOG_DEBUG("Preparing to read a byte");
 			data[op].address  = ut->address + RxFifo;
 			data[op].function = PixiSpiEnableRead16;
 			op++;
@@ -188,6 +189,7 @@ int pixi_uartProcess (Uart* uarts, uint count)
 			int value = ioPop (&ut->txBuf);
 			if (value >= 0)
 			{
+//				LIBPIXI_LOG_DEBUG("Writing byte 0x%02x", value);
 				data[op].address  = ut->address + TxFifo;
 				data[op].function = PixiSpiEnableWrite16;
 				data[op].value    = value;
@@ -195,7 +197,7 @@ int pixi_uartProcess (Uart* uarts, uint count)
 				ut->operations |= EmptyTxHoldingReg;
 			}
 		}
-		LIBPIXI_LOG_INFO("Uart 0x%02x status=0x%02x operations=0x%02x", ut->address, status, ut->operations);
+		LIBPIXI_LOG_TRACE("Uart 0x%02x status=0x%02x operations=0x%02x", ut->address, status, ut->operations);
 		operations |= ut->operations;
 	}
 	if (op == 0)
