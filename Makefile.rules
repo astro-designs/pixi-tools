@@ -33,8 +33,6 @@ else
     DEBUG_FLAGS = -DNDEBUG
 endif
 
-WARN_FLAGS = -Wall -Wno-long-long -Wmissing-declarations -Wmissing-prototypes -fmessage-length=0
-
 DEPDIR = .deps
 LIBDIR = .libs
 
@@ -50,8 +48,8 @@ target_CXXFLAGS = $($(basename $(@F))_CXXFLAGS)
 target_LDFLAGS  = $($(basename $(@F))_LDFLAGS)
 
 MK_CPPFLAGS  ?= $(build_CPPFLAGS) $(CPPFLAGS)
-MK_CFLAGS    ?= $(WARN_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) $(build_CFLAGS) $(target_CFLAGS) $(CFLAGS)
-MK_CXXFLAGS  ?= $(WARN_FLAGS) $(OPT_FLAGS) $(DEBUG_FLAGS) $(build_CXXFLAGS) $(target_CXXFLAGS) $(CXXFLAGS)
+MK_CFLAGS    ?= $(OPT_FLAGS) $(DEBUG_FLAGS) $(build_CFLAGS) $(target_CFLAGS) $(CFLAGS)
+MK_CXXFLAGS  ?= $(OPT_FLAGS) $(DEBUG_FLAGS) $(build_CXXFLAGS) $(target_CXXFLAGS) $(CXXFLAGS)
 MK_LDFLAGS   ?= $(target_LDFLAGS) $(LDFLAGS)
 
 #LIBTOOL      ?= libtool
@@ -59,6 +57,7 @@ MK_LDFLAGS   ?= $(target_LDFLAGS) $(LDFLAGS)
 #LIBTOOL_CXX  ?= $(LIBTOOL) $(QUIET) --mode=compile $(CXX) -shared
 
 LINK ?= $(CC) $(MK_CFLAGS)
+LINKCXX ?= $(CXX) $(MK_CXXFLAGS)
 
 LINK_LIB = $(LIBTOOL_LINK) $(LINK) -shared $(MK_LDFLAGS)
 LINK_EXE = $(LIBTOOL_LINK) $(LINK) $(MK_LDFLAGS)

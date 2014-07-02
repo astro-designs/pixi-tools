@@ -25,7 +25,9 @@ CP = cp
 INSTALL_EXEC = install -v
 INSTALL_DATA = install -v -m 0644
 
-common_CFLAGS = -std=c99 -D_GNU_SOURCE
+common_CFLAGS   = -std=c99   -fmessage-length=0 -Wall -Wextra -Wstrict-prototypes -Wmissing-declarations -Wmissing-prototypes -pedantic
+common_CXXFLAGS = -std=c++0x -fmessage-length=0 -Wall -Wextra
+common_CPPFLAGS = -I$(topdir) -D_GNU_SOURCE
 
 toolsdir = $(topdir)/tools
 version_h = $(topdir)/libpixi/private/version.h
@@ -89,12 +91,13 @@ APPS       = $(pio)
 PYTHON_EXTS = $(_pi) $(_pixi)
 PYTHON_MODS = $(build_pylibdir)/pi.py $(build_pylibdir)/pixi.py
 TARGETS    = $(LIBS) $(APPS) $(PYTHON_EXTS) $(html_FILES)
-OBJECTS    = $(libpixi_OBJECTS) $(pio_OBJECTS) $(_pixi_OBJECTS)
+OBJECTS    = $(libpixi_OBJECTS) $(pio_OBJECTS) $(_pixi_OBJECTS) $(_pi_OBJECTS)
 
 VPATH = $(topdir)
 
-build_CPPFLAGS = -I$(topdir)
-build_CFLAGS   = $(common_CFLAGS) -Wall -Wextra -Wstrict-prototypes -pedantic
+build_CPPFLAGS = $(common_CPPFLAGS)
+build_CFLAGS   = $(common_CFLAGS)
+build_CXXFLAGS = $(common_CXXFLAGS)
 
 
 .PHONY: all check check-python check-header-syntax run-python run-python-demo run-server help-custom temp-install
