@@ -70,6 +70,11 @@ pio_SOURCES := $(shell cd $(topdir) && find pio/ -name \*.c)
 pio_OBJECTS := $(pio_SOURCES:.c=.o)
 pio_LIBS      = -Llib -lpixi
 
+pixi-tty          = bin/pixi-tty
+pixi-tty_SOURCES := $(shell cd $(topdir) && find pixi-tty/ -name \*.cpp)
+pixi-tty_OBJECTS := $(pixi-tty_SOURCES:.cpp=.o)
+pixi-tty_LIBS    := -Llib -lpixi $(shell pkg-config fuse --libs)
+
 pythonPackage      = pixitools
 
 _pi          = $(build_pylibdir)/_pi.so
@@ -87,11 +92,11 @@ html_FILES   := $(addprefix $(build_htmldir)/,$(html_SOURCES))
 
 LIBS       = $(libpixi) $(pixisim)
 HEADERS    = $(libpixi_HEADERS)
-APPS       = $(pio)
+APPS       = $(pio) $(pixi-tty)
 PYTHON_EXTS = $(_pi) $(_pixi)
 PYTHON_MODS = $(build_pylibdir)/pi.py $(build_pylibdir)/pixi.py
 TARGETS    = $(LIBS) $(APPS) $(PYTHON_EXTS) $(html_FILES)
-OBJECTS    = $(libpixi_OBJECTS) $(pio_OBJECTS) $(_pixi_OBJECTS) $(_pi_OBJECTS)
+OBJECTS    = $(libpixi_OBJECTS) $(pio_OBJECTS) $(pixi-tty_OBJECTS) $(_pixi_OBJECTS) $(_pi_OBJECTS)
 
 VPATH = $(topdir)
 
@@ -112,6 +117,10 @@ $(pixisim): build_CFLAGS += -fPIC
 $(pixisim): $(libpixi) $(pixisim_OBJECTS)
 
 $(pio): $(libpixi) $(pio_OBJECTS)
+
+$(pixi-tty): build_CPPFLAGS += -I/usr/include/fuse -D_FILE_OFFSET_BITS=64
+$(pixi-tty): LINK = $(LINKCXX)
+$(pixi-tty): $(libpixi) $(pixi-tty_OBJECTS)
 
 $(_pi): build_CFLAGS = $(common_CFLAGS) $(PYTHON_CFLAGS) -Wno-missing-prototypes -Wno-missing-declarations
 $(_pi): $(libpixi) $(_pi_OBJECTS)
