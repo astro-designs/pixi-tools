@@ -169,10 +169,11 @@ static void testWrite (Uart* uart, uint count)
 
 	struct timeval start;
 	gettimeofday (&start, NULL);
+	byte value = 0;
 	for (uint i = 0; i < writes; i++)
 	{
 		for (uint u = 0; u < count; u++)
-			ioPush (&uart[u].txBuf, statusReads);
+			ioPush (&uart[u].txBuf, value++);
 		uint operation;
 		do
 		{
