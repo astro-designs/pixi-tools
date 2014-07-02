@@ -114,18 +114,20 @@ static inline bool ioIsEmpty (IoBuffer* buf)
 	return (buf->readPos == buf->writePos);
 }
 
-static inline uint ioAvailable (IoBuffer* buf)
+///	Return size of data in buffer
+static inline uint ioSize (IoBuffer* buf)
 {
 	uint readPos  = buf->readPos;
 	uint writePos = buf->writePos;
 	uint avail = writePos - readPos;
 	if (writePos < readPos)
 		avail += IoBufferSize;
-//	uint count = (inputPos - outputPos) & IoBufferMask;
 	return avail;
 }
 
-static inline uint ioContiguousAvailable (IoBuffer* buf)
+///	Return size of data in buffer that's available in
+///	in a single contiguous chunk
+static inline uint ioContiguousSize (IoBuffer* buf)
 {
 	uint readPos  = buf->readPos;
 	uint writePos = buf->writePos;
@@ -134,6 +136,8 @@ static inline uint ioContiguousAvailable (IoBuffer* buf)
 	return IoBufferSize - readPos;
 }
 
+///	Push a single byte to the buffer. Return 0 if successful,
+///	or a negative error value if out of space.
 static inline int ioPush (IoBuffer* buf, byte value)
 {
 	uint readPos      = buf->readPos;
@@ -149,6 +153,8 @@ static inline int ioPush (IoBuffer* buf, byte value)
 	return 0;
 }
 
+///	Pop a single byte from the buffer. Return the value if successful,
+///	or a negative error code if no data is available.
 static inline int ioPop (IoBuffer* buf)
 {
 	uint readPos = buf->readPos;

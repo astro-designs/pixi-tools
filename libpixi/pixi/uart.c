@@ -176,7 +176,7 @@ int pixi_uartProcess (Uart* uarts, uint count)
 		ut->status     = status;
 		ut->operations = 0;
 		checkErrors (ut);
-		if ((status & DataReady) && ioAvailable (&ut->rxBuf) < (IoBufferSize - 1))
+		if ((status & DataReady) && ioSize (&ut->rxBuf) < (IoBufferSize - 1))
 		{
 //			LIBPIXI_LOG_DEBUG("Preparing to read a byte");
 			data[op].address  = ut->address + RxFifo;

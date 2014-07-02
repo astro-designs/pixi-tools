@@ -110,7 +110,7 @@ public:
 	}
 	uint read (char* data, uint size, int flags)
 	{
-		APP_LOG_DEBUG("read of size %u, available=%u", size, ioAvailable (&m_uart->rxBuf));
+		APP_LOG_DEBUG("read of size %u, available=%u", size, ioSize (&m_uart->rxBuf));
 
 		mutex_lock lock (m_mutex);
 		if (flags & O_NONBLOCK)
@@ -132,7 +132,7 @@ public:
 	}
 	uint write (const char* data, uint size, int flags)
 	{
-		APP_LOG_DEBUG("write of size %u, available=%u", size, ioAvailable (&m_uart->rxBuf));
+		APP_LOG_DEBUG("write of size %u, available=%u", size, ioSize (&m_uart->rxBuf));
 
 		mutex_lock lock (m_mutex);
 		if (flags & O_NONBLOCK)

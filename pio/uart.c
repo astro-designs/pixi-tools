@@ -62,7 +62,7 @@ static void handleUart (Uart* uart)
 	do
 	{
 		status = getStatusReg (uart);
-		if ((status & DataReady) && ioAvailable (&uart->rxBuf) < (IoBufferSize - 1))
+		if ((status & DataReady) && ioSize (&uart->rxBuf) < (IoBufferSize - 1))
 		{
 			byte value = getUartReg (uart, RxFifo);
 			ioPush (&uart->rxBuf, value);
@@ -73,7 +73,7 @@ static void handleUart (Uart* uart)
 			if (value >= 0)
 				setUartReg (uart, TxFifo, value);
 		}
-	} while (((status & DataReady) && ioAvailable (&uart->rxBuf) < (IoBufferSize - 1))
+	} while (((status & DataReady) && ioSize (&uart->rxBuf) < (IoBufferSize - 1))
 		|| ((status & EmptyTxHoldingReg) && !ioIsEmpty (&uart->txBuf)));
 }
 
