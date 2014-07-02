@@ -1,0 +1,57 @@
+#!/bin/sh
+
+# Helper for running (and building) uninstalled code
+
+make=no
+
+while test $# -gt 0; do
+	case $1 in
+		-r|--release)
+			echo release mode >&2
+			BUILD_MODE=release
+			;;
+		-d|--debug)
+			echo debug mode >&2
+			BUILD_MODE=debug
+			;;
+		-s|--sim)
+			echo enable simulator >&2
+			export LD_PRELOAD=pixisim.so
+			;;
+		-p|--python)
+			shift
+			export PYTHON_VERSION=$1
+			;;
+		-m|--make)
+			make=yes
+			;;
+		-*)
+			echo "Unknown option: $1" >&2
+			exit 1
+			;;
+		*)
+			# no more options
+			break
+			;;
+	esac
+	shift
+done
+
+if test -z "$BUILD_MODE"; then
+	BUILD_MODE=debug
+fi
+
+mode=$BUILD_MODE$PYTHON_VERSION
+
+export LD_LIBRARY_PATH=build/$mode/lib
+PATH=$(pwd)/build/$mode/bin:$PATH
+export PYTHONPATH=$(pwd)/$LD_LIBRARY_PATH/python2.7/site-packages
+
+if test $make = yes; then
+	set -x
+	env -u LD_PRELOAD make BUILD_MODE=$BUILD_MODE most
+else
+	set -x
+fi
+
+exec "$@"

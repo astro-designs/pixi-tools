@@ -96,6 +96,7 @@ APPS       = $(pio) $(pixi-tty)
 PYTHON_EXTS = $(_pi) $(_pixi)
 PYTHON_MODS = $(build_pylibdir)/pi.py $(build_pylibdir)/pixi.py
 TARGETS    = $(LIBS) $(APPS) $(PYTHON_EXTS) $(html_FILES)
+MOST_TARGETS = $(LIBS) $(APPS)
 OBJECTS    = $(libpixi_OBJECTS) $(pio_OBJECTS) $(pixi-tty_OBJECTS) $(_pixi_OBJECTS) $(_pi_OBJECTS)
 
 VPATH = $(topdir)
@@ -105,10 +106,13 @@ build_CFLAGS   = $(common_CFLAGS)
 build_CXXFLAGS = $(common_CXXFLAGS)
 
 
-.PHONY: all check check-python check-header-syntax run-python run-python-demo run-server help-custom temp-install
+.PHONY: all most check check-python check-header-syntax run-python run-python-demo run-server help-custom temp-install
 .SECONDARY: $(_pi_SOURCES) $(_pixi_SOURCES)
 
 all: $(version_h) $(TARGETS)
+
+most: $(version_h) $(MOST_TARGETS)
+	echo $(BUILD_MODE) $(MOST_TARGETS)
 
 $(libpixi): build_CFLAGS += -fPIC
 $(libpixi): $(libpixi_OBJECTS)
