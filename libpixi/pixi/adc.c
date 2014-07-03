@@ -46,19 +46,21 @@ int pixi_adcRead (uint adcChannel)
 {
 	LIBPIXI_PRECONDITION(adcChannel < PixiAdcMaxChannels);
 
-	uint8_t buffer[3] = {
-		6, // TODO: what is this?
+	uint8 buffer[3] = {
+		6, // start bits (bit 0 is high bit of channel select for MCP3208)
 		adcChannel << 6,
 		0
 	};
-	LIBPIXI_LOG_TRACE("pixi_pixiAdcRead channel=%u, writing %x %x %x", adcChannel, buffer[0], buffer[1], buffer[2]);
+	LIBPIXI_LOG_TRACE("pixi_adcRead channel=%u, writing %x %x %x", adcChannel, buffer[0], buffer[1], buffer[2]);
 	int result = pixi_spiReadWrite (&adcSpi, buffer, buffer, sizeof (buffer));
-	LIBPIXI_LOG_TRACE("pixi_pixiAdcRead result=%d, read %x %x %x", result, buffer[0], buffer[1], buffer[2]);
+	LIBPIXI_LOG_TRACE("pixi_adcRead result=%d, read %x %x %x", result, buffer[0], buffer[1], buffer[2]);
 
 	// Apparently this is useful for bringing CS down. Whatever that means
 	read (adcSpi.fd, buffer, 0);
 
 	if (result < 0)
 		return result;
-	return (buffer[1] << 8) | buffer[2];
+	uint value = ((0x0F & (uint) buffer[1]) << 8) | (uint) buffer[2];
+	LIBPIXI_LOG_DEBUG("ADC channel %u value %u", adcChannel, value);
+	return value;
 }
