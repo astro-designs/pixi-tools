@@ -83,4 +83,7 @@ multi-check-python:
 	$(MAKE) check-python
 	PYTHON_VERSION=3 $(MAKE) check-python
 
+print-python-version:
+	@echo $(get_python_version)
+
 % :: $(builddir) ; :

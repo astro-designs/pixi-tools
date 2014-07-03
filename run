@@ -2,7 +2,14 @@
 
 # Helper for running (and building) uninstalled code
 
+topdir=$(dirname $0)
+case $topdir in
+	/*) ;;
+	*) topdir=$(pwd)/$topdir ;;
+esac
+
 make=no
+pixisim=no
 
 while test $# -gt 0; do
 	case $1 in
@@ -16,7 +23,7 @@ while test $# -gt 0; do
 			;;
 		-s|--sim)
 			echo enable simulator >&2
-			export LD_PRELOAD=pixisim.so
+			pixisim=yes
 			;;
 		-p|--python)
 			shift
@@ -42,16 +49,23 @@ if test -z "$BUILD_MODE"; then
 fi
 
 mode=$BUILD_MODE$PYTHON_VERSION
+builddir=$topdir/build/$mode
 
-export LD_LIBRARY_PATH=build/$mode/lib
-PATH=$(pwd)/build/$mode/bin:$PATH
-export PYTHONPATH=$(pwd)/$LD_LIBRARY_PATH/python2.7/site-packages
-
-if test $make = yes; then
-	set -x
-	env -u LD_PRELOAD make BUILD_MODE=$BUILD_MODE most
-else
-	set -x
+if test -z "$PYTHON_VERSION"; then
+	PYTHON_VERSION=$(cd $topdir && make print-python-version)
 fi
 
+export LD_LIBRARY_PATH=$builddir/lib
+PATH=$builddir/bin:$PATH
+export PYTHONPATH=$builddir/lib/python$PYTHON_VERSION/site-packages
+
+if test $make = yes; then
+	make -C $builddir all temp-install
+fi
+
+if test $pixisim = yes; then
+	export LD_PRELOAD=pixisim.so
+fi
+
+set -x
 exec "$@"
