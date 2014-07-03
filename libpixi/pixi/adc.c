@@ -23,17 +23,28 @@
 #include <libpixi/util/log.h>
 #include <unistd.h>
 
-int pixi_pixiAdcOpen (SpiDevice* device)
+static SpiDevice adcSpi = SPI_DEVICE_INIT;
+
+int pixi_adcOpen (void)
 {
-	int result = pixi_spiOpen (PixiAdcSpiChannel, PixiAdcSpiSpeed, device);
+	// TODO: instead rejecting if previously open,
+	// do ref-counting of open count?
+	LIBPIXI_PRECONDITION(adcSpi.fd < 0);
+	int result = pixi_spiOpen (PixiAdcSpiChannel, PixiAdcSpiSpeed, &adcSpi);
 	if (result < 0)
 		LIBPIXI_ERROR(-result, "Cannot open SPI channel to PiXi ADC");
 	return result;
 }
 
-int pixi_pixiAdcRead (SpiDevice* device, uint adcChannel)
+int pixi_adcClose (void)
 {
-	LIBPIXI_PRECONDITION(adcChannel < PixiAdcChannels);
+	LIBPIXI_PRECONDITION(adcSpi.fd >= 0);
+	return pixi_spiClose (&adcSpi);
+}
+
+int pixi_adcRead (uint adcChannel)
+{
+	LIBPIXI_PRECONDITION(adcChannel < PixiAdcMaxChannels);
 
 	uint8_t buffer[3] = {
 		6, // TODO: what is this?
@@ -41,11 +52,11 @@ int pixi_pixiAdcRead (SpiDevice* device, uint adcChannel)
 		0
 	};
 	LIBPIXI_LOG_TRACE("pixi_pixiAdcRead channel=%u, writing %x %x %x", adcChannel, buffer[0], buffer[1], buffer[2]);
-	int result = pixi_spiReadWrite (device, buffer, buffer, sizeof (buffer));
+	int result = pixi_spiReadWrite (&adcSpi, buffer, buffer, sizeof (buffer));
 	LIBPIXI_LOG_TRACE("pixi_pixiAdcRead result=%d, read %x %x %x", result, buffer[0], buffer[1], buffer[2]);
 
 	// Apparently this is useful for bringing CS down. Whatever that means
-	read (device->fd, buffer, 0);
+	read (adcSpi.fd, buffer, 0);
 
 	if (result < 0)
 		return result;

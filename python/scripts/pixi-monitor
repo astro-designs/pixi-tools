@@ -7,15 +7,14 @@ from subprocess import call
 from time import localtime, sleep, strftime
 from threading import Thread, RLock
 from pixitools.pi import SpiDevice, spiClose
-from pixitools.pixi import pixiAdcOpen, pixiAdcRead, openPixi, registerRead, Pixi_Switch_in
+from pixitools.pixi import adcOpen, adcRead, openPixi, registerRead, Pixi_Switch_in
 from pixitools import pixix
 from pixitools.pixix import Lcd
 
 format = "%H:%M:%S"
 persistent = "/run/shm/pixi-display"
 
-adc = SpiDevice()
-pixiAdcOpen (adc)
+adcOpen()
 
 openPixi()
 lcd = Lcd()
@@ -32,7 +31,7 @@ def textAt (x, y, text):
 
 def monitorPower (interval = 1):
 	while True:
-		power = pixiAdcRead (adc, 0)
+		power = adcRead (0)
 		voltage = 10.277 * (power / 4096.0)
 		time = strftime (format, localtime())
 		text = "%s %.3fv " % (time, voltage)

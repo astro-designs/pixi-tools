@@ -44,7 +44,7 @@ enum
 };
 
 ///	Open the Pi SPI channel to the pixi. When finished,
-///	call pixi_pixiClose().
+///	call pixi_closePixi().
 ///	@return 0 on success, or -errno on error
 int pixi_openPixi (void);
 

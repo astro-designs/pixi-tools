@@ -26,22 +26,26 @@
 
 LIBPIXI_BEGIN_DECLS
 
-///@defgroup PiXiAdc PiXi ADC / MCP-3204 interface
+///@defgroup PiXiAdc PiXi ADC / MCP-3204 / ADC088S021 / ADC128S022 interface
 ///@{
 
 enum
 {
-	PixiAdcChannels   = 4
+	PixiAdcMaxChannels = 8
 };
 
-///	Open the Pi SPI channel to the ADC. When done with @c device,
-///	call pixi_spiClose().
+///	Open the Pi SPI channel to the PiXi ADC. When finished,
+///	call pixi_closePixi().
 ///	@return 0 on success, or -errno on error
-int pixi_pixiAdcOpen (SpiDevice* device);
+int pixi_adcOpen (void);
+
+///	Close the Pi SPI channel to the PiXi ADC.
+///	@return 0 on success, or -errno on error
+int pixi_adcClose (void);
 
 ///	Read an ADC channel
 ///	@return the (uint16) value on success, or -errno on error
-int pixi_pixiAdcRead (SpiDevice* device, uint adcChannel);
+int pixi_adcRead (uint adcChannel);
 
 ///@} defgroup
 

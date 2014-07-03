@@ -55,7 +55,7 @@ static inline int64 pixiOpenOrDie (void) {
 	int64 version = pixiOpen();
 	if (version <= 0)
 	{
-		LIBPIXI_LOG_ERROR("Aborting");
+		LIBPIXI_LOG_ERROR("Aborting due to pixiOpen failure");
 		exit (255);
 	}
 	return version;
@@ -68,28 +68,23 @@ static inline int pixiClose (void) {
 
 ///	Open the global SPI channel to the PiXi ADC.
 ///	@return 0 on success, or -errno on error
-static inline int pixiAdcOpen (void) {
-	int result = pixi_pixiAdcOpen (&globalPixiAdc);
-	if (result < 0)
-		LIBPIXI_ERROR(-result, "Failed to open PiXi ADC SPI channel");
-	return result;
+static inline int adcOpen (void) {
+	return pixi_adcOpen();
 }
 
 ///	Open the global SPI channel to the PiXi ADC. Exit the process on error.
-///	@return PiXi FPGA version on success, no return on error
-static inline int64 pixiAdcOpenOrDie (void) {
-	int result = pixiAdcOpen();
+static inline void adcOpenOrDie (void) {
+	int result = adcOpen();
 	if (result < 0)
 	{
-		LIBPIXI_LOG_ERROR("Aborting");
+		LIBPIXI_LOG_ERROR("Aborting due to adcOpen failure");
 		exit (254);
 	}
-	return result;
 }
 
 ///	Close the global SPI channel to the PiXi ADC.
-static inline int pixiAdcClose (void) {
-	return pixi_spiClose (&globalPixiAdc);
+static inline int adcClose (void) {
+	return pixi_adcClose();
 }
 
 ///	Wrapper for @ref pixi_registerRead
@@ -127,9 +122,9 @@ static inline int pwmWritePinPercent (uint pin, double dutyCycle) {
 	return pixi_pwmWritePinPercent (pin, dutyCycle);
 }
 
-///	Wrapper for @ref pixi_pixiAdcRead
+///	Wrapper for @ref pixi_adcRead
 static inline int adcRead (uint adcChannel) {
-	return pixi_pixiAdcRead (&globalPixiAdc, adcChannel);
+	return pixi_adcRead (adcChannel);
 }
 
 ///@} defgroup

@@ -19,6 +19,7 @@
 */
 
 #include <libpixi/pixi/adc.h>
+#include <libpixi/pixi/simple.h>
 #include <libpixi/util/string.h>
 #include "Command.h"
 #include "log.h"
@@ -31,15 +32,9 @@ static int adcReadFn (const Command* command, uint argc, char* argv[])
 
 	uint adcChannel = pixi_parseLong (argv[1]);
 
-	SpiDevice dev = SpiDeviceInit;
-	int result = pixi_pixiAdcOpen(&dev);
-	if (result < 0)
-	{
-		PIO_ERROR(-result, "Failed to open ADC SPI device");
-		return result;
-	}
-	result = pixi_pixiAdcRead (&dev, adcChannel);
-	pixi_spiClose (&dev);
+	adcOpenOrDie();
+	int result = adcRead (adcChannel);
+	adcClose();
 	if (result < 0)
 	{
 		PIO_ERROR(-result, "ADC SPI read failed");

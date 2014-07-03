@@ -43,7 +43,7 @@ const uint MotorDirectionValues[2] = {0, 0x8000};
 static void prepare (void)
 {
 	pixiOpenOrDie();
-	pixiAdcOpenOrDie();
+	adcOpenOrDie();
 //	gpioSetPinMode (MotorGpioController, MotorGpioPin, ??);
 	gpioWritePin   (MotorGpioController, MotorGpioPin, true);
 }
@@ -51,7 +51,7 @@ static void prepare (void)
 static void unprepare (void)
 {
 	gpioWritePin (MotorGpioController, MotorGpioPin, false);
-	pixiAdcClose();
+	adcClose();
 	pixiClose();
 }
 
