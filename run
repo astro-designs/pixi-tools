@@ -48,11 +48,15 @@ if test -z "$BUILD_MODE"; then
 	BUILD_MODE=debug
 fi
 
+make_BM="BUILD_MODE=$BUILD_MODE"
+
 mode=$BUILD_MODE$PYTHON_VERSION
 builddir=$topdir/build/$mode
 
 if test -z "$PYTHON_VERSION"; then
 	PYTHON_VERSION=$(cd $topdir && make print-python-version)
+else
+	make_PY="PYTHON_VERSION=$PYTHON_VERSION"
 fi
 
 export LD_LIBRARY_PATH=$builddir/lib
@@ -60,7 +64,7 @@ PATH=$builddir/bin:$PATH
 export PYTHONPATH=$builddir/lib/python$PYTHON_VERSION/site-packages
 
 if test $make = yes; then
-	make -C $builddir all temp-install
+	make -C $topdir $make_BM $make_PY all temp-install
 fi
 
 if test $pixisim = yes; then
