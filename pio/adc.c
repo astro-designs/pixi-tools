@@ -35,10 +35,10 @@ static int adcReadFn (const Command* command, uint argc, char* argv[])
 	adcOpenOrDie();
 	int result = adcRead (adcChannel);
 	adcClose();
-	if (result < 0)
+	if (result < PixiAdcError)
 	{
 		PIO_ERROR(-result, "ADC SPI read failed");
-		return result;
+		return result - PixiAdcError;
 	}
 
 	printf ("%d\n", result);

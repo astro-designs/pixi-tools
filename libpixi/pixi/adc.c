@@ -21,7 +21,14 @@
 #include <libpixi/pixi/adc.h>
 #include <libpixi/pixi/spi.h>
 #include <libpixi/util/log.h>
+#include <libpixi/util/string.h>
 #include <unistd.h>
+
+static int adcReadMCP3204 (uint adcChannel);
+static int adcReadADC128S022 (uint adcChannel);
+
+static int (*adcReadImpl) (uint adcChannel) = adcReadADC128S022;
+static uint adcChannels = 8;
 
 static SpiDevice adcSpi = SPI_DEVICE_INIT;
 
@@ -33,6 +40,7 @@ int pixi_adcOpen (void)
 	int result = pixi_spiOpen (PixiAdcSpiChannel, PixiAdcSpiSpeed, &adcSpi);
 	if (result < 0)
 		LIBPIXI_ERROR(-result, "Cannot open SPI channel to PiXi ADC");
+	// TODO: work out which ADC it is
 	return result;
 }
 
@@ -42,25 +50,82 @@ int pixi_adcClose (void)
 	return pixi_spiClose (&adcSpi);
 }
 
-int pixi_adcRead (uint adcChannel)
+static inline int signed12Bit (uint8 hi, uint8 lo)
 {
-	LIBPIXI_PRECONDITION(adcChannel < PixiAdcMaxChannels);
+	// for 12 bit signed integer
+	const int signExt[2] = {
+		0,
+		-1 & ~0xFFF
+	};
+	return signExt[1 && (hi & 0x08)]
+	            | ((hi & 0x0F) << 8)
+	            | lo;
+}
 
-	uint8 buffer[3] = {
+static int adcReadMCP3204 (uint adcChannel)
+{
+	uint8 tx[3] = {
 		6, // start bits (bit 0 is high bit of channel select for MCP3208)
 		adcChannel << 6,
 		0
 	};
-	LIBPIXI_LOG_TRACE("pixi_adcRead channel=%u, writing %x %x %x", adcChannel, buffer[0], buffer[1], buffer[2]);
-	int result = pixi_spiReadWrite (&adcSpi, buffer, buffer, sizeof (buffer));
-	LIBPIXI_LOG_TRACE("pixi_adcRead result=%d, read %x %x %x", result, buffer[0], buffer[1], buffer[2]);
-
-	// Apparently this is useful for bringing CS down. Whatever that means
-	read (adcSpi.fd, buffer, 0);
-
+	uint8 rx[3] = {0,0,0};
+	int result = pixi_spiReadWrite (&adcSpi, tx, rx, sizeof (tx));
 	if (result < 0)
-		return result;
-	uint value = ((0x0F & (uint) buffer[1]) << 8) | (uint) buffer[2];
-	LIBPIXI_LOG_DEBUG("ADC channel %u value %u", adcChannel, value);
+		return PixiAdcError + result;
+
+	int value = signed12Bit (rx[1], rx[2]);
+	if (pixi_isLogLevelEnabled (LogLevelError))
+	{
+		char txStr[10];
+		char rxStr[10];
+		pixi_hexEncode (tx, sizeof(tx), txStr, sizeof(txStr), ' ', "");
+		pixi_hexEncode (rx, sizeof(rx), rxStr, sizeof(rxStr), ' ', "");
+		LIBPIXI_LOG_DEBUG("pixi_adcRead result=%d, tx=%s rx=%s value=0x%08x value=%d", result, txStr, rxStr, value, value);
+	}
 	return value;
+}
+
+static int adcReadADC128S022 (uint adcChannel)
+{
+	uint8 tx[2] = {
+		adcChannel << 3,
+		0
+	};
+	uint8 rx[2] = {0,0};
+	int result = pixi_spiReadWrite (&adcSpi, tx, rx, sizeof (tx));
+	if (result < 0)
+		return PixiAdcError + result;
+
+	int value = signed12Bit (rx[0], rx[1]);
+	if (pixi_isLogLevelEnabled (LogLevelError))
+	{
+		char txStr[10];
+		char rxStr[10];
+		pixi_hexEncode (tx, sizeof(tx), txStr, sizeof(txStr), ' ', "");
+		pixi_hexEncode (rx, sizeof(rx), rxStr, sizeof(rxStr), ' ', "");
+		LIBPIXI_LOG_DEBUG("pixi_adcRead result=%d, tx=%s rx=%s value=0x%08x value=%d", result, txStr, rxStr, value, value);
+	}
+	return value;
+}
+
+int pixi_adcRead (uint adcChannel)
+{
+	if (adcChannel >= adcChannels)
+	{
+		LIBPIXI_LOG_ERROR("ADC channel number %u is not less than %u", adcChannel, adcChannels);
+		return PixiAdcError -EINVAL;
+	}
+
+	int result = adcReadImpl (adcChannel);
+	// Apparently this is useful for bringing CS down.
+	char c;
+	read (adcSpi.fd, &c, 0);
+
+	if (result < PixiAdcError)
+	{
+		LIBPIXI_ERROR(PixiAdcError - result, "Error reading ADC channel");
+		return result;
+	}
+	return result;
 }

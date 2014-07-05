@@ -47,4 +47,10 @@
 %pythoncode %{
 import pixitools
 pixitools._rewrap (vars(), vars (_pixi))
+
+def adcRead (adcChannel):
+	result = _pixi.adcRead (adcChannel)
+	if result < _pixi.PixiAdcError:
+		raise pixitools.PixiToolsError ('adcRead', result - _pixi.PixiAdcError)
+	return result
 %}

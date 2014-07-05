@@ -44,7 +44,7 @@ int pixi_spiOpen (uint channel, uint speed, SpiDevice* device)
 	if (fd < 0)
 		return fd;
 
-	LIBPIXI_LOG_DEBUG("Opened SPI name=%s fd=%d", name, fd);
+	LIBPIXI_LOG_DEBUG("Opened SPI name=%s fd=%d, speed=%u", name, fd, speed);
 	int mode = 0;
 	int result = ioctl (fd, SPI_IOC_WR_MODE, &mode);
 	if (result < 0)
