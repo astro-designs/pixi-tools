@@ -131,7 +131,7 @@ static inline bool pixi_isLogLevelEnabled (LogLevel level) {
 
 /// Test @c pointer. If @c pointer is NULL, log an error and return -EINVAL.
 #define LIBPIXI_PRECONDITION_NOT_NULL(pointer) \
-	do if (LIBPIXI_UNLIKELY(!(pointer))) { \
+	do if (LIBPIXI_UNLIKELY(pointer == NULL)) { \
 		LIBPIXI_PRECONDITION_FAILURE(#pointer " is NULL"); \
 		return -EINVAL; \
 	} while (0)

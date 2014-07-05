@@ -26,15 +26,15 @@
 
 int pixi_pwmWritePin (uint pwm, uint dutyCycle)
 {
-	LIBPIXI_PRECONDITION_NOT_NULL(pwm < 8);
-//	LIBPIXI_PRECONDITION_NOT_NULL(dutyCycle < 1024);
+	LIBPIXI_PRECONDITION(pwm < 8);
+//	LIBPIXI_PRECONDITION(dutyCycle < 1024);
 	return pixi_registerWrite (Pixi_PWM0_control + pwm, dutyCycle);
 }
 
 int pixi_pwmWritePinPercent (uint pwm, double dutyCycle)
 {
-	LIBPIXI_PRECONDITION_NOT_NULL(dutyCycle >= 0);
-	LIBPIXI_PRECONDITION_NOT_NULL(dutyCycle <= 100);
+	LIBPIXI_PRECONDITION(dutyCycle >= 0);
+	LIBPIXI_PRECONDITION(dutyCycle <= 100);
 	uint cycle = dutyCycle * 1023.0;
 	return pixi_pwmWritePin (pwm, cycle);
 }

@@ -67,7 +67,7 @@ int pixi_spiReadWrite (SpiDevice* device, const void* outputBuffer, void* inputB
 	LIBPIXI_PRECONDITION(device->fd >= 0);
 	LIBPIXI_PRECONDITION_NOT_NULL(outputBuffer);
 	LIBPIXI_PRECONDITION_NOT_NULL(inputBuffer);
-	LIBPIXI_PRECONDITION_NOT_NULL(bufferSize >= 3);
+	LIBPIXI_PRECONDITION(bufferSize > 0);
 
 	const uint8* command = (uint8*) outputBuffer;
 	uint8 address  = command[0];
