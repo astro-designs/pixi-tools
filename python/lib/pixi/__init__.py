@@ -28,13 +28,13 @@ class PixiToolsError (RuntimeError):
 		super (PixiToolsError, self).__init__(functionName + " failed: " + strerror (-result))
 		self.result = result
 
-def _makeWrapper (name, wrapped):
+def _makeWrapper (name, defWrapper, wrapped):
 	def wrapper (*args):
 		result = wrapped (*args)
 		if result < 0:
 			raise PixiToolsError (name, result)
 		return result
-	update_wrapper (wrapper, wrapped)
+	update_wrapper (wrapper, defWrapper)
 	return wrapper
 
 def _rewrap (wrapper, wrapped):
@@ -45,6 +45,6 @@ def _rewrap (wrapper, wrapped):
 			try:
 				wrappedFn = wrapped[name]
 				if isinstance (wrappedFn.__doc__, str) and ' -> int' in wrappedFn.__doc__:
-					wrapper[name] = _makeWrapper (name, wrappedFn)
+					wrapper[name] = _makeWrapper (name, obj, wrappedFn)
 			except KeyError:
 				pass
