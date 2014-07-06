@@ -169,8 +169,9 @@ static inline int ioPop (IoBuffer* buf)
 static inline uint ioWrite (IoBuffer* buf, const void* data, uint size)
 {
 	// TODO: rewrite in optimal fashion
+	uint i;
 	const byte* bytes = (byte*) data;
-	for (uint i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 	{
 		int result = ioPush (buf, bytes[i]);
 		if (result < 0)
@@ -182,8 +183,9 @@ static inline uint ioWrite (IoBuffer* buf, const void* data, uint size)
 static inline uint ioRead  (IoBuffer* buf, void* data, uint size)
 {
 	// TODO: rewrite in optimal fashion
+	uint i;
 	byte* bytes = (byte*) data;
-	for (uint i = 0; i < size; i++)
+	for (i = 0; i < size; i++)
 	{
 		int value = ioPop (buf);
 		if (value < 0)
