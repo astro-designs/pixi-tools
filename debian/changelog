@@ -1,3 +1,9 @@
+pixi-tools (0.4preview1-1) unstable; urgency=medium
+
+  * Snapshot of current development
+
+ -- Simon Cantrill <simonjcantrill@gmail.com>  Sun, 06 Jul 2014 20:01:52 +0100
+
 pixi-tools (0.3-1) unstable; urgency=medium
 
   * Configurable UI, with additional capabilities
