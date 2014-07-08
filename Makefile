@@ -63,7 +63,7 @@ clean-all-builds: clean-source
 deb:
 	make clean-all-builds
 	.  $(topdir)/project-info && git archive -o ../$${PROJECT_NAME}_$${PROJECT_VERSION}.orig.tar.gz HEAD
-	debuild --preserve-envvar TEST_HARDWARE -us -uc -i'build|\.git|\.project|\.cproject|\.settings'
+	debuild --preserve-envvar TEST_HARDWARE -i'build|\.git|\.project|\.cproject|\.settings'
 
 deb-clean:
 	debuild clean
