@@ -88,20 +88,27 @@ static int adcReadMCP3204 (uint adcChannel)
 
 static int adcReadADC128S022 (uint adcChannel)
 {
-	uint8 tx[2] = {
+	// The protocol is 2-byte sequences for the request, but the
+	// response is received in the following 2-byte sequence.
+	// So you can read eight channels in using a 10-byte read/write
+	// but you need 4 bytes to read a single channel.
+	// TODO: provide an API for efficient reading of multiple channels.
+	uint8 tx[4] = {
 		adcChannel << 3,
+		0,
+		0,
 		0
 	};
-	uint8 rx[2] = {0,0};
+	uint8 rx[4] = {0,0,0,0};
 	int result = pixi_spiReadWrite (&adcSpi, tx, rx, sizeof (tx));
 	if (result < 0)
 		return PixiAdcError + result;
 
-	int value = signed12Bit (rx[0], rx[1]);
+	int value = signed12Bit (rx[2], rx[3]);
 	if (pixi_isLogLevelEnabled (LogLevelError))
 	{
-		char txStr[10];
-		char rxStr[10];
+		char txStr[20];
+		char rxStr[20];
 		pixi_hexEncode (tx, sizeof(tx), txStr, sizeof(txStr), ' ', "");
 		pixi_hexEncode (rx, sizeof(rx), rxStr, sizeof(rxStr), ' ', "");
 		LIBPIXI_LOG_DEBUG("pixi_adcRead result=%d, tx=%s rx=%s value=0x%08x value=%d", result, txStr, rxStr, value, value);
