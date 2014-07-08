@@ -1,3 +1,11 @@
+pixi-tools (0.4preview2-1) unstable; urgency=medium
+
+  * Fixes for reading ADC, setting LCD position
+
+  * Signed packages
+
+ -- Simon Cantrill <simonjcantrill@gmail.com>  Tue, 08 Jul 2014 20:05:54 +0100
+
 pixi-tools (0.4preview1-1) unstable; urgency=medium
 
   * Snapshot of current development
