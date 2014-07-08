@@ -2,6 +2,26 @@ pixi-tools (0.4preview1-1) unstable; urgency=medium
 
   * Snapshot of current development
 
+  * Add log file support
+
+  * Add pio spi-scan command
+
+  * Add pio --help-all option
+
+  * Support PiXi version 2 ADC
+
+  * API improvements:
+    - Remove the SpiDevice* parameter from most APIs
+    - Remove struct LcdDevice
+
+  * Python improvements:
+    - Generate python wrappers that throw exceptions on error
+    - Add generated python doc to functions
+
+  * Add some (not yet functional) UART code
+
+  * Add dalek and telescope-remote extensions
+
  -- Simon Cantrill <simonjcantrill@gmail.com>  Sun, 06 Jul 2014 20:01:52 +0100
 
 pixi-tools (0.3-1) unstable; urgency=medium
