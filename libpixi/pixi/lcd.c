@@ -101,8 +101,10 @@ int pixi_lcdClear (void)
 
 int pixi_lcdSetCursorPos (uint x, uint y)
 {
+	x &= 0x3F;
+	y &= 1;
 	LIBPIXI_LOG_DEBUG("Setting cursor position to: %d, %d", x, y);
-	uint value = 0x0080 + ((y & 0x3f) << 6) + (x & 0x3f);
+	uint value = 0x0080 + (y << 6) + x;
 	return lcdWrite (value);
 }
 
