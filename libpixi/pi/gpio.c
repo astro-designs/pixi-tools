@@ -407,6 +407,7 @@ static inline bool getPinRegisterBit (uint32* registers, uint pin)
 
 int pixi_gpioSetPinMode (uint pin, Direction mode)
 {
+	LIBPIXI_LOG_DEBUG("pixi_gpioSetPinMode (%u, %u)", pin, mode);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
 	return pixi_gpioPhysSetPinMode (pinToPhys (pin), mode);
 }
@@ -414,11 +415,12 @@ int pixi_gpioSetPinMode (uint pin, Direction mode)
 int pixi_gpioGetPinMode (uint pin)
 {
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
-	return pixi_gpioGetPinMode (pinToPhys (pin));
+	return pixi_gpioPhysGetPinMode (pinToPhys (pin));
 }
 
 int pixi_gpioPhysSetPinMode (uint pin, Direction mode)
 {
+	LIBPIXI_LOG_DEBUG("pixi_gpioPhysSetPinMode (%u, %u)", pin, mode);
 	LIBPIXI_PRECONDITION_NOT_NULL(gpioRegisters);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
 	uint index =      pin / 10;
@@ -428,7 +430,7 @@ int pixi_gpioPhysSetPinMode (uint pin, Direction mode)
 	uint* reg = gpioRegisters->functionSelect + index;
 	LIBPIXI_LOG_TRACE("Setting pin %u to mode 0x%x", pin, mode);
 	*reg = (*reg & ~mask) | func;
-	return -EINVAL;
+	return 0;
 }
 
 int pixi_gpioPhysGetPinMode (uint pin)
