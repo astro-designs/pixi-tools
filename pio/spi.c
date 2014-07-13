@@ -27,6 +27,81 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+static int spiTransfer (const Command* command, uint argc, char* argv[])
+{
+	if (argc < 4)
+		return commandUsageError (command);
+
+	const uint dataOffset = 3;
+	uint channel   = pixi_parseLong (argv[1]);
+	uint frequency = pixi_parseLong (argv[2]);
+	uint size      = argc - dataOffset;
+	if (size > 4096)
+	{
+		PIO_LOG_ERROR("Transfer size of %u is too large", size);
+		return -EINVAL;
+	}
+
+	SpiDevice dev = SPI_DEVICE_INIT;
+	int result = pixi_spiOpen (channel, frequency, &dev);
+	if (result < 0)
+	{
+		PIO_ERROR(-result, "Couldn't open flash SPI channel");
+		return result;
+	}
+	uint8* tx = 0;
+	uint8* rx = 0;
+	char* hex = 0;
+	tx = malloc (size);
+	rx = malloc (size);
+	if (tx && rx)
+	{
+		for (uint i = 0; i < size; i++)
+			tx[i] = pixi_parseLong (argv[dataOffset + i]);
+
+		result = pixi_spiReadWrite (&dev, tx, rx, size);
+		pixi_spiClose (&dev);
+		if (result >= 0)
+		{
+			uint hexSize = 1 + (size * 3);
+			hex = malloc (hexSize);
+			if (hex)
+			{
+				pixi_hexEncode (rx, size, hex, hexSize, ' ', "");
+				printf ("result: [%s]\n", hex);
+			}
+			else
+			{
+				PIO_ERROR(-result, "Read/write succeeded, but could not allocate print buffer");
+				result = -ENOMEM;
+			}
+		}
+		else
+		{
+			PIO_ERROR(-result, "SPI read/write failed");
+			return result;
+		}
+		return 0;
+	}
+	else
+	{
+		PIO_LOG_FATAL("Failed to allocate buffers of size %u", size);
+		result = -ENOMEM;
+	}
+
+	free (tx);
+	free (rx);
+	free (hex);
+	return result;
+}
+static Command spiTransferCmd =
+{
+	.name        = "spi-transfer",
+	.description = "Perform an SPI transfer",
+	.usage       = "usage: %s CHANNEL FREQUENCY TX-BYTES...",
+	.function    = spiTransfer
+};
+
 static int spiSetGet (bool writeMode, uint channel, uint address, uint data)
 {
 	SpiDevice dev = SpiDeviceInit;
@@ -271,6 +346,7 @@ static Command monitorButtonsCmd =
 
 static const Command* commands[] =
 {
+	&spiTransferCmd,
 	&spiSetCmd,
 	&spiGetCmd,
 	&spiMonitorCmd,
