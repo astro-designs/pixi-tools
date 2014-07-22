@@ -21,6 +21,11 @@
 #include <libpixi/pixi/uart.h>
 #include <libpixi/pixi/simple.h>
 
+enum
+{
+	UartClock = 17663043
+};
+
 static inline int setUartReg (Uart* uart, UartRegister reg, uint8 value)
 {
 	return registerWrite (uart->address + reg, value);
@@ -49,7 +54,7 @@ uint getBaudDivisor (uint baudRate)
 		LIBPIXI_LOG_ERROR("Cannot set baudRate of 0");
 		return 0;
 	}
-	return (25 * 1000 * 1000) / (16 * baudRate);
+	return UartClock / (16 * baudRate);
 }
 
 int setBaudRate (Uart* uart)
