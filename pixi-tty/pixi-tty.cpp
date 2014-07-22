@@ -250,7 +250,11 @@ int main (int argc, char* argv[])
 {
 	setlocale (LC_ALL, "");
 
-	pixi_appLogLevel = pixi_strToLogLevel (getenv ("PIXI_UART_LOG_LEVEL"), LogLevelInfo);
+	pixi_appLogLevel = pixi_strToLogLevel (getenv ("PIXI_TTY_LOG_LEVEL"), LogLevelInfo);
+
+	uint rate = 38400;
+	if (argc > 1)
+		rate = pixi_parseLong (argv[1]);
 
 	uartOps.open     = uart_open;
 	uartOps.read     = uart_read;
@@ -261,8 +265,9 @@ int main (int argc, char* argv[])
 */
 	pixiOpenOrDie();
 
+
 	Uart uarts[4];
-	int result = pixi_uartDebugOpen (&uarts[0], 0x80, 38400);
+	int result = pixi_uartDebugOpen (&uarts[0], 0x80, rate);
 	if (result < 0)
 	{
 		APP_LOG_FATAL("Could not open PiXi uart");
