@@ -20,10 +20,17 @@
 
 #include <libpixi/pixi/simple.h>
 #include <libpixi/pi/spi.h>
+#include <libpixi/util/file.h>
 #include <libpixi/util/string.h>
 #include "Command.h"
 #include "log.h"
 #include <stdio.h>
+#include <fcntl.h>
+
+enum
+{
+	FlashCapacity = 524288 // 4 megabit
+};
 
 static int flashOpen (SpiDevice* device)
 {
@@ -150,15 +157,22 @@ static Command flashReadStatusCmd =
 
 static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
 {
-	if (argc != 3)
+	if (argc != 4)
 		return commandUsageError (command);
 
 	uint address = pixi_parseLong (argv[1]);
 	uint length  = pixi_parseLong (argv[2]);
-	if (length > 0x1000000)
+	const char* filename = argv[3];
+	if (address >= FlashCapacity)
 	{
-		PIO_LOG_ERROR("Length of %u is too big", length);
+		PIO_LOG_ERROR("Address 0x%x exceeds flash capacity of 0x%x", address, FlashCapacity);
 		return -EINVAL;
+	}
+	uint capacityFromAddress = FlashCapacity - address;
+	if (length > capacityFromAddress)
+	{
+		PIO_LOG_WARN("Length of 0x%x exceeds capacity of 0x%x from address 0x%x", length, capacityFromAddress, address);
+		length = capacityFromAddress;
 	}
 
 	SpiDevice dev = SPI_DEVICE_INIT;
@@ -166,60 +180,69 @@ static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
 	if (result < 0)
 		return result;
 
-	uint header = 4;
-	uint size = header + length;
-	uint8* tx = 0;
-	uint8* rx = 0;
-	char* hex = 0;
-	tx = malloc (size);
-	rx = malloc (size);
-	if (tx && rx)
+	int output = pixi_open (filename, O_CREAT | O_TRUNC | O_WRONLY, 0666);
+	if (output < 0)
 	{
-		tx[0] = 0x03;
-		tx[1] = address << 16;
-		tx[2] = address <<  8;
-		tx[3] = address <<  0;
-
-		result = pixi_spiReadWrite (&dev, tx, rx, size);
+		PIO_ERROR(-output, "Failed to open output filename [%s]", filename);
 		pixi_spiClose (&dev);
-		if (result >= 0)
-		{
-			uint hexSize = 1 + (size * 3);
-			hex = malloc (hexSize);
-			if (hex)
-			{
-				pixi_hexEncode (rx, size, hex, hexSize, ' ', "");
-				printf ("memory: [%s]\n", hex);
-			}
-			else
-			{
-				PIO_ERROR(-result, "Read/write succeeded, but could not allocate print buffer");
-				result = -ENOMEM;
-			}
-		}
-		else
+		return output;
+	}
+
+	// Max SPI transfer size is 4096. Since a few bytes are needed for the request,
+	// use a max block size of 2048.
+	// Alternatively, could do a transfer sequence keeping CS low between transfers,
+	// but this way we get to monitor what's happening
+	const uint blockSize = 2048;
+	const uint headerSize = 4; // command + 3 address bytes
+	const uint bufferSize = blockSize + headerSize;
+	uint8 tx[bufferSize];
+	uint8 rx[bufferSize];
+	memset (tx, 0, sizeof (tx));
+
+	uint total = 0;
+	while (length > 0)
+	{
+		uint size = length > blockSize ? blockSize : length;
+		tx[0] = 0x03;
+		tx[1] = address >> 16;
+		tx[2] = address >>  8;
+		tx[3] = address >>  0;
+
+		result = pixi_spiReadWrite (&dev, tx, rx, headerSize + size);
+		if (result < 0)
 		{
 			PIO_ERROR(-result, "SPI read/write failed");
-			return result;
+			break;
 		}
-		return 0;
+		result = pixi_write (output, rx + headerSize, size);
+		if (result < 0)
+		{
+			PIO_ERROR(-result, "Failed to write to output file [%s]", filename);
+			break;
+		}
+		else if (result != (int) size)
+		{
+			PIO_LOG_ERROR("Short write to output file");
+			result = -EIO;
+			break;
+		}
+		total   += size;
+		address += size;
+		length  -= size;
+		printf ("\raddress=0x%x size=%u total=%u ", address, size, total);
+		fflush (stdout);
 	}
-	else
-	{
-		PIO_LOG_FATAL("Failed to allocate buffers of size %u", size);
-		result = -ENOMEM;
-	}
+	printf ("\n");
+	pixi_close (output);
+	pixi_spiClose (&dev);
 
-	free (tx);
-	free (rx);
-	free (hex);
 	return result;
 }
 static Command flashReadMemoryCmd =
 {
 	.name        = "flash-read",
 	.description = "read flash memory",
-	.usage       = "usage: %s ADDRESS LENGTH",
+	.usage       = "usage: %s ADDRESS LENGTH OUTPUT-FILE",
 	.function    = flashReadMemoryFn
 };
 
