@@ -82,10 +82,10 @@ static int i2cRead (const Command* command, uint argc, char* argv[])
 	}
 
 	int result = 0;
-	uint8* rx = 0;
-	char* hex = 0;
-	rx = malloc (size);
-	if (rx)
+	uint hexSize = 1 + (size * 3);
+	char* hex = malloc (hexSize);
+	uint8* rx = malloc (size);
+	if (hex && rx)
 	{
 		result = pixi_read (i2c, rx, size);
 		if (result < 0)
@@ -96,19 +96,8 @@ static int i2cRead (const Command* command, uint argc, char* argv[])
 			result = 0;
 			PIO_LOG_INFO("Read %u bytes", size);
 
-			uint hexSize = 1 + (size * 3);
-			hex = malloc (hexSize);
-			if (hex)
-			{
-				pixi_hexEncode (rx, size, hex, hexSize, ' ', "");
-				printf ("result: [%s]\n", hex);
-			}
-			else
-			{
-				PIO_ERROR(-result, "Read succeeded, but could not allocate print buffer");
-				result = -ENOMEM;
-			}
-
+			pixi_hexEncode (rx, size, hex, hexSize, ' ', "");
+			printf ("result: [%s]\n", hex);
 		}
 	}
 	else
@@ -154,8 +143,7 @@ static int i2cWrite (const Command* command, uint argc, char* argv[])
 	}
 
 	int result = 0;
-	uint8* tx = 0;
-	tx = malloc (size);
+	uint8* tx = malloc (size);
 	if (tx)
 	{
 		for (uint i = 0; i < size; i++)
@@ -166,9 +154,15 @@ static int i2cWrite (const Command* command, uint argc, char* argv[])
 		if (result < 0)
 			PIO_ERROR(-result, "i2c write failed");
 		else if (result != (int) size)
+		{
 			PIO_LOG_ERROR("Failed to write all bytes [%u]: wrote %u", size, result);
+			result = -EIO;
+		}
 		else
+		{
 			PIO_LOG_INFO("Wrote %u bytes", result);
+			result = 0;
+		}
 	}
 	else
 	{

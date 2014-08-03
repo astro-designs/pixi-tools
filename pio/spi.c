@@ -49,45 +49,31 @@ static int spiTransfer (const Command* command, uint argc, char* argv[])
 		PIO_ERROR(-result, "Couldn't open flash SPI channel");
 		return result;
 	}
-	uint8* tx = 0;
-	uint8* rx = 0;
-	char* hex = 0;
-	tx = malloc (size);
-	rx = malloc (size);
-	if (tx && rx)
+	uint hexSize = 1 + (size * 3);
+	char* hex = malloc (hexSize);
+	uint8* tx = malloc (size);
+	uint8* rx = malloc (size);
+	if (hex && tx && rx)
 	{
 		for (uint i = 0; i < size; i++)
 			tx[i] = pixi_parseLong (argv[dataOffset + i]);
 
 		result = pixi_spiReadWrite (&dev, tx, rx, size);
-		pixi_spiClose (&dev);
 		if (result >= 0)
 		{
-			uint hexSize = 1 + (size * 3);
-			hex = malloc (hexSize);
-			if (hex)
-			{
-				pixi_hexEncode (rx, size, hex, hexSize, ' ', "");
-				printf ("result: [%s]\n", hex);
-			}
-			else
-			{
-				PIO_ERROR(-result, "Read/write succeeded, but could not allocate print buffer");
-				result = -ENOMEM;
-			}
+			pixi_hexEncode (rx, size, hex, hexSize, ' ', "");
+			printf ("result: [%s]\n", hex);
+			result = 0;
 		}
 		else
-		{
 			PIO_ERROR(-result, "SPI read/write failed");
-			return result;
-		}
-		return 0;
 	}
 	else
 	{
 		PIO_LOG_FATAL("Failed to allocate buffers of size %u", size);
 		result = -ENOMEM;
 	}
+	pixi_spiClose (&dev);
 
 	free (tx);
 	free (rx);
