@@ -29,7 +29,38 @@
 
 enum
 {
-	FlashCapacity = 524288 // 4 megabit
+	FlashCapacity   =     524288, // 4 megabit
+	FlashPageSize   =        256, // bytes
+	FlashId         =   0x202013
+};
+
+enum Instructions
+{
+	// name                    value // address-bytes, dummy-bytes, data-bytes
+	WriteEnable              = 0x06, // 0,  0,  0
+	WriteDisable             = 0x04, // 0,  0,  0
+	ReadIdentification       = 0x9F, // 0,  0,1-3 returns 202013 (manufacturer=20h,memory type=20h,capacity=13h)
+	ReadStatusRegister       = 0x05, // 0,  0,1-∞ see enum StatusBits
+	WriteStatusRegister      = 0x01, // 0,  0,  1
+	ReadDataBytes            = 0x03, // 3,  0,1-∞
+	ReadDataBytesFast        = 0x0B, // 3,  1,1-∞
+	PageProgram              = 0x02, // 3,  0,1-256
+	SectorErase              = 0xD8, // 3,  0,  0
+	BulkErase                = 0xC7, // 0,  0,  0
+	DeepPowerDown            = 0xB9, // 0,  0,  0
+	ReleaseFromDeepPowerDown = 0xAB  // 0,  0,  0, or 0,3,1-∞ for 'and read electronic signature'
+};
+
+enum StatusBits
+{
+	WriteInProgress            = 1 << 0,
+	WriteEnableLatch           = 1 << 1,
+	BlockProtect0              = 1 << 2,
+	BlockProtect1              = 1 << 3,
+	BlockProtect2              = 1 << 4,
+	// 0 = 1 << 5,
+	// 0 = 1 << 6,
+	StatusRegisterWriteProtect = 1 << 7
 };
 
 static int flashOpen (SpiDevice* device)
@@ -38,6 +69,58 @@ static int flashOpen (SpiDevice* device)
 	if (result < 0)
 		PIO_ERROR(-result, "Couldn't open flash SPI channel");
 	return result;
+}
+
+static int flashReadStatus (SpiDevice* device)
+{
+	uint8 tx[2] = {
+		ReadStatusRegister,
+		0
+	};
+	uint8 rx[2];
+	int result = pixi_spiReadWrite (device, tx, rx, sizeof (tx));
+	if (result < 0)
+	{
+		PIO_ERROR(-result, "Flash SPI read of status register failed");
+		return result;
+	}
+	return rx[1];
+}
+
+static int flashReadId (SpiDevice* device)
+{
+	uint8 tx[4] = {
+		ReadIdentification,
+		0,
+		0,
+		0
+	};
+	uint8 rx[4];
+	int result = pixi_spiReadWrite (device, tx, rx, sizeof (tx));
+	if (result < 0)
+	{
+		PIO_ERROR(-result, "Flash SPI read of identification failed");
+		return result;
+	}
+	uint id = (rx[1] << 16) | (rx[2] << 8) | rx[3];
+	return id;
+}
+
+static int checkFlashId (SpiDevice* device)
+{
+	int result = flashReadId (device);
+	if (result < 0)
+	{
+		PIO_ERROR(-result, "Couldn't read flash ID");
+		return result;
+	}
+	if (result != FlashId)
+	{
+		PIO_LOG_WARN("Could not identify flash device (id=0x%06x, expected 0x%06x)", result, FlashId);
+		PIO_LOG_WARN("Is flash communication configured? Proceeding anyway...");
+//		return -ENODEV; // TODO: more suitable error code?
+	}
+	return 0;
 }
 
 static int flashRdpResFn (const Command* command, uint argc, char* argv[])
@@ -53,7 +136,7 @@ static int flashRdpResFn (const Command* command, uint argc, char* argv[])
 		return result;
 
 	uint8 tx[5] = {
-		0xAB,
+		ReleaseFromDeepPowerDown,
 		0,
 		0,
 		0,
@@ -91,22 +174,13 @@ static int flashReadIdFn (const Command* command, uint argc, char* argv[])
 	if (result < 0)
 		return result;
 
-	uint8 tx[4] = {
-		0x9F,
-		0,
-		0,
-		0
-	};
-	uint8 rx[4];
-	result = pixi_spiReadWrite (&dev, tx, rx, sizeof (tx));
+	int id = flashReadId (&dev);
 	pixi_spiClose (&dev);
-	if (result < 0)
-	{
-		PIO_ERROR(-result, "SPI read/write failed");
-		return result;
-	}
-	uint id = (rx[0] << 24) | (rx[1] << 16) | (rx[2] << 8) | rx[3];
-	printf ("0x%08X\n", id);
+	if (id < 0)
+		return id;
+
+	// Note: id contains useful info, like flash capacity
+	printf ("0x%06X\n", id);
 	return 0;
 }
 static Command flashReadIdCmd =
@@ -129,22 +203,14 @@ static int flashReadStatusFn (const Command* command, uint argc, char* argv[])
 	if (result < 0)
 		return result;
 
-	uint8 tx[4] = {
-		0x05,
-		0,
-		0,
-		0
-	};
-	uint8 rx[4];
-	result = pixi_spiReadWrite (&dev, tx, rx, sizeof (tx));
+	checkFlashId (&dev);
+
+	int status = flashReadStatus (&dev);
 	pixi_spiClose (&dev);
-	if (result < 0)
-	{
-		PIO_ERROR(-result, "SPI read/write failed");
-		return result;
-	}
-	uint id = (rx[0] << 24) | (rx[1] << 16) | (rx[2] << 8) | rx[3];
-	printf ("0x%08X\n", id);
+	if (status < 0)
+		return status;
+
+	printf ("0x%02X\n", status);
 	return 0;
 }
 static Command flashReadStatusCmd =
@@ -171,7 +237,7 @@ static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
 	uint capacityFromAddress = FlashCapacity - address;
 	if (length > capacityFromAddress)
 	{
-		PIO_LOG_WARN("Length of 0x%x exceeds capacity of 0x%x from address 0x%x", length, capacityFromAddress, address);
+		PIO_LOG_WARN("Length of 0x%x exceeds available capacity of 0x%x from address 0x%x", length, capacityFromAddress, address);
 		length = capacityFromAddress;
 	}
 
@@ -179,6 +245,8 @@ static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
 	int result = flashOpen (&dev);
 	if (result < 0)
 		return result;
+
+	checkFlashId (&dev);
 
 	int output = pixi_open (filename, O_CREAT | O_TRUNC | O_WRONLY, 0666);
 	if (output < 0)
@@ -203,7 +271,7 @@ static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
 	while (length > 0)
 	{
 		uint size = length > blockSize ? blockSize : length;
-		tx[0] = 0x03;
+		tx[0] = ReadDataBytes;
 		tx[1] = address >> 16;
 		tx[2] = address >>  8;
 		tx[3] = address >>  0;
@@ -226,10 +294,10 @@ static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
 			result = -EIO;
 			break;
 		}
+		printf ("\raddress=0x%x size=%u total=%u ", address, size, total);
 		total   += size;
 		address += size;
 		length  -= size;
-		printf ("\raddress=0x%x size=%u total=%u ", address, size, total);
 		fflush (stdout);
 	}
 	printf ("\n");
@@ -245,6 +313,7 @@ static Command flashReadMemoryCmd =
 	.usage       = "usage: %s ADDRESS LENGTH OUTPUT-FILE",
 	.function    = flashReadMemoryFn
 };
+
 
 static const Command* commands[] =
 {
