@@ -157,18 +157,26 @@ int64 pixi_fileGetSize (int fd)
 
 }
 
+ssize_t pixi_fileRead (const char* filename, void* buffer, size_t bufferSize)
+{
+	LIBPIXI_PRECONDITION_NOT_NULL(buffer);
+
+	int fd = pixi_open (filename, O_RDONLY, 0);
+	if (fd < 0)
+		return fd;
+	ssize_t count = pixi_read (fd, buffer, bufferSize);
+	pixi_close (fd);
+	return count;
+}
+
 ssize_t pixi_fileReadStr (const char* filename, char* buffer, size_t bufferSize)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(buffer);
 	LIBPIXI_PRECONDITION(bufferSize > 0);
 
-	int fd = pixi_open (filename, O_RDONLY, 0);
-	if (fd < 0)
-		return fd;
-	ssize_t count = pixi_read (fd, buffer, bufferSize - 1);
+	ssize_t count = pixi_fileRead (filename, buffer, bufferSize - 1);
 	if (count >= 0)
 		buffer[count] = '\0';
-	pixi_close (fd);
 	return count;
 }
 

@@ -65,6 +65,10 @@ ssize_t pixi_write (int fd, const void* buffer, size_t count);
 int64 pixi_fileGetSize (int fd);
 
 /// Open a file, read contents into @c buffer, up to a limit of @c bufferSize.
+/// On error, -errno is returned.
+ssize_t pixi_fileRead (const char* filename, void* buffer, size_t bufferSize);
+
+/// Open a file, read contents into @c buffer, up to a limit of @c bufferSize-1.
 /// On success, @c buffer will always be nul-terminated.
 /// On error, -errno is returned.
 ssize_t pixi_fileReadStr (const char* filename, char* buffer, size_t bufferSize);
