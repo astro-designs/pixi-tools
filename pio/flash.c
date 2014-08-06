@@ -335,12 +335,212 @@ static Command flashReadMemoryCmd =
 };
 
 
+static int flashSendWrite (SpiDevice* device, const void* tx, void* rx, uint size)
+{
+	uint8 writeEnable = WriteEnable;
+	int result = pixi_spiReadWrite (device, &writeEnable, &writeEnable, sizeof (writeEnable));
+	if (result < 0)
+	{
+		PIO_ERROR(-result, "Flash SPI write-enable failed");
+		return result;
+	}
+	result = flashReadStatus (device);
+	if (!(result & WriteEnableLatch))
+	{
+		PIO_LOG_ERROR("WriteEnable bit not in status register");
+		return -EIO;
+	}
+
+	if (pio_isLogLevelEnabled (LogLevelTrace))
+	{
+		char hex[1 + (size*3)];
+		pixi_hexEncode (tx, size, hex, sizeof (hex), ' ', "");
+		PIO_LOG_TRACE("Sending 'write' [%s]", hex);
+	}
+
+	result = pixi_spiReadWrite (device, tx, rx, size);
+	if (result < 0)
+	{
+		PIO_ERROR(-result, "Flash SPI page program failed");
+		return result;
+	}
+	for (uint i = 0; i < 100000; i++)
+	{
+		result = flashReadStatus (device);
+		if (result < 0)
+			return result;
+		if (!(result & WriteInProgress))
+		{
+			PIO_LOG_DEBUG("Waited %u iterations for write to complete", i);
+			return 0;
+		}
+	}
+	if (result & WriteInProgress)
+	{
+		PIO_LOG_ERROR("Waited too long for write to finish");
+		return -EIO;
+	}
+	return 0;
+}
+
+static int flashWriteMemory (SpiDevice* device, uint address, const void* buffer, uint length)
+{
+	if (address >= FlashCapacity)
+	{
+		PIO_LOG_ERROR("Address 0x%x exceeds available flash capacity of 0x%x", address, FlashCapacity);
+		return -EINVAL;
+	}
+	const char* pbuf = buffer;
+
+	uint capacityFromAddress = FlashCapacity - address;
+	if (length > capacityFromAddress)
+	{
+		PIO_LOG_WARN("Write request length exceed capacity of 0x%x from address 0x%x", capacityFromAddress, address);
+		length = capacityFromAddress;
+	}
+
+	const uint blockSize = FlashPageSize;
+	const uint headerSize = 4; // command + 3 address bytes
+	const uint bufferSize = blockSize + headerSize;
+	uint8 tx[bufferSize];
+	uint8 rx[bufferSize];
+
+	int result = 0;
+	uint total = 0;
+	while (length > 0)
+	{
+		uint pageOffset = address & (FlashPageSize - 1);
+		uint pageRemainder = FlashPageSize - pageOffset;
+		// Write a page a time. If a write extends beyond page,
+		// it wraps around to the beginning of the page.
+		uint size = length > pageRemainder ? pageRemainder : length;
+
+		tx[0] = PageProgram;
+		tx[1] = address >> 16;
+		tx[2] = address >>  8;
+		tx[3] = address >>  0;
+		memcpy (tx + headerSize, pbuf, size);
+		result = flashSendWrite (device, tx, rx, headerSize + size);
+		if (result < 0)
+			break;
+
+		total   += size;
+		address += size;
+		length  -= size;
+		pbuf    += size;
+		result   = total;
+	}
+
+	return result;
+}
+
+static int flashWriteMemoryFn (const Command* command, uint argc, char* argv[])
+{
+	if (argc != 3)
+		return commandUsageError (command);
+
+	uint address = pixi_parseLong (argv[1]);
+	const char* filename = argv[2];
+	char buffer[FlashCapacity+1];
+	int result = pixi_fileRead (filename, buffer, sizeof (buffer));
+	if (result < 0)
+	{
+		PIO_ERROR(-result, "Failed to open input filename [%s]", filename);
+		return result;
+	}
+	uint length = result;
+
+	SpiDevice dev = SPI_DEVICE_INIT;
+	result = flashOpen (&dev);
+	if (result < 0)
+		return result;
+
+	checkFlashId (&dev);
+
+	printf ("Writing to flash address=0x%x, length=0x%x\n", address, length);
+	result = flashWriteMemory (&dev, address, buffer, length);
+	printf ("Finished writing to flash\n");
+	if (result > 0)
+	{
+		printf ("Verifying: reading from flash\n");
+		int written = result;
+		char check[written];
+		result = flashReadMemory (&dev, address, check, written);
+		if (result == written)
+		{
+			printf ("Comparing memory\n");
+			result = 0;
+			for (int i = 0; i < written; i++)
+			{
+				if (buffer[i] != check[i])
+				{
+					PIO_LOG_FATAL ("Wrote to flash, but verification failed at offset 0x%0x", i);
+					result = -EIO;
+					break;
+				}
+			}
+			if (result == 0)
+				printf ("Verified\n");
+		}
+		else
+		{
+			PIO_LOG_FATAL ("Wrote to flash, but verify read failed");
+			if (result >= 0)
+				result = -EIO;
+		}
+	}
+
+	pixi_spiClose (&dev);
+
+	return result;
+}
+static Command flashWriteMemoryCmd =
+{
+	.name        = "flash-write",
+	.description = "write flash memory",
+	.usage       = "usage: %s ADDRESS INPUT-FILE",
+	.function    = flashWriteMemoryFn
+};
+
+static int flashEraseFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	SpiDevice dev = SPI_DEVICE_INIT;
+	int result = flashOpen (&dev);
+	if (result < 0)
+		return result;
+
+	checkFlashId (&dev);
+
+	printf ("Erasing flash memory\n");
+	uint8 bulkErase = BulkErase;
+	result = flashSendWrite (&dev, &bulkErase, &bulkErase, sizeof (bulkErase));
+	printf ("Finished erasing flash memory\n");
+
+	pixi_spiClose (&dev);
+
+	return result;
+}
+static Command flashEraseCmd =
+{
+	.name        = "flash-erase",
+	.description = "erase all flash memory",
+	.usage       = "usage: %s",
+	.function    = flashEraseFn
+};
+
+
 static const Command* commands[] =
 {
 	&flashRdpResCmd,
 	&flashReadIdCmd,
 	&flashReadStatusCmd,
 	&flashReadMemoryCmd,
+	&flashWriteMemoryCmd,
+	&flashEraseCmd,
 };
 
 
