@@ -221,14 +221,10 @@ static Command flashReadStatusCmd =
 	.function    = flashReadStatusFn
 };
 
-static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
+static int flashReadMemory (SpiDevice* device, uint address, void* buffer, uint length)
 {
-	if (argc != 4)
-		return commandUsageError (command);
+	PIO_PRECONDITION_NOT_NULL(buffer);
 
-	uint address = pixi_parseLong (argv[1]);
-	uint length  = pixi_parseLong (argv[2]);
-	const char* filename = argv[3];
 	if (address >= FlashCapacity)
 	{
 		PIO_LOG_ERROR("Address 0x%x exceeds flash capacity of 0x%x", address, FlashCapacity);
@@ -240,6 +236,56 @@ static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
 		PIO_LOG_WARN("Length of 0x%x exceeds available capacity of 0x%x from address 0x%x", length, capacityFromAddress, address);
 		length = capacityFromAddress;
 	}
+
+	// Max SPI transfer size is 4096. Since a few bytes are needed for the request,
+	// use a max block size of 2048.
+	// Alternatively, could do a transfer sequence keeping CS low between transfers,
+	// but this way we get to monitor what's happening
+	const uint blockSize = 2048;
+	const uint headerSize = 4; // command + 3 address bytes
+	const uint bufferSize = blockSize + headerSize;
+	uint8 tx[bufferSize];
+	uint8 rx[bufferSize];
+	memset (tx, 0, sizeof (tx));
+	char* output = buffer;
+
+	int result = 0;
+	uint total = 0;
+	while (length > 0)
+	{
+		uint size = length > blockSize ? blockSize : length;
+		tx[0] = ReadDataBytes;
+		tx[1] = address >> 16;
+		tx[2] = address >>  8;
+		tx[3] = address >>  0;
+
+		result = pixi_spiReadWrite (device, tx, rx, headerSize + size);
+		if (result < 0)
+		{
+			PIO_ERROR(-result, "SPI read/write failed");
+			break;
+		}
+		memcpy (output, rx + headerSize, size);
+
+		output  += size;
+		total   += size;
+		address += size;
+		length  -= size;
+		result   = total;
+	}
+
+	return result;
+
+}
+
+static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
+{
+	if (argc != 4)
+		return commandUsageError (command);
+
+	uint address = pixi_parseLong (argv[1]);
+	uint length  = pixi_parseLong (argv[2]);
+	const char* filename = argv[3];
 
 	SpiDevice dev = SPI_DEVICE_INIT;
 	int result = flashOpen (&dev);
@@ -256,51 +302,25 @@ static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
 		return output;
 	}
 
-	// Max SPI transfer size is 4096. Since a few bytes are needed for the request,
-	// use a max block size of 2048.
-	// Alternatively, could do a transfer sequence keeping CS low between transfers,
-	// but this way we get to monitor what's happening
-	const uint blockSize = 2048;
-	const uint headerSize = 4; // command + 3 address bytes
-	const uint bufferSize = blockSize + headerSize;
-	uint8 tx[bufferSize];
-	uint8 rx[bufferSize];
-	memset (tx, 0, sizeof (tx));
-
-	uint total = 0;
-	while (length > 0)
+	uint8 buffer[FlashCapacity];
+	printf ("Reading from flash address=0x%x, length=0x%x\n", address, length);
+	result = flashReadMemory (&dev, address, buffer, length);
+	printf ("Finished reading from flash\n");
+	if (result >= 0)
 	{
-		uint size = length > blockSize ? blockSize : length;
-		tx[0] = ReadDataBytes;
-		tx[1] = address >> 16;
-		tx[2] = address >>  8;
-		tx[3] = address >>  0;
-
-		result = pixi_spiReadWrite (&dev, tx, rx, headerSize + size);
+		int size = result;
+		printf ("Writing to file [%s]\n", filename);
+		result = pixi_write (output, buffer, size);
 		if (result < 0)
-		{
-			PIO_ERROR(-result, "SPI read/write failed");
-			break;
-		}
-		result = pixi_write (output, rx + headerSize, size);
-		if (result < 0)
-		{
 			PIO_ERROR(-result, "Failed to write to output file [%s]", filename);
-			break;
-		}
-		else if (result != (int) size)
+		else if (result != size)
 		{
 			PIO_LOG_ERROR("Short write to output file");
 			result = -EIO;
-			break;
 		}
-		printf ("\raddress=0x%x size=%u total=%u ", address, size, total);
-		total   += size;
-		address += size;
-		length  -= size;
-		fflush (stdout);
+		else
+			result = 0;
 	}
-	printf ("\n");
 	pixi_close (output);
 	pixi_spiClose (&dev);
 
