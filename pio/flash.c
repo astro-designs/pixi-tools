@@ -31,7 +31,10 @@ enum
 {
 	FlashCapacity   =     524288, // 4 megabit
 	FlashPageSize   =        256, // bytes
-	FlashId         =   0x202013
+	FlashId         =   0x202013,
+
+	FlashSectorSize     = 256 * FlashPageSize, // bytes
+	FlashSectorBaseMask = ~(FlashSectorSize - 1) // bytes
 };
 
 enum Instructions
@@ -371,7 +374,7 @@ static int flashSendWrite (SpiDevice* device, const void* tx, void* rx, uint siz
 			return result;
 		if (!(result & WriteInProgress))
 		{
-			PIO_LOG_DEBUG("Waited %u iterations for write to complete", i);
+			PIO_LOG_TRACE("Waited %u iterations for write to complete", i);
 			return 0;
 		}
 	}
@@ -381,6 +384,47 @@ static int flashSendWrite (SpiDevice* device, const void* tx, void* rx, uint siz
 		return -EIO;
 	}
 	return 0;
+}
+
+///	Erase the sectors corresponding to the region defined by @a address, @a length.
+static int flashEraseSectors (SpiDevice* device, uint address, uint length)
+{
+	if (address >= FlashCapacity)
+	{
+		PIO_LOG_ERROR("Address 0x%x exceeds available flash capacity of 0x%x", address, FlashCapacity);
+		return -EINVAL;
+	}
+	if (length == 0)
+		return 0;
+
+	uint capacityFromAddress = FlashCapacity - address;
+	if (length > capacityFromAddress)
+	{
+		PIO_LOG_WARN("Write request length exceed capacity of 0x%x from address 0x%x", capacityFromAddress, address);
+		length = capacityFromAddress;
+	}
+
+	const uint limit = address + length;
+	address &= FlashSectorBaseMask;
+	uint8 tx[4];
+
+	int result = 0;
+	while (address < limit)
+	{
+		tx[0] = SectorErase;
+		tx[1] = address >> 16;
+		tx[2] = address >>  8;
+		tx[3] = address >>  0;
+		PIO_LOG_INFO("Erasing sector at address 0x%06x", address);
+		result = flashSendWrite (device, tx, tx, sizeof (tx));
+		if (result < 0)
+			break;
+
+		address += FlashSectorSize;
+		result  += FlashSectorSize;
+	}
+
+	return result;
 }
 
 static int flashWriteMemory (SpiDevice* device, uint address, const void* buffer, uint length)
@@ -420,6 +464,7 @@ static int flashWriteMemory (SpiDevice* device, uint address, const void* buffer
 		tx[2] = address >>  8;
 		tx[3] = address >>  0;
 		memcpy (tx + headerSize, pbuf, size);
+		PIO_LOG_DEBUG("Writing %u bytes at address 0x%06x", size, address);
 		result = flashSendWrite (device, tx, rx, headerSize + size);
 		if (result < 0)
 			break;
@@ -434,7 +479,7 @@ static int flashWriteMemory (SpiDevice* device, uint address, const void* buffer
 	return result;
 }
 
-static int flashWriteMemoryFn (const Command* command, uint argc, char* argv[])
+static int flashEraseWriteMemory (const Command* command, uint argc, char* argv[], bool erase)
 {
 	if (argc != 3)
 		return commandUsageError (command);
@@ -457,11 +502,23 @@ static int flashWriteMemoryFn (const Command* command, uint argc, char* argv[])
 
 	checkFlashId (&dev);
 
-	printf ("Writing to flash address=0x%x, length=0x%x\n", address, length);
-	result = flashWriteMemory (&dev, address, buffer, length);
-	printf ("Finished writing to flash\n");
+	if (erase)
+	{
+		printf ("Erasing sectors in region address=0x%x, length=0x%x\n", address, length);
+		result = flashEraseSectors (&dev, address, length);
+		if (result < 0)
+			PIO_LOG_ERROR("Sector erase failed");
+	}
+	if (result >= 0)
+	{
+		printf ("Writing to flash address=0x%x, length=0x%x\n", address, length);
+		result = flashWriteMemory (&dev, address, buffer, length);
+		if (result < 0)
+			PIO_LOG_ERROR("Flash write failed");
+	}
 	if (result > 0)
 	{
+		printf ("Finished writing to flash\n");
 		printf ("Verifying: reading from flash\n");
 		int written = result;
 		char check[written];
@@ -494,12 +551,63 @@ static int flashWriteMemoryFn (const Command* command, uint argc, char* argv[])
 
 	return result;
 }
+
+static int flashWriteMemoryFn (const Command* command, uint argc, char* argv[])
+{
+	return flashEraseWriteMemory (command, argc, argv, true);
+}
 static Command flashWriteMemoryCmd =
 {
 	.name        = "flash-write",
 	.description = "write flash memory",
 	.usage       = "usage: %s ADDRESS INPUT-FILE",
 	.function    = flashWriteMemoryFn
+};
+
+static int flashWriteMemoryNoEraseFn (const Command* command, uint argc, char* argv[])
+{
+	return flashEraseWriteMemory (command, argc, argv, false);
+}
+static Command flashWriteMemoryNoEraseCmd =
+{
+	.name        = "flash-write-no-erase",
+	.description = "write flash memory without erasing the sectors",
+	.usage       = "usage: %s ADDRESS INPUT-FILE",
+	.function    = flashWriteMemoryNoEraseFn
+};
+
+static int flashEraseSectorsFn (const Command* command, uint argc, char* argv[])
+{
+	if (argc != 3)
+		return commandUsageError (command);
+
+	uint address = pixi_parseLong (argv[1]);
+	uint length  = pixi_parseLong (argv[2]);
+
+	SpiDevice dev = SPI_DEVICE_INIT;
+	int result = flashOpen (&dev);
+	if (result < 0)
+		return result;
+
+	checkFlashId (&dev);
+
+	printf ("Erasing flash sectors\n");
+	result = flashEraseSectors (&dev, address, length);
+	if (result < 0)
+		PIO_ERROR(-result, "erasing sectors failed");
+	else
+		printf ("Erasing 0x%02x bytes of flash\n", result);
+
+	pixi_spiClose (&dev);
+
+	return result;
+}
+static Command flashEraseSectorsCmd =
+{
+	.name        = "flash-erase-sectors",
+	.description = "erase flash sectors corresponding to a memory region",
+	.usage       = "usage: %s ADDRESS LENGTH",
+	.function    = flashEraseSectorsFn
 };
 
 static int flashEraseFn (const Command* command, uint argc, char* argv[])
@@ -515,7 +623,7 @@ static int flashEraseFn (const Command* command, uint argc, char* argv[])
 
 	checkFlashId (&dev);
 
-	printf ("Erasing flash memory\n");
+	printf ("Erasing all flash memory\n");
 	uint8 bulkErase = BulkErase;
 	result = flashSendWrite (&dev, &bulkErase, &bulkErase, sizeof (bulkErase));
 	printf ("Finished erasing flash memory\n");
@@ -540,6 +648,8 @@ static const Command* commands[] =
 	&flashReadStatusCmd,
 	&flashReadMemoryCmd,
 	&flashWriteMemoryCmd,
+	&flashWriteMemoryNoEraseCmd,
+	&flashEraseSectorsCmd,
 	&flashEraseCmd,
 };
 
