@@ -33,7 +33,7 @@
 
 static void LIBPIXI_CONSTRUCTOR (1) initLib (void)
 {
-	pixi_logInit (pixi_strToLogLevel (getenv ("LIBPIXI_LOG_LEVEL"), LogLevelInfo));
+	pixi_logInit();
 	LIBPIXI_LOG_TRACE("libpixi initialised");
 }
 

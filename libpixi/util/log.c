@@ -20,6 +20,7 @@
 
 #include <libpixi/util/log.h>
 #include <libpixi/util/string.h>
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -108,9 +109,33 @@ static void rotateLogFile (void)
 }
 
 
-void pixi_logInit (LogLevel level)
+static const char* getAppLogLevelEnv (void)
 {
-	pixi_logLevel = level;
+	const char* prog = program_invocation_short_name;
+	if (!prog)
+		return NULL;
+
+	// get the value of environment var {uppercase(app-name)}_LOG_LEVEL
+	const char* suffix = "_LOG_LEVEL";
+	uint progLen = strlen (prog);
+	char label[progLen + strlen (suffix) + 1];
+	uint i = 0;
+	for ( ; i < progLen; i++)
+	{
+		if (isalnum (prog[i]))
+			label[i] = toupper (prog[i]);
+		else
+			label[i] = '_';
+	}
+	strcpy (label+i, suffix);
+	return getenv (label);
+}
+
+void pixi_logInit (void)
+{
+	pixi_logLevel = pixi_strToLogLevel (getenv ("LIBPIXI_LOG_LEVEL"), LogLevelInfo);
+	// app inherit libpixi level
+	pixi_appLogLevel = pixi_strToLogLevel (getAppLogLevelEnv(), pixi_logLevel);
 
 	// TODO: this check is a bit too crude:
 	pixi_logColors = useAnsiColors();

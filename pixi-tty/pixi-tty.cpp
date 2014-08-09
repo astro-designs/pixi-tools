@@ -250,8 +250,6 @@ int main (int argc, char* argv[])
 {
 	setlocale (LC_ALL, "");
 
-	pixi_appLogLevel = pixi_strToLogLevel (getenv ("PIXI_TTY_LOG_LEVEL"), LogLevelInfo);
-
 	uint rate = 38400;
 	if (argc > 1)
 		rate = pixi_parseLong (argv[1]);
