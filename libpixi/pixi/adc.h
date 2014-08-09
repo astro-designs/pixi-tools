@@ -22,7 +22,7 @@
 #define libpixi_pixi_adc_h__included
 
 
-#include <libpixi/pi/spi.h>
+#include <libpixi/common.h>
 #include <limits.h>
 
 LIBPIXI_BEGIN_DECLS
