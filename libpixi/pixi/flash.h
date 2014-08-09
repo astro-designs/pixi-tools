@@ -52,14 +52,14 @@ enum StatusBits
 	StatusRegisterWriteProtect = 1 << 7
 };
 
-int flashOpen (SpiDevice* device);
+int pixi_flashOpen (SpiDevice* device);
 int pixi_flashRdpReadSig (SpiDevice* device);
-int flashReadId (SpiDevice* device);
-int flashReadStatus (SpiDevice* device);
-int flashReadMemory (SpiDevice* device, uint address, void* buffer, uint length);
+int pixi_flashReadId (SpiDevice* device);
+int pixi_flashReadStatus (SpiDevice* device);
+int pixi_flashReadMemory (SpiDevice* device, uint address, void* buffer, uint length);
 ///	Erase the sectors corresponding to the region defined by @a address, @a length.
-int flashEraseSectors (SpiDevice* device, uint address, uint length);
-int flashWriteMemory (SpiDevice* device, uint address, const void* buffer, uint length);
+int pixi_flashEraseSectors (SpiDevice* device, uint address, uint length);
+int pixi_flashWriteMemory (SpiDevice* device, uint address, const void* buffer, uint length);
 
 int pixi_flashBulkErase (SpiDevice* device);
 

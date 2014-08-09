@@ -28,7 +28,7 @@
 
 static int checkFlashId (SpiDevice* device)
 {
-	int result = flashReadId (device);
+	int result = pixi_flashReadId (device);
 	if (result < 0)
 	{
 		PIO_ERROR(-result, "Couldn't read flash ID");
@@ -51,7 +51,7 @@ static int flashRdpResFn (const Command* command, uint argc, char* argv[])
 		return commandUsageError (command);
 
 	SpiDevice dev = SPI_DEVICE_INIT;
-	int result = flashOpen (&dev);
+	int result = pixi_flashOpen (&dev);
 	if (result < 0)
 		return result;
 
@@ -80,11 +80,11 @@ static int flashReadIdFn (const Command* command, uint argc, char* argv[])
 		return commandUsageError (command);
 
 	SpiDevice dev = SPI_DEVICE_INIT;
-	int result = flashOpen (&dev);
+	int result = pixi_flashOpen (&dev);
 	if (result < 0)
 		return result;
 
-	int id = flashReadId (&dev);
+	int id = pixi_flashReadId (&dev);
 	pixi_spiClose (&dev);
 	if (id < 0)
 		return id;
@@ -109,13 +109,13 @@ static int flashReadStatusFn (const Command* command, uint argc, char* argv[])
 		return commandUsageError (command);
 
 	SpiDevice dev = SPI_DEVICE_INIT;
-	int result = flashOpen (&dev);
+	int result = pixi_flashOpen (&dev);
 	if (result < 0)
 		return result;
 
 	checkFlashId (&dev);
 
-	int status = flashReadStatus (&dev);
+	int status = pixi_flashReadStatus (&dev);
 	pixi_spiClose (&dev);
 	if (status < 0)
 		return status;
@@ -141,7 +141,7 @@ static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
 	const char* filename = argv[3];
 
 	SpiDevice dev = SPI_DEVICE_INIT;
-	int result = flashOpen (&dev);
+	int result = pixi_flashOpen (&dev);
 	if (result < 0)
 		return result;
 
@@ -157,7 +157,7 @@ static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
 
 	uint8 buffer[FlashCapacity];
 	printf ("Reading from flash address=0x%x, length=0x%x\n", address, length);
-	result = flashReadMemory (&dev, address, buffer, length);
+	result = pixi_flashReadMemory (&dev, address, buffer, length);
 	printf ("Finished reading from flash\n");
 	if (result >= 0)
 	{
@@ -204,7 +204,7 @@ static int flashEraseWriteMemory (const Command* command, uint argc, char* argv[
 	uint length = result;
 
 	SpiDevice dev = SPI_DEVICE_INIT;
-	result = flashOpen (&dev);
+	result = pixi_flashOpen (&dev);
 	if (result < 0)
 		return result;
 
@@ -213,14 +213,14 @@ static int flashEraseWriteMemory (const Command* command, uint argc, char* argv[
 	if (erase)
 	{
 		printf ("Erasing sectors in region address=0x%x, length=0x%x\n", address, length);
-		result = flashEraseSectors (&dev, address, length);
+		result = pixi_flashEraseSectors (&dev, address, length);
 		if (result < 0)
 			PIO_LOG_ERROR("Sector erase failed");
 	}
 	if (result >= 0)
 	{
 		printf ("Writing to flash address=0x%x, length=0x%x\n", address, length);
-		result = flashWriteMemory (&dev, address, buffer, length);
+		result = pixi_flashWriteMemory (&dev, address, buffer, length);
 		if (result < 0)
 			PIO_LOG_ERROR("Flash write failed");
 	}
@@ -230,7 +230,7 @@ static int flashEraseWriteMemory (const Command* command, uint argc, char* argv[
 		printf ("Verifying: reading from flash\n");
 		int written = result;
 		char check[written];
-		result = flashReadMemory (&dev, address, check, written);
+		result = pixi_flashReadMemory (&dev, address, check, written);
 		if (result == written)
 		{
 			printf ("Comparing memory\n");
@@ -293,14 +293,14 @@ static int flashEraseSectorsFn (const Command* command, uint argc, char* argv[])
 	uint length  = pixi_parseLong (argv[2]);
 
 	SpiDevice dev = SPI_DEVICE_INIT;
-	int result = flashOpen (&dev);
+	int result = pixi_flashOpen (&dev);
 	if (result < 0)
 		return result;
 
 	checkFlashId (&dev);
 
 	printf ("Erasing flash sectors\n");
-	result = flashEraseSectors (&dev, address, length);
+	result = pixi_flashEraseSectors (&dev, address, length);
 	if (result < 0)
 		PIO_ERROR(-result, "erasing sectors failed");
 	else
@@ -325,7 +325,7 @@ static int flashEraseFn (const Command* command, uint argc, char* argv[])
 		return commandUsageError (command);
 
 	SpiDevice dev = SPI_DEVICE_INIT;
-	int result = flashOpen (&dev);
+	int result = pixi_flashOpen (&dev);
 	if (result < 0)
 		return result;
 

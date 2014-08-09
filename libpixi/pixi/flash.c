@@ -43,7 +43,7 @@ enum Instructions
 	ReleaseFromDeepPowerDown = 0xAB  // 0,  0,  0, or 0,3,1-∞ for 'and read electronic signature'
 };
 
-int flashOpen (SpiDevice* device)
+int pixi_flashOpen (SpiDevice* device)
 {
 	int result = pixi_spiOpen (0, PixiSpiSpeed, device);
 	if (result < 0)
@@ -77,7 +77,7 @@ int pixi_flashRdpReadSig (SpiDevice* device)
 
 }
 
-int flashReadStatus (SpiDevice* device)
+int pixi_flashReadStatus (SpiDevice* device)
 {
 	uint8 tx[2] = {
 		ReadStatusRegister,
@@ -93,7 +93,7 @@ int flashReadStatus (SpiDevice* device)
 	return rx[1];
 }
 
-int flashReadId (SpiDevice* device)
+int pixi_flashReadId (SpiDevice* device)
 {
 	uint8 tx[4] = {
 		ReadIdentification,
@@ -112,7 +112,7 @@ int flashReadId (SpiDevice* device)
 	return id;
 }
 
-int flashReadMemory (SpiDevice* device, uint address, void* buffer, uint length)
+int pixi_flashReadMemory (SpiDevice* device, uint address, void* buffer, uint length)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(buffer);
 
@@ -178,7 +178,7 @@ static int flashSendWrite (SpiDevice* device, const void* tx, void* rx, uint siz
 		LIBPIXI_ERROR(-result, "Flash SPI write-enable failed");
 		return result;
 	}
-	result = flashReadStatus (device);
+	result = pixi_flashReadStatus (device);
 	if (!(result & WriteEnableLatch))
 	{
 		LIBPIXI_LOG_ERROR("WriteEnable bit not in status register");
@@ -200,7 +200,7 @@ static int flashSendWrite (SpiDevice* device, const void* tx, void* rx, uint siz
 	}
 	for (uint i = 0; i < 100000; i++)
 	{
-		result = flashReadStatus (device);
+		result = pixi_flashReadStatus (device);
 		if (result < 0)
 			return result;
 		if (!(result & WriteInProgress))
@@ -217,7 +217,7 @@ static int flashSendWrite (SpiDevice* device, const void* tx, void* rx, uint siz
 	return 0;
 }
 
-int flashEraseSectors (SpiDevice* device, uint address, uint length)
+int pixi_flashEraseSectors (SpiDevice* device, uint address, uint length)
 {
 	if (address >= FlashCapacity)
 	{
@@ -263,7 +263,7 @@ int pixi_flashBulkErase (SpiDevice* device)
 	return flashSendWrite (device, &bulkErase, &bulkErase, sizeof (bulkErase));
 }
 
-int flashWriteMemory (SpiDevice* device, uint address, const void* buffer, uint length)
+int pixi_flashWriteMemory (SpiDevice* device, uint address, const void* buffer, uint length)
 {
 	if (address >= FlashCapacity)
 	{
