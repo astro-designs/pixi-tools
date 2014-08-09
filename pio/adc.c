@@ -21,7 +21,7 @@
 #include <libpixi/pixi/adc.h>
 #include <libpixi/pixi/simple.h>
 #include <libpixi/util/string.h>
-#include "Command.h"
+#include "common.h"
 #include "log.h"
 #include <stdio.h>
 
@@ -66,7 +66,7 @@ static CommandGroup pixiAdcGroup =
 	.nextGroup = NULL
 };
 
-static void PIO_CONSTRUCTOR (103) initGroup (void)
+static void PIO_CONSTRUCTOR (1060) initGroup (void)
 {
 	addCommandGroup (&pixiAdcGroup);
 }

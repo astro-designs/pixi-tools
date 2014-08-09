@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
-#include "Command.h"
+#include "common.h"
 #include "log.h"
 
 

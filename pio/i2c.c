@@ -20,7 +20,7 @@
 
 #include <libpixi/util/file.h>
 #include <libpixi/util/string.h>
-#include "Command.h"
+#include "common.h"
 #include "log.h"
 #include <fcntl.h>
 #include <stdio.h>
@@ -197,7 +197,7 @@ static CommandGroup pixiI2cGroup =
 	.nextGroup = NULL
 };
 
-static void PIO_CONSTRUCTOR (103) initGroup (void)
+static void PIO_CONSTRUCTOR (1050) initGroup (void)
 {
 	addCommandGroup (&pixiI2cGroup);
 }

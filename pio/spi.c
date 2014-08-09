@@ -21,7 +21,7 @@
 #include <libpixi/pixi/registers.h>
 #include <libpixi/pixi/spi.h>
 #include <libpixi/util/string.h>
-#include "Command.h"
+#include "common.h"
 #include "log.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -349,7 +349,7 @@ static CommandGroup pixiSpiGroup =
 	.nextGroup = NULL
 };
 
-static void PIO_CONSTRUCTOR (102) initGroup (void)
+static void PIO_CONSTRUCTOR (1020) initGroup (void)
 {
 	addCommandGroup (&pixiSpiGroup);
 }

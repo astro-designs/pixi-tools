@@ -21,7 +21,7 @@
 #include <libpixi/pixi/simple.h>
 #include <libpixi/pixi/uart.h>
 #include <libpixi/util/string.h>
-#include "Command.h"
+#include "common.h"
 #include "log.h"
 #include <stdio.h>
 #include <sys/time.h>
@@ -238,7 +238,7 @@ static CommandGroup pixiUartGroup =
 	.nextGroup = NULL
 };
 
-static void PIO_CONSTRUCTOR (109) initGroup (void)
+static void PIO_CONSTRUCTOR (1900) initGroup (void)
 {
 	addCommandGroup (&pixiUartGroup);
 }

@@ -21,7 +21,7 @@
 #include <libpixi/pixi/flash.h>
 #include <libpixi/util/file.h>
 #include <libpixi/util/string.h>
-#include "Command.h"
+#include "common.h"
 #include "log.h"
 #include <stdio.h>
 #include <fcntl.h>
@@ -365,7 +365,7 @@ static CommandGroup pixiFlashGroup =
 	.nextGroup = NULL
 };
 
-static void PIO_CONSTRUCTOR (103) initGroup (void)
+static void PIO_CONSTRUCTOR (1040) initGroup (void)
 {
 	addCommandGroup (&pixiFlashGroup);
 }

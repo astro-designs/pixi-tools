@@ -19,7 +19,7 @@
 */
 
 #include <libpixi/pi/gpio.h>
-#include "Command.h"
+#include "common.h"
 #include "log.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -166,10 +166,15 @@ static const Command* gpioCommands[] =
 	&unexportGpioCmd
 };
 
-CommandGroup gpioGroup =
+static CommandGroup gpioGroup =
 {
 	.name      = "gpio",
 	.count     = ARRAY_COUNT(gpioCommands),
 	.commands  = gpioCommands,
 	.nextGroup = NULL
 };
+
+static void PIO_CONSTRUCTOR (1000) initGroup (void)
+{
+	addCommandGroup (&gpioGroup);
+}

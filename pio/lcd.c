@@ -18,7 +18,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "Command.h"
+#include "common.h"
 #include "log.h"
 #include <libpixi/pixi/lcd.h>
 #include <libpixi/pixi/spi.h>
@@ -180,7 +180,7 @@ static CommandGroup pixiLcdGroup =
 	.nextGroup = NULL
 };
 
-static void PIO_CONSTRUCTOR (103) initGroup (void)
+static void PIO_CONSTRUCTOR (1910) initGroup (void)
 {
 	addCommandGroup (&pixiLcdGroup);
 }

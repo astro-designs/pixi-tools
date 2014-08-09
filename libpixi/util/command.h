@@ -1,7 +1,7 @@
 /*
     pixi-tools: a set of software to interface with the Raspberry Pi
     and PiXi-200 hardware
-    Copyright (C) 2013 Simon Cantrill
+    Copyright (C) 2014 Simon Cantrill
 
     pixi-tools is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -18,11 +18,11 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef Command_h__included
-#define Command_h__included
+#ifndef libpixi_util_command_h__included
+#define libpixi_util_command_h__included
 
 
-#include <pio/common.h>
+#include <libpixi/common.h>
 #include <libpixi/libpixi.h>
 
 
@@ -30,6 +30,7 @@ typedef struct Command Command;
 /// @return >=0 on success, -errno on error
 typedef int (*CommandFn) (const Command* command, uint, char* []);
 
+///	Describes a program command
 struct Command
 {
 	const char*  name;        ///< name of command
@@ -38,8 +39,14 @@ struct Command
 	CommandFn    function;    ///< implementation
 };
 
-int commandUsageError (const Command* command);
+///	Display command usage error for @a command
+int pixi_commandUsageError (const Command* command);
+///	Wrapper for @ref pixi_commandUsageError
+static inline int commandUsageError (const Command* command) {
+	return pixi_commandUsageError (command);
+}
 
+///	Groups program commands together
 typedef struct CommandGroup
 {
 	const char*                 name;     ///< name of the command group
@@ -48,9 +55,22 @@ typedef struct CommandGroup
 	const struct CommandGroup*  nextGroup;///< internal pointer to next command group
 } CommandGroup;
 
-extern CommandGroup gpioGroup;
+///	Add a command group to the global list
+int pixi_addCommandGroup (CommandGroup* group);
+///	Wrapper for @ref pixi_addCommandGroup
+static inline int addCommandGroup (CommandGroup* group) {
+	return pixi_addCommandGroup (group);
+}
 
-int addCommandGroup (CommandGroup* group);
+///	Invoke the command specified on the command line, or process --help/--version commands.
+///	@param description	description of this application
+///	@param version	version of the application (NULL is allowed)
+///	@param argc		argc that was passed to main
+///	@param argv		argv that was passed to main
+///	@return program exit code
+int pixi_main (const char* description, const char* version, int argc, char* argv[]);
+
+#	define LIBPIXI_CONSTRUCTOR(priority) __attribute__((constructor (10000 + priority)))
 
 
-#endif // !defined Command_h__included
+#endif // !defined libpixi_util_command_h__included

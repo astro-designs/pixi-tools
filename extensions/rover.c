@@ -21,7 +21,7 @@
 #include <libpixi/pixi/simple.h>
 #include <libpixi/util/string.h>
 #include <stdio.h>
-#include "Command.h"
+#include "common.h"
 #include "log.h"
 
 const uint MotorGpioController = 2;

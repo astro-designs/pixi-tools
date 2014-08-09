@@ -1,7 +1,7 @@
 /*
     pixi-tools: a set of software to interface with the Raspberry Pi
     and PiXi-200 hardware
-    Copyright (C) 2013 Simon Cantrill
+    Copyright (C) 2014 Simon Cantrill
 
     pixi-tools is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@
 
 
 #include <libpixi/common.h>
+#include <libpixi/util/command.h>
 
 ///	Add a constructor attribute to function, with the given priority (ordering).
 #define PIO_CONSTRUCTOR(priority) LIBPIXI_CONSTRUCTOR(10000 + priority)

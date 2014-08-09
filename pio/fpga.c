@@ -20,7 +20,7 @@
 
 #include <libpixi/pixi/fpga.h>
 #include <libpixi/pixi/spi.h>
-#include "Command.h"
+#include "common.h"
 #include "log.h"
 #include <stdio.h>
 
@@ -166,7 +166,7 @@ static CommandGroup pixiFpgaGroup =
 	.nextGroup = NULL
 };
 
-static void PIO_CONSTRUCTOR (101) initGroup (void)
+static void PIO_CONSTRUCTOR (1010) initGroup (void)
 {
 	addCommandGroup (&pixiFpgaGroup);
 }
