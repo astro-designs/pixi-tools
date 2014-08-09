@@ -26,9 +26,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 
-static int checkFlashId (SpiDevice* device)
+static int checkFlashId (void)
 {
-	int result = pixi_flashReadId (device);
+	int result = pixi_flashReadId();
 	if (result < 0)
 	{
 		PIO_ERROR(-result, "Couldn't read flash ID");
@@ -50,13 +50,12 @@ static int flashRdpResFn (const Command* command, uint argc, char* argv[])
 	if (argc != 1)
 		return commandUsageError (command);
 
-	SpiDevice dev = SPI_DEVICE_INIT;
-	int result = pixi_flashOpen (&dev);
+	int result = pixi_flashOpen();
 	if (result < 0)
 		return result;
 
-	result = pixi_flashRdpReadSig (&dev);
-	pixi_spiClose (&dev);
+	result = pixi_flashRdpReadSig();
+	pixi_flashClose();
 	if (result < 0)
 	{
 		PIO_ERROR(-result, "Release flash from deep power down and read electronic signature failed");
@@ -79,13 +78,12 @@ static int flashReadIdFn (const Command* command, uint argc, char* argv[])
 	if (argc != 1)
 		return commandUsageError (command);
 
-	SpiDevice dev = SPI_DEVICE_INIT;
-	int result = pixi_flashOpen (&dev);
+	int result = pixi_flashOpen();
 	if (result < 0)
 		return result;
 
-	int id = pixi_flashReadId (&dev);
-	pixi_spiClose (&dev);
+	int id = pixi_flashReadId();
+	pixi_flashClose();
 	if (id < 0)
 		return id;
 
@@ -108,15 +106,14 @@ static int flashReadStatusFn (const Command* command, uint argc, char* argv[])
 	if (argc != 1)
 		return commandUsageError (command);
 
-	SpiDevice dev = SPI_DEVICE_INIT;
-	int result = pixi_flashOpen (&dev);
+	int result = pixi_flashOpen();
 	if (result < 0)
 		return result;
 
-	checkFlashId (&dev);
+	checkFlashId();
 
-	int status = pixi_flashReadStatus (&dev);
-	pixi_spiClose (&dev);
+	int status = pixi_flashReadStatus();
+	pixi_flashClose();
 	if (status < 0)
 		return status;
 
@@ -140,24 +137,23 @@ static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
 	uint length  = pixi_parseLong (argv[2]);
 	const char* filename = argv[3];
 
-	SpiDevice dev = SPI_DEVICE_INIT;
-	int result = pixi_flashOpen (&dev);
+	int result = pixi_flashOpen();
 	if (result < 0)
 		return result;
 
-	checkFlashId (&dev);
+	checkFlashId();
 
 	int output = pixi_open (filename, O_CREAT | O_TRUNC | O_WRONLY, 0666);
 	if (output < 0)
 	{
 		PIO_ERROR(-output, "Failed to open output filename [%s]", filename);
-		pixi_spiClose (&dev);
+		pixi_flashClose();
 		return output;
 	}
 
 	uint8 buffer[FlashCapacity];
 	printf ("Reading from flash address=0x%x, length=0x%x\n", address, length);
-	result = pixi_flashReadMemory (&dev, address, buffer, length);
+	result = pixi_flashReadMemory (address, buffer, length);
 	printf ("Finished reading from flash\n");
 	if (result >= 0)
 	{
@@ -175,7 +171,7 @@ static int flashReadMemoryFn (const Command* command, uint argc, char* argv[])
 			result = 0;
 	}
 	pixi_close (output);
-	pixi_spiClose (&dev);
+	pixi_flashClose();
 
 	return result;
 }
@@ -203,24 +199,23 @@ static int flashEraseWriteMemory (const Command* command, uint argc, char* argv[
 	}
 	uint length = result;
 
-	SpiDevice dev = SPI_DEVICE_INIT;
-	result = pixi_flashOpen (&dev);
+	result = pixi_flashOpen();
 	if (result < 0)
 		return result;
 
-	checkFlashId (&dev);
+	checkFlashId();
 
 	if (erase)
 	{
 		printf ("Erasing sectors in region address=0x%x, length=0x%x\n", address, length);
-		result = pixi_flashEraseSectors (&dev, address, length);
+		result = pixi_flashEraseSectors (address, length);
 		if (result < 0)
 			PIO_LOG_ERROR("Sector erase failed");
 	}
 	if (result >= 0)
 	{
 		printf ("Writing to flash address=0x%x, length=0x%x\n", address, length);
-		result = pixi_flashWriteMemory (&dev, address, buffer, length);
+		result = pixi_flashWriteMemory (address, buffer, length);
 		if (result < 0)
 			PIO_LOG_ERROR("Flash write failed");
 	}
@@ -230,7 +225,7 @@ static int flashEraseWriteMemory (const Command* command, uint argc, char* argv[
 		printf ("Verifying: reading from flash\n");
 		int written = result;
 		char check[written];
-		result = pixi_flashReadMemory (&dev, address, check, written);
+		result = pixi_flashReadMemory (address, check, written);
 		if (result == written)
 		{
 			printf ("Comparing memory\n");
@@ -255,7 +250,7 @@ static int flashEraseWriteMemory (const Command* command, uint argc, char* argv[
 		}
 	}
 
-	pixi_spiClose (&dev);
+	pixi_flashClose();
 
 	return result;
 }
@@ -292,21 +287,20 @@ static int flashEraseSectorsFn (const Command* command, uint argc, char* argv[])
 	uint address = pixi_parseLong (argv[1]);
 	uint length  = pixi_parseLong (argv[2]);
 
-	SpiDevice dev = SPI_DEVICE_INIT;
-	int result = pixi_flashOpen (&dev);
+	int result = pixi_flashOpen();
 	if (result < 0)
 		return result;
 
-	checkFlashId (&dev);
+	checkFlashId();
 
 	printf ("Erasing flash sectors\n");
-	result = pixi_flashEraseSectors (&dev, address, length);
+	result = pixi_flashEraseSectors (address, length);
 	if (result < 0)
 		PIO_ERROR(-result, "erasing sectors failed");
 	else
 		printf ("Erasing 0x%02x bytes of flash\n", result);
 
-	pixi_spiClose (&dev);
+	pixi_flashClose();
 
 	return result;
 }
@@ -324,16 +318,15 @@ static int flashEraseFn (const Command* command, uint argc, char* argv[])
 	if (argc != 1)
 		return commandUsageError (command);
 
-	SpiDevice dev = SPI_DEVICE_INIT;
-	int result = pixi_flashOpen (&dev);
+	int result = pixi_flashOpen();
 	if (result < 0)
 		return result;
 
-	checkFlashId (&dev);
+	checkFlashId();
 
 	printf ("Erasing all flash memory\n");
-	result = pixi_flashBulkErase (&dev);
-	pixi_spiClose (&dev);
+	result = pixi_flashBulkErase();
+	pixi_flashClose();
 	if (result < 0)
 		PIO_ERROR(-result, "Bulk erase failed");
 	else

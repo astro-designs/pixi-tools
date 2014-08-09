@@ -43,15 +43,26 @@ enum Instructions
 	ReleaseFromDeepPowerDown = 0xAB  // 0,  0,  0, or 0,3,1-∞ for 'and read electronic signature'
 };
 
-int pixi_flashOpen (SpiDevice* device)
+static SpiDevice flashSpi = SPI_DEVICE_INIT;
+
+int pixi_flashOpen (void)
 {
-	int result = pixi_spiOpen (0, PixiSpiSpeed, device);
+	// TODO: instead rejecting if previously open,
+	// do ref-counting of open count?
+	LIBPIXI_PRECONDITION(flashSpi.fd < 0);
+	int result = pixi_spiOpen (PixiSpiChannel, PixiSpiSpeed, &flashSpi);
 	if (result < 0)
-		LIBPIXI_ERROR(-result, "Couldn't open flash SPI channel");
+		LIBPIXI_ERROR(-result, "Cannot open flash SPI channel");
 	return result;
 }
 
-int pixi_flashRdpReadSig (SpiDevice* device)
+int pixi_flashClose (void)
+{
+	LIBPIXI_PRECONDITION(flashSpi.fd >= 0);
+	return pixi_spiClose (&flashSpi);
+}
+
+int pixi_flashRdpReadSig (void)
 {
 	uint8 tx[5] = {
 		ReleaseFromDeepPowerDown,
@@ -61,7 +72,7 @@ int pixi_flashRdpReadSig (SpiDevice* device)
 		0
 	};
 	uint8 rx[5];
-	int result = pixi_spiReadWrite (device, tx, rx, sizeof (tx));
+	int result = pixi_spiReadWrite (&flashSpi, tx, rx, sizeof (tx));
 	if (result < 0)
 	{
 		LIBPIXI_ERROR(-result, "SPI read/write failed");
@@ -77,14 +88,14 @@ int pixi_flashRdpReadSig (SpiDevice* device)
 
 }
 
-int pixi_flashReadStatus (SpiDevice* device)
+int pixi_flashReadStatus (void)
 {
 	uint8 tx[2] = {
 		ReadStatusRegister,
 		0
 	};
 	uint8 rx[2];
-	int result = pixi_spiReadWrite (device, tx, rx, sizeof (tx));
+	int result = pixi_spiReadWrite (&flashSpi, tx, rx, sizeof (tx));
 	if (result < 0)
 	{
 		LIBPIXI_ERROR(-result, "Flash SPI read of status register failed");
@@ -93,7 +104,7 @@ int pixi_flashReadStatus (SpiDevice* device)
 	return rx[1];
 }
 
-int pixi_flashReadId (SpiDevice* device)
+int pixi_flashReadId (void)
 {
 	uint8 tx[4] = {
 		ReadIdentification,
@@ -102,7 +113,7 @@ int pixi_flashReadId (SpiDevice* device)
 		0
 	};
 	uint8 rx[4];
-	int result = pixi_spiReadWrite (device, tx, rx, sizeof (tx));
+	int result = pixi_spiReadWrite (&flashSpi, tx, rx, sizeof (tx));
 	if (result < 0)
 	{
 		LIBPIXI_ERROR(-result, "Flash SPI read of identification failed");
@@ -112,7 +123,7 @@ int pixi_flashReadId (SpiDevice* device)
 	return id;
 }
 
-int pixi_flashReadMemory (SpiDevice* device, uint address, void* buffer, uint length)
+int pixi_flashReadMemory (uint address, void* buffer, uint length)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(buffer);
 
@@ -150,7 +161,7 @@ int pixi_flashReadMemory (SpiDevice* device, uint address, void* buffer, uint le
 		tx[2] = address >>  8;
 		tx[3] = address >>  0;
 
-		result = pixi_spiReadWrite (device, tx, rx, headerSize + size);
+		result = pixi_spiReadWrite (&flashSpi, tx, rx, headerSize + size);
 		if (result < 0)
 		{
 			LIBPIXI_ERROR(-result, "SPI read/write failed");
@@ -169,16 +180,16 @@ int pixi_flashReadMemory (SpiDevice* device, uint address, void* buffer, uint le
 
 }
 
-static int flashSendWrite (SpiDevice* device, const void* tx, void* rx, uint size)
+static int flashSendWrite (const void* tx, void* rx, uint size)
 {
 	uint8 writeEnable = WriteEnable;
-	int result = pixi_spiReadWrite (device, &writeEnable, &writeEnable, sizeof (writeEnable));
+	int result = pixi_spiReadWrite (&flashSpi, &writeEnable, &writeEnable, sizeof (writeEnable));
 	if (result < 0)
 	{
 		LIBPIXI_ERROR(-result, "Flash SPI write-enable failed");
 		return result;
 	}
-	result = pixi_flashReadStatus (device);
+	result = pixi_flashReadStatus();
 	if (!(result & WriteEnableLatch))
 	{
 		LIBPIXI_LOG_ERROR("WriteEnable bit not in status register");
@@ -192,7 +203,7 @@ static int flashSendWrite (SpiDevice* device, const void* tx, void* rx, uint siz
 		LIBPIXI_LOG_TRACE("Sending 'write' [%s]", hex);
 	}
 
-	result = pixi_spiReadWrite (device, tx, rx, size);
+	result = pixi_spiReadWrite (&flashSpi, tx, rx, size);
 	if (result < 0)
 	{
 		LIBPIXI_ERROR(-result, "Flash SPI page program failed");
@@ -200,7 +211,7 @@ static int flashSendWrite (SpiDevice* device, const void* tx, void* rx, uint siz
 	}
 	for (uint i = 0; i < 100000; i++)
 	{
-		result = pixi_flashReadStatus (device);
+		result = pixi_flashReadStatus();
 		if (result < 0)
 			return result;
 		if (!(result & WriteInProgress))
@@ -217,7 +228,7 @@ static int flashSendWrite (SpiDevice* device, const void* tx, void* rx, uint siz
 	return 0;
 }
 
-int pixi_flashEraseSectors (SpiDevice* device, uint address, uint length)
+int pixi_flashEraseSectors (uint address, uint length)
 {
 	if (address >= FlashCapacity)
 	{
@@ -246,7 +257,7 @@ int pixi_flashEraseSectors (SpiDevice* device, uint address, uint length)
 		tx[2] = address >>  8;
 		tx[3] = address >>  0;
 		LIBPIXI_LOG_INFO("Erasing sector at address 0x%06x", address);
-		result = flashSendWrite (device, tx, tx, sizeof (tx));
+		result = flashSendWrite (tx, tx, sizeof (tx));
 		if (result < 0)
 			break;
 
@@ -257,13 +268,13 @@ int pixi_flashEraseSectors (SpiDevice* device, uint address, uint length)
 	return result;
 }
 
-int pixi_flashBulkErase (SpiDevice* device)
+int pixi_flashBulkErase (void)
 {
 	uint8 bulkErase = BulkErase;
-	return flashSendWrite (device, &bulkErase, &bulkErase, sizeof (bulkErase));
+	return flashSendWrite (&bulkErase, &bulkErase, sizeof (bulkErase));
 }
 
-int pixi_flashWriteMemory (SpiDevice* device, uint address, const void* buffer, uint length)
+int pixi_flashWriteMemory (uint address, const void* buffer, uint length)
 {
 	if (address >= FlashCapacity)
 	{
@@ -301,7 +312,7 @@ int pixi_flashWriteMemory (SpiDevice* device, uint address, const void* buffer, 
 		tx[3] = address >>  0;
 		memcpy (tx + headerSize, pbuf, size);
 		LIBPIXI_LOG_DEBUG("Writing %u bytes at address 0x%06x", size, address);
-		result = flashSendWrite (device, tx, rx, headerSize + size);
+		result = flashSendWrite (tx, rx, headerSize + size);
 		if (result < 0)
 			break;
 

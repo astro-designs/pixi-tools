@@ -22,7 +22,7 @@
 #define libpixi_pixi_flash_h__included
 
 
-#include <libpixi/pi/spi.h>
+#include <libpixi/common.h>
 #include <limits.h>
 
 LIBPIXI_BEGIN_DECLS
@@ -52,16 +52,17 @@ enum StatusBits
 	StatusRegisterWriteProtect = 1 << 7
 };
 
-int pixi_flashOpen (SpiDevice* device);
-int pixi_flashRdpReadSig (SpiDevice* device);
-int pixi_flashReadId (SpiDevice* device);
-int pixi_flashReadStatus (SpiDevice* device);
-int pixi_flashReadMemory (SpiDevice* device, uint address, void* buffer, uint length);
+int pixi_flashOpen (void);
+int pixi_flashClose (void);
+int pixi_flashRdpReadSig (void);
+int pixi_flashReadId (void);
+int pixi_flashReadStatus (void);
+int pixi_flashReadMemory (uint address, void* buffer, uint length);
 ///	Erase the sectors corresponding to the region defined by @a address, @a length.
-int pixi_flashEraseSectors (SpiDevice* device, uint address, uint length);
-int pixi_flashWriteMemory (SpiDevice* device, uint address, const void* buffer, uint length);
+int pixi_flashEraseSectors (uint address, uint length);
+int pixi_flashWriteMemory (uint address, const void* buffer, uint length);
 
-int pixi_flashBulkErase (SpiDevice* device);
+int pixi_flashBulkErase (void);
 
 ///@} defgroup
 
