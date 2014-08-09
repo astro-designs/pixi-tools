@@ -28,8 +28,6 @@
 #include "log.h"
 
 
-LogLevel pio_logLevel = LogLevelAll;
-
 static CommandGroup* groups = &gpioGroup;
 static CommandGroup* lastGroup = &gpioGroup;
 
@@ -119,8 +117,6 @@ int main (int argc, char* argv[])
 		printf ("pio version %s\n", pixi_getLibVersion());
 		return 0;
 	}
-
-	pio_logLevel = pixi_strToLogLevel (getenv ("PIO_LOG_LEVEL"), LogLevelInfo);
 
 	int result = pixi_initLib();
 //	if (result < 0)

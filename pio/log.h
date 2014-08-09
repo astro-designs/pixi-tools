@@ -24,17 +24,15 @@
 
 #include <libpixi/util/log.h>
 
-extern LogLevel pio_logLevel;
-
 /// Check if logging at @a level should be output.
 static inline bool pio_isLogLevelEnabled (LogLevel level) {
-	return level >= pio_logLevel;
+	return pixi_isAppLogLevelEnabled (level);
 }
 
 /// Wraps LIBPIXI_GENERAL_LOG with confLevel=pio_logLevel
-#define PIO_LOG(         level,         ...) LIBPIXI_GENERAL_LOG          (pio_logLevel, level,         __VA_ARGS__)
+#define PIO_LOG(         level,         ...) LIBPIXI_GENERAL_LOG          (pixi_appLogLevel, level,         __VA_ARGS__)
 /// Wraps LIBPIXI_GENERAL_STRERROR_LOG with confLevel=pio_logLevel
-#define PIO_STRERROR_LOG(level, errnum, ...) LIBPIXI_GENERAL_STRERROR_LOG (pio_logLevel, level, errnum, __VA_ARGS__)
+#define PIO_STRERROR_LOG(level, errnum, ...) LIBPIXI_GENERAL_STRERROR_LOG (pixi_appLogLevel, level, errnum, __VA_ARGS__)
 
 /// Wraps PIO_LOG with @c level=LogLevelTrace
 #define PIO_LOG_TRACE(...) PIO_LOG(LogLevelTrace  , __VA_ARGS__)
