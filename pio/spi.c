@@ -88,13 +88,13 @@ static Command spiTransferCmd =
 	.function    = spiTransfer
 };
 
-static int spiSetGet (bool writeMode, uint channel, uint address, uint data)
+static int spiSetGet (bool writeMode, uint address, uint data)
 {
 	SpiDevice dev = SpiDeviceInit;
-	int result = pixi_spiOpen(channel, PixiSpiSpeed, &dev);
+	int result = pixi_spiOpen(PixiSpiChannel, PixiSpiSpeed, &dev);
 	if (result < 0)
 	{
-		PIO_ERROR(-result, "Failed to setup SPI device %u", channel);
+		PIO_ERROR(-result, "Failed to setup SPI device %u", PixiSpiChannel);
 		return result;
 	}
 	// TODO: belongs in libpixi
@@ -118,61 +118,50 @@ static int spiSetGet (bool writeMode, uint channel, uint address, uint data)
 
 static int spiSetFn (const Command* command, uint argc, char* argv[])
 {
-	if (argc < 3 || argc > 4)
+	if (argc != 3)
 		return commandUsageError (command);
 
-	uint channel = PixiSpiChannel;
-	uint address = 0;
-	uint data    = 0;
-	int arg = 1;
-	if (argc > 3)
-		channel = pixi_parseLong (argv[arg++]);
-	address = pixi_parseLong (argv[arg++]);
-	data    = pixi_parseLong (argv[arg++]);
+	uint address = pixi_parseLong (argv[1]);
+	uint data    = pixi_parseLong (argv[2]);
 
-	return spiSetGet (true, channel, address, data);
+	return spiSetGet (true, address, data);
 }
 static Command spiSetCmd =
 {
 	.name        = "spi-set",
 	.description = "write a value to the pixi over spi",
-	.usage       = "usage: %s [CHANNEL] ADDRESS VALUE",
+	.usage       = "usage: %s ADDRESS VALUE",
 	.function    = spiSetFn
 };
 
 static int spiGetFn (const Command* command, uint argc, char* argv[])
 {
-	if (argc < 2 || argc > 4)
+	if (argc < 2 || argc > 3)
 		return commandUsageError (command);
 
-	uint channel = PixiSpiChannel;
-	uint address = 0;
-	uint data    = 0;
-	int arg = 1;
+	uint address = pixi_parseLong (argv[1]);
+	uint data = 0;
 	if (argc > 2)
-		channel = pixi_parseLong (argv[arg++]);
-	address = pixi_parseLong (argv[arg++]);
-	if (argc > 3)
-		data    = pixi_parseLong (argv[arg++]);
+		data    = pixi_parseLong (argv[2]);
 
-	return spiSetGet (false, channel, address, data);
+	return spiSetGet (false, address, data);
 }
 static Command spiGetCmd =
 {
 	.name        = "spi-get",
 	.description = "read a value from the pixi over spi",
-	.usage       = "usage: %s [CHANNEL] ADDRESS [NULL-DATA]",
+	.usage       = "usage: %s ADDRESS [NULL-DATA]",
 	.function    = spiGetFn
 };
 
 
-static int monitorSpi (uint channel, uint address)
+static int monitorSpi (uint address)
 {
 	SpiDevice dev = SpiDeviceInit;
-	int result = pixi_spiOpen(channel, PixiSpiSpeed, &dev);
+	int result = pixi_spiOpen(PixiSpiChannel, PixiSpiSpeed, &dev);
 	if (result < 0)
 	{
-		PIO_ERROR(-result, "Failed to setup SPI device %u", channel);
+		PIO_ERROR(-result, "Failed to setup SPI device %u", PixiSpiChannel);
 		return result;
 	}
 
@@ -214,30 +203,29 @@ static int monitorSpi (uint channel, uint address)
 
 static int spiMonitorFn (const Command* command, uint argc, char* argv[])
 {
-	if (argc != 3)
+	if (argc != 2)
 		return commandUsageError (command);
 
-	uint channel = pixi_parseLong (argv[1]);
-	uint address = pixi_parseLong (argv[2]);
+	uint address = pixi_parseLong (argv[1]);
 
-	return monitorSpi (channel, address);
+	return monitorSpi (address);
 }
 static Command spiMonitorCmd =
 {
 	.name        = "spi-monitor",
-	.description = "monitor an SPI channel/address",
-	.usage       = "usage: %s CHANNEL ADDRESS",
+	.description = "monitor a PiXi register via SPI",
+	.usage       = "usage: %s ADDRESS",
 	.function    = spiMonitorFn
 };
 
 
-static int scanSpi (uint channel, uint low, uint high, uint sleepUs)
+static int scanSpi (uint low, uint high, uint sleepUs)
 {
 	SpiDevice dev = SpiDeviceInit;
-	int result = pixi_spiOpen(channel, PixiSpiSpeed, &dev);
+	int result = pixi_spiOpen(PixiSpiChannel, PixiSpiSpeed, &dev);
 	if (result < 0)
 	{
-		PIO_ERROR(-result, "Failed to setup SPI device %u", channel);
+		PIO_ERROR(-result, "Failed to setup SPI device %u", PixiSpiChannel);
 		return result;
 	}
 
@@ -289,28 +277,26 @@ static int scanSpi (uint channel, uint low, uint high, uint sleepUs)
 
 static int spiScanFn (const Command* command, uint argc, char* argv[])
 {
-	if (argc < 2 || argc > 5)
+	if (argc < 1 || argc > 4)
 		return commandUsageError (command);
 
-	uint channel = 0;
 	uint low     = 0;
 	uint high    = 255;
 	uint sleepUs = 0;
-	channel = pixi_parseLong (argv[1]);
+	if (argc > 1)
+		low     = pixi_parseLong (argv[1]);
 	if (argc > 2)
-		low     = pixi_parseLong (argv[2]);
+		high    = pixi_parseLong (argv[2]);
 	if (argc > 3)
-		high    = pixi_parseLong (argv[3]);
-	if (argc > 4)
-		sleepUs = pixi_parseLong (argv[4]);
+		sleepUs = pixi_parseLong (argv[3]);
 
-	return scanSpi (channel, low, high, sleepUs);
+	return scanSpi (low, high, sleepUs);
 }
 static Command spiScanCmd =
 {
 	.name        = "spi-scan",
-	.description = "continually scan an SPI channel (all addresses)",
-	.usage       = "usage: %s CHANNEL [LOW] [HIGH] [SLEEP-US]",
+	.description = "continually scan a range of PiXi registers via SPI",
+	.usage       = "usage: %s [LOW] [HIGH] [SLEEP-US]",
 	.function    = spiScanFn
 };
 
@@ -320,7 +306,7 @@ static int monitorButtonsFn (const Command* command, uint argc, char* argv[])
 	if (argc != 1)
 		return commandUsageError (command);
 
-	return monitorSpi (0, Pixi_Switch_in);
+	return monitorSpi (Pixi_Switch_in);
 }
 static Command monitorButtonsCmd =
 {
