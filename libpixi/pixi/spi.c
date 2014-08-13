@@ -1,7 +1,7 @@
 /*
     pixi-tools: a set of software to interface with the Raspberry Pi
     and PiXi-200 hardware
-    Copyright (C) 2013 Simon Cantrill
+    Copyright (C) 2014 Simon Cantrill
 
     pixi-tools is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -86,7 +86,7 @@ int pixi_multiRegisterOp (RegisterOp* operations, uint opCount)
 {
 	LIBPIXI_PRECONDITION(pixiSpi.fd >= 0);
 	LIBPIXI_PRECONDITION_NOT_NULL(operations);
-	LIBPIXI_PRECONDITION(opCount < 256);
+	LIBPIXI_PRECONDITION(opCount <= 256);
 
 	struct spi_ioc_transfer transfers[opCount];
 	for (uint i = 0; i < opCount; i++)

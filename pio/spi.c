@@ -1,7 +1,7 @@
 /*
     pixi-tools: a set of software to interface with the Raspberry Pi
     and PiXi-200 hardware
-    Copyright (C) 2013 Simon Cantrill
+    Copyright (C) 2014 Simon Cantrill
 
     pixi-tools is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -20,11 +20,13 @@
 
 #include <libpixi/pixi/registers.h>
 #include <libpixi/pixi/spi.h>
+#include <libpixi/pixi/simple.h>
 #include <libpixi/util/string.h>
 #include "common.h"
 #include "log.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 static int spiTransfer (const Command* command, uint argc, char* argv[])
@@ -90,29 +92,21 @@ static Command spiTransferCmd =
 
 static int spiSetGet (bool writeMode, uint address, uint data)
 {
-	SpiDevice dev = SpiDeviceInit;
-	int result = pixi_spiOpen(PixiSpiChannel, PixiSpiSpeed, &dev);
-	if (result < 0)
-	{
-		PIO_ERROR(-result, "Failed to setup SPI device %u", PixiSpiChannel);
-		return result;
-	}
-	// TODO: belongs in libpixi
-	uint8_t buffer[4] = {
-		address,
-		writeMode ? PixiSpiEnableWrite8 : PixiSpiEnableRead16, // FIXME: erm, check this
-		(data & 0xFF00) >> 8,
-		(data & 0x00FF)
+	pixiOpenOrDie();
+
+	RegisterOp op = {
+		.address  = address,
+		.function = (writeMode ? PixiSpiEnableWrite16 : PixiSpiEnableRead16),
+		.value    = data
 	};
-	result = pixi_spiReadWrite(&dev, buffer, buffer, sizeof (buffer));
-	pixi_spiClose (&dev);
+	int result = multiRegisterOp (&op, 1);
 	if (result < 0)
 		PIO_ERROR(-result, "SPI read-write failed");
 
-	data = (buffer[2] << 8) | buffer[3];
-	PIO_LOG_INFO("SPI returned: 0x%02x 0x%02x 0x%04x", buffer[0], buffer[1], data);
+	PIO_LOG_INFO("SPI returned: 0x%02x 0x%02x 0x%04x", op.address, op.function, op.value);
 	if (!writeMode)
-		printf ("%u\n", data);
+		printf ("%u\n", op.value);
+	pixiClose();
 	return result;
 }
 
@@ -157,31 +151,18 @@ static Command spiGetCmd =
 
 static int monitorSpi (uint address)
 {
-	SpiDevice dev = SpiDeviceInit;
-	int result = pixi_spiOpen(PixiSpiChannel, PixiSpiSpeed, &dev);
-	if (result < 0)
-	{
-		PIO_ERROR(-result, "Failed to setup SPI device %u", PixiSpiChannel);
-		return result;
-	}
+	pixiOpenOrDie();
 
+	int result = 0;
 	uint previous = -1;
 	uint changes = 0;
 	while (true)
 	{
-		uint data = 0;
-		// TODO: belongs in libpixi
-		uint8_t buffer[4] = {
-			address,
-			PixiSpiEnableRead16,
-			(data & 0xFF00) >> 8,
-			(data & 0x00FF)
-		};
-		result = pixi_spiReadWrite(&dev, buffer, buffer, sizeof (buffer));
+		result = registerRead (address);;
 		if (result < 0)
 			break;
 
-		data = (buffer[2] << 8) | buffer[3];
+		uint data = result;
 		if (previous != data)
 		{
 			changes++;
@@ -194,7 +175,8 @@ static int monitorSpi (uint address)
 	}
 	printf("\n");
 
-	pixi_spiClose (&dev);
+	pixiClose();
+
 	if (result < 0)
 		PIO_ERROR(-result, "SPI read-write failed");
 
@@ -221,54 +203,58 @@ static Command spiMonitorCmd =
 
 static int scanSpi (uint low, uint high, uint sleepUs)
 {
-	SpiDevice dev = SpiDeviceInit;
-	int result = pixi_spiOpen(PixiSpiChannel, PixiSpiSpeed, &dev);
-	if (result < 0)
-	{
-		PIO_ERROR(-result, "Failed to setup SPI device %u", PixiSpiChannel);
-		return result;
-	}
+	pixiOpenOrDie();
 
-	uint16 memory[256];
-	memset (memory, 0, sizeof (memory));
-	uint changes = 0;
+	const uint count = high - low + 1;
+	uint memory[count];
+	memset (memory, 0, count * sizeof (uint));
+	uint iterations = 0;
+	uint changes    = 0;
+	int result = 0;
 
 	while (true)
 	{
-		for (uint addr = low; addr <= high; addr++)
-		{
-			// TODO: belongs in libpixi
-			uint8 txBuf[4] = {addr, PixiSpiEnableRead16, 0, 0};
-			uint8 rxBuf[4] = {0,0,0,0};
-			result = pixi_spiReadWrite(&dev, txBuf, rxBuf, sizeof (txBuf));
-			if (result < 0)
-				break;
+		struct timeval tod;
+		gettimeofday (&tod, NULL);
 
-			if (pio_isLogLevelEnabled (LogLevelDebug))
+		RegisterOp ops[count];
+		for (uint i = 0; i < count; i++)
+		{
+			ops[i].address  = low + i;
+			ops[i].function = PixiSpiEnableRead16;
+			ops[i].value    = 0;
+		}
+		result = pixi_multiRegisterOp (ops, count);
+		if (result < 0)
+		{
+			LIBPIXI_ERROR(-result, "pixi_multiRegisterOp failed");
+			break;
+		}
+		bool haveTime = false;
+		char time[26];
+		for (uint i = 0; i < count; i++)
+		{
+			if (memory[i] != ops[i].value)
 			{
-				char txHex[16];
-				char rxHex[16];
-				pixi_hexEncode (txBuf, sizeof (txBuf), txHex, sizeof (txHex), ' ', "");
-				pixi_hexEncode (rxBuf, sizeof (rxBuf), rxHex, sizeof (rxHex), ' ', "");
-				PIO_LOG_DEBUG("SPI tx=[%s] rx=[%s]", txHex, rxHex);
-			}
-			uint data = (rxBuf[2] << 8) | rxBuf[3];
-			if (memory[addr] != data)
-			{
+				if (!haveTime)
+				{
+					pixi_formatTimeval (&tod, time, sizeof (time));
+					haveTime = true;
+				}
 				changes++;
-				memory[addr] = data;
-				char time[26];
-				pixi_formatCurTime (time, sizeof (time));
-				printf("%s: 0x%02x 0x%04x [%u]\n", time, addr, data, changes);
+				memory[i] = ops[i].value;
+				printf("%s: 0x%02x 0x%04x [iterations=%u changes=%u]\n",
+					time, ops[i].address, ops[i].value, iterations, changes);
 				fflush (stdout);
 			}
 		}
 		if (sleepUs)
 			usleep (sleepUs);
+		iterations++;
 	}
 	printf("\n");
 
-	pixi_spiClose (&dev);
+	pixiClose();
 	if (result < 0)
 		PIO_ERROR(-result, "SPI read-write failed");
 
@@ -290,6 +276,11 @@ static int spiScanFn (const Command* command, uint argc, char* argv[])
 	if (argc > 3)
 		sleepUs = pixi_parseLong (argv[3]);
 
+	if (high < low || low > 255 || high > 255)
+	{
+		PIO_LOG_ERROR("Registers out of range");
+		return -EINVAL;
+	}
 	return scanSpi (low, high, sleepUs);
 }
 static Command spiScanCmd =
