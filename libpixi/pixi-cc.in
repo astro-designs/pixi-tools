@@ -1,0 +1,28 @@
+#!/bin/bash
+
+if test -z "$CC"; then
+	CC=@CC@
+fi
+if test ! -v CFLAGS; then
+	CFLAGS="-std=c99 -Wall -Wextra -Wstrict-prototypes -Wmissing-declarations -Wmissing-prototypes -pedantic"
+fi
+
+libdir=@libdir@
+includedir=@includedir@
+
+cppflags="-I${includedir} -D_GNU_SOURCE"
+libs="-L${libdir} -lpixi -Wl,-rpath,${libdir}"
+
+if test $# = 0 || test "$1" = "--help"; then
+	echo "A trivial wrapper around $CC for compiling using libpixi"
+	echo "Calls $CC with flags:"
+	echo "  $cppflags"
+	echo "  $CFLAGS"
+	echo "  $libs"
+	echo "example usage:"
+	echo "  $0 my-source.c -o myexecutable"
+	exit 0
+fi
+
+set -x
+exec "$CC" $cppflags $CFLAGS "$@" $libs

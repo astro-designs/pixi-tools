@@ -33,7 +33,13 @@ toolsdir = $(topdir)/tools
 version_h = $(topdir)/libpixi/private/version.h
 
 project_version = $(shell . $(topdir)/project-info && echo $$PROJECT_VERSION)
-substitutions   = -e 's,@prefix@,$(prefix),' -e 's,@libdir@,$(libdir),' -e 's,@includedir@,$(includedir),' -e 's,@PROJECT_VERSION@,$(project_version),'
+substitutions   = \
+	-e 's,@prefix@,$(prefix),' \
+	-e 's,@libdir@,$(libdir),' \
+	-e 's,@includedir@,$(includedir),' \
+	-e 's,@PROJECT_VERSION@,$(project_version),' \
+	-e 's,@CC@,$(CC),' \
+	-e 's,@CXX@,$(CXX),'
 
 # python 'site' packages directory within build tree
 build_bindir   = bin
@@ -221,6 +227,10 @@ install-exec: $(APPS)
 	$(CMD)for target in $(APPS); do \
 		$(INSTALL_EXEC) $$target $(DESTDIR)$(bindir)/ || exit 1 ; \
 	done
+	$(CMD)for target in pixi-cc pixi-c++; do \
+		sed $(substitutions) < $(topdir)/libpixi/$$target.in > $$target || exit 1 ; \
+		$(INSTALL_EXEC) $$target $(DESTDIR)$(bindir) || exit 1 ; \
+	done
 
 uninstall-exec:
 	$(ECHO) uninstalling executables
@@ -233,8 +243,8 @@ install-libraries: $(LIBS)
 	$(CMD)mkdir -p $(DESTDIR)$(libdir) $(DESTDIR)$(pkgconfigdir)
 	$(CMD)$(INSTALL_EXEC) $(libpixi) $(DESTDIR)$(libdir)/libpixi.so.$(libpixi_ABI)
 	$(CMD)ln -sf libpixi.so.$(libpixi_ABI) $(DESTDIR)$(libdir)/libpixi.so
-	sed $(substitutions) < $(topdir)/libpixi/libpixi.pc.in > libpixi.pc
-	$(CMD)install -m 0644 libpixi.pc $(DESTDIR)$(pkgconfigdir)
+	$(CMD)sed $(substitutions) < $(topdir)/libpixi/libpixi.pc.in > libpixi.pc
+	$(CMD)$(INSTALL_DATA) -m 0644 libpixi.pc $(DESTDIR)$(pkgconfigdir)
 
 uninstall-libraries:
 	$(ECHO) uninstalling libraries

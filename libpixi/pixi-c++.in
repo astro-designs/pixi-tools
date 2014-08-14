@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if test -z "$CXX"; then
+	CXX=@CXX@
+fi
+
+dir=$(dirname "$0")
+
+CFLAGS="-Wall -Wextra"
+export CFLAGS
+CC=$CXX CC_STD= exec "$dir/pixi-cc" "$@"
