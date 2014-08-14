@@ -25,6 +25,10 @@
 #include <libpixi/common.h>
 #include <libpixi/libpixi.h>
 
+LIBPIXI_BEGIN_DECLS
+
+///@defgroup util_command libpixi command line utilities
+///@{
 
 typedef struct Command Command;
 /// @return >=0 on success, -errno on error
@@ -70,7 +74,10 @@ static inline int addCommandGroup (CommandGroup* group) {
 ///	@return program exit code
 int pixi_main (const char* description, const char* version, int argc, char* argv[]);
 
-#	define LIBPIXI_CONSTRUCTOR(priority) __attribute__((constructor (10000 + priority)))
+#define LIBPIXI_COMMAND_GROUP(priority) LIBPIXI_CONSTRUCTOR(1000 + priority)
 
+///@} defgroup
+
+LIBPIXI_END_DECLS
 
 #endif // !defined libpixi_util_command_h__included
