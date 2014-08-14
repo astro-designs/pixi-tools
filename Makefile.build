@@ -1,6 +1,6 @@
 #    pixi-tools: a set of software to interface with the Raspberry Pi
 #    and PiXi-200 hardware
-#    Copyright (C) 2013 Simon Cantrill
+#    Copyright (C) 2014 Simon Cantrill
 #
 #    pixi-tools is free software; you can redistribute it and/or
 #    modify it under the terms of the GNU Lesser General Public
@@ -32,6 +32,9 @@ common_CPPFLAGS = -I$(topdir) -D_GNU_SOURCE
 toolsdir = $(topdir)/tools
 version_h = $(topdir)/libpixi/private/version.h
 
+project_version = $(shell . $(topdir)/project-info && echo $$PROJECT_VERSION)
+substitutions   = -e 's,@prefix@,$(prefix),' -e 's,@libdir@,$(libdir),' -e 's,@includedir@,$(includedir),' -e 's,@PROJECT_VERSION@,$(project_version),'
+
 # python 'site' packages directory within build tree
 build_bindir   = bin
 build_libdir   = lib
@@ -43,6 +46,7 @@ prefix    = /usr/local
 bindir    = $(prefix)/bin
 libdir    = $(prefix)/lib
 htmldir   = $(prefix)/$(build_htmldir)
+pkgconfigdir = $(libdir)/pkgconfig
 
 # run packages-dir.py only on first expansion of $(pylibdir)
 get_pylibdir = $(shell $(PYTHON) $(toolsdir)/packages-dir.py $(libdir)/python$(PYTHON_VERSION))
@@ -226,13 +230,15 @@ uninstall-exec:
 
 install-libraries: $(LIBS)
 	$(ECHO) installing libraries
-	$(CMD)mkdir -p $(DESTDIR)$(libdir)
+	$(CMD)mkdir -p $(DESTDIR)$(libdir) $(DESTDIR)$(pkgconfigdir)
 	$(CMD)$(INSTALL_EXEC) $(libpixi) $(DESTDIR)$(libdir)/libpixi.so.$(libpixi_ABI)
 	$(CMD)ln -sf libpixi.so.$(libpixi_ABI) $(DESTDIR)$(libdir)/libpixi.so
+	sed $(substitutions) < $(topdir)/libpixi/libpixi.pc.in > libpixi.pc
+	$(CMD)install -m 0644 libpixi.pc $(DESTDIR)$(pkgconfigdir)
 
 uninstall-libraries:
 	$(ECHO) uninstalling libraries
-	$(CMD)rm -f -v $(DESTDIR)$(libdir)/libpixi.so.$(libpixi_ABI) $(DESTDIR)$(libdir)/libpixi.so
+	$(CMD)rm -f -v $(DESTDIR)$(libdir)/libpixi.so.$(libpixi_ABI) $(DESTDIR)$(libdir)/libpixi.so $(DESTDIR)$(pkgconfigdir)/libpixi.pc
 
 install-headers:
 	$(ECHO) installing headers
