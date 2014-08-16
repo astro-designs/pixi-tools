@@ -50,6 +50,24 @@ static int64 getVersion (void)
 	return version;
 }
 
+static int formatBuildTime (int64 version, char* buffer, size_t bufferLen)
+{
+	time_t time = pixi_pixiFpgaVersionToTime (version);
+	if (time < 0)
+	{
+		PIO_ERROR(-time, "Error converting FPGA version to time");
+		return time;
+	}
+	// Use strftime %c to get localised time format
+	size_t chars = strftime (buffer, bufferLen, "%c", gmtime (&time));
+	if (chars <= 0)
+	{
+		PIO_ERROR(-time, "Error formatting time value of %ld", time);
+		return -EINVAL;
+	}
+	return 0;
+}
+
 static int fpgaLoadFn (const Command* command, uint argc, char* argv[])
 {
 	if (argc > 2)
@@ -74,6 +92,12 @@ static int fpgaLoadFn (const Command* command, uint argc, char* argv[])
 		return result;
 	}
 	printf ("FPGA Version: %012llx\n", (ulonglong) version);
+	char buildTime[80];
+	result = formatBuildTime (version, buildTime, sizeof (buildTime));
+	if (result < 0)
+		return result;
+
+	printf ("FPGA Build-time: %s\n", buildTime);
 	return 0;
 }
 static Command fpgaLoadCmd =
@@ -125,22 +149,13 @@ static int fpgaGetBuildTimeFn (const Command* command, uint argc, char* argv[])
 		PIO_ERROR(-version, "Error getting FPGA version");
 		return version;
 	}
-	time_t time = pixi_pixiFpgaVersionToTime (version);
-	if (time < 0)
-	{
-		PIO_ERROR(-time, "Error converting FPGA version to time");
-		return time;
-	}
-	// Use strftime %c to get localised time format
-	char buf[80];
-	size_t chars = strftime (buf, sizeof (buf), "%c\n", gmtime (&time));
-	if (chars > 0)
-		printf (buf);
-	else
-	{
-		PIO_ERROR(-time, "Error formatting time value of %ld", time);
-		return -EINVAL;
-	}
+
+	char buildTime[80];
+	int result = formatBuildTime (version, buildTime, sizeof (buildTime));
+	if (result < 0)
+		return result;
+
+	printf ("%s\n", buildTime);
 	return 0;
 }
 static Command fpgaGetBuildTimeCmd =
