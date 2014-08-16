@@ -19,10 +19,9 @@
 */
 
 #include <libpixi/pixi/simple.h>
+#include <libpixi/util/command.h>
 #include <libpixi/util/string.h>
 #include <stdio.h>
-#include "common.h"
-#include "log.h"
 
 const uint MotorGpioController = 2;
 const uint MotorGpioPin        = 0;
@@ -65,7 +64,7 @@ static double readVoltage (void)
 static void moveRover (MotorDirection leftSide, MotorDirection rightSide, double speed)
 {
 	uint pwmSpeed = ((uint) (speed * 1023.0 / 100.0)) & 0x000003ff;
-	PIO_LOG_INFO ("moveRover left=%d right=%d speed=%f pwmSpeed=0x%4x", leftSide, rightSide, speed, pwmSpeed);
+	APP_LOG_INFO ("moveRover left=%d right=%d speed=%f pwmSpeed=0x%4x", leftSide, rightSide, speed, pwmSpeed);
 
 	// each side must be synchronised, but each side the motors are opposed:
 	pwmWritePin (FrontRight, pwmSpeed + MotorDirectionValues[ rightSide]);
@@ -80,10 +79,10 @@ static void turnLeft     (double speed) {moveRover (Reverse, Forward, speed);}
 static void turnRight    (double speed) {moveRover (Forward, Reverse, speed);}
 
 static void rest (void) {
-	PIO_LOG_INFO("Power = %.3fv", readVoltage());
-	PIO_LOG_INFO("Waiting...");
+	APP_LOG_INFO("Power = %.3fv", readVoltage());
+	APP_LOG_INFO("Waiting...");
 	sleep (2);
-	PIO_LOG_INFO("Power = %.3fv", readVoltage());
+	APP_LOG_INFO("Power = %.3fv", readVoltage());
 }
 
 static int roverFn (const Command* command, uint argc, char* argv[])
@@ -95,13 +94,13 @@ static int roverFn (const Command* command, uint argc, char* argv[])
 	double speed = atof (argv[2]);
 
 	prepare();
-	PIO_LOG_INFO("Power = %.3fv", readVoltage());
+	APP_LOG_INFO("Power = %.3fv", readVoltage());
 	if      (pixi_strStartsWithI ("forward" , move)) moveForward  (speed);
 	else if (pixi_strStartsWithI ("backward", move)) moveBackward (speed);
 	else if (pixi_strStartsWithI ("left"    , move)) turnLeft     (speed);
 	else if (pixi_strStartsWithI ("right"   , move)) turnRight    (speed);
 	else
-		PIO_LOG_ERROR ("Unknown movement: %s", move);
+		APP_LOG_ERROR ("Unknown movement: %s", move);
 	rest();
 	unprepare();
 	return 0;
@@ -155,7 +154,7 @@ static CommandGroup roverGroup =
 	.nextGroup = NULL
 };
 
-static void PIO_CONSTRUCTOR (10001) initGroup (void)
+static void LIBPIXI_COMMAND_GROUP(2010) initGroup (void)
 {
 	addCommandGroup (&roverGroup);
 }

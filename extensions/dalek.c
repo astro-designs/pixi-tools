@@ -19,14 +19,13 @@
 */
 
 #include <libpixi/pixi/simple.h>
+#include <libpixi/util/command.h>
 #include <libpixi/util/io.h>
 #include <libpixi/util/string.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include "common.h"
-#include "log.h"
 
 static int pixi_dalek_stop(int duration);
 static int pixi_dalek_f(int speed, int duration);
@@ -494,7 +493,7 @@ static CommandGroup dalekGroup =
 	.nextGroup = NULL
 };
 
-static void PIO_CONSTRUCTOR (10002) initGroup (void)
+static void LIBPIXI_COMMAND_GROUP(2020) initGroup (void)
 {
 	addCommandGroup (&dalekGroup);
 }

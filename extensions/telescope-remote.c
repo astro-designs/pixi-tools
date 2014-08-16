@@ -20,6 +20,7 @@
 
 #include <libpixi/pixi/simple.h>
 #include <libpixi/pixi/lcd.h>
+#include <libpixi/util/command.h>
 #include <libpixi/util/io.h>
 #include <libpixi/util/string.h>
 #include <ctype.h>
@@ -28,8 +29,6 @@
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
-#include "common.h"
-#include "log.h"
 
 
 static int setupSerial (int serialFd)
@@ -38,7 +37,7 @@ static int setupSerial (int serialFd)
 	int result = tcgetattr (serialFd, &term);
 	if (result < 0)
 	{
-		PIO_ERRNO_ERROR("tcgetattr of serial device failed");
+		APP_ERRNO_ERROR("tcgetattr of serial device failed");
 		return result;
 	}
 
@@ -48,11 +47,11 @@ static int setupSerial (int serialFd)
 
 	result = cfsetspeed (&term, B9600);
 	if (result < 0)
-		PIO_ERRNO_ERROR("cfsetspeed failed to set baud rate");
+		APP_ERRNO_ERROR("cfsetspeed failed to set baud rate");
 
 	result = tcsetattr (serialFd, TCSANOW, &term);
 	if (result < 0)
-		PIO_ERRNO_ERROR("tcsetattr failed to set baud rate");
+		APP_ERRNO_ERROR("tcsetattr failed to set baud rate");
 	return result;
 }
 
@@ -133,7 +132,7 @@ static const char keyLeft[]  = {0x1b, 0x5b, 0x44, 0};
 
 static void clearDisplay (State* state)
 {
-	PIO_LOG_INFO("Clearing display");
+	APP_LOG_INFO("Clearing display");
 	memset (state->display, ' ', sizeof state->display);
 	state->xPos = 0;
 	state->yPos = 0;
@@ -176,7 +175,7 @@ static bool writeDisplayChar (State* state, byte ch)
 	}
 	else if (ch >= 127 || !isprint (ch) || (isspace (ch) && ch != ' '))
 	{
-		PIO_LOG_ERROR("Unexpected display character %02x", ch);
+		APP_LOG_ERROR("Unexpected display character %02x", ch);
 		ch = '?';
 	}
 	if (update)
@@ -208,7 +207,7 @@ static bool writeDisplayChar (State* state, byte ch)
 
 static void eraseToLineEnd (State* state)
 {
-	PIO_LOG_TRACE("Erase to line end");
+	APP_LOG_TRACE("Erase to line end");
 	uint x = state->xPos;
 	uint y = state->yPos;
 	uint len = DisplayChars - x;
@@ -237,22 +236,22 @@ static void readTelescope (State* state)
 	ssize_t count = pixi_read (state->serialFd, buf, sizeof (buf));
 	if (count < 0)
 	{
-		PIO_ERROR(-count, "Error reading from serial");
+		APP_ERROR(-count, "Error reading from serial");
 		return;
 	}
-	if (pio_isLogLevelEnabled(LogLevelDebug))
+	if (pixi_isAppLogLevelEnabled(LogLevelDebug))
 	{
 		char printable[1+(sizeof(buf)*3)];
 		pixi_hexEncode (buf, count, printable, sizeof (printable), '%', printableChars);
-		PIO_LOG_DEBUG("Received: as characters : [%s]", printable);
+		APP_LOG_DEBUG("Received: as characters : [%s]", printable);
 		pixi_hexEncode (buf, count, printable, sizeof (printable), ' ', "");
-		PIO_LOG_DEBUG("Received: as hexadecimal: [%s]", printable);
+		APP_LOG_DEBUG("Received: as hexadecimal: [%s]", printable);
 	}
 	bool displayUpdate = false;
 	for (ssize_t i = 0; i < count; i++)
 	{
 		byte ch = buf[i];
-		PIO_LOG_TRACE("handle byte: %2x", ch);
+		APP_LOG_TRACE("handle byte: %2x", ch);
 		int newState = Ready;
 		switch (state->cmdState)
 		{
@@ -268,18 +267,18 @@ static void readTelescope (State* state)
 			{
 			case 0x07: newState = Beep; break;
 			case 0x13: newState = Sleep1; break;
-			case 0x17: PIO_LOG_INFO("Waking up"); state->asleep = false; break;
-			case 'C' : PIO_LOG_INFO("Cursor on"); break;
-			case 'c' : PIO_LOG_INFO("Cursor off"); break;
+			case 0x17: APP_LOG_INFO("Waking up"); state->asleep = false; break;
+			case 'C' : APP_LOG_INFO("Cursor on"); break;
+			case 'c' : APP_LOG_INFO("Cursor off"); break;
 			case 'E' : eraseToLineEnd (state); displayUpdate = true; break;
 			case 'G' : newState = GotoX; break;
 			case 'L' : newState = LcdBright; break;
 			case 'l' : newState = KeyBright; break;
-			case 'M' : PIO_LOG_INFO("Reading LED on"); break;
-			case 'm' : PIO_LOG_INFO("Reading LED off"); break;
+			case 'M' : APP_LOG_INFO("Reading LED on"); break;
+			case 'm' : APP_LOG_INFO("Reading LED off"); break;
 			case 'O' : newState = LcdContrast; break;
 			default :
-				PIO_LOG_ERROR("Unexpected escape byte %2X", ch);
+				APP_LOG_ERROR("Unexpected escape byte %2X", ch);
 			}
 			break;
 
@@ -288,20 +287,20 @@ static void readTelescope (State* state)
 			if (ch == 0x13)
 				newState = state->cmdState + 1;
 			else
-				PIO_LOG_ERROR("Unexpected sleep byte %2X", ch);
+				APP_LOG_ERROR("Unexpected sleep byte %2X", ch);
 			break;
 		case Sleep3:
 			if (ch == 0)
 			{
-				PIO_LOG_INFO("Sleeping");
+				APP_LOG_INFO("Sleeping");
 				state->asleep = true;
 			}
 			else
-				PIO_LOG_ERROR("Unexpected sleep byte %2X", ch);
+				APP_LOG_ERROR("Unexpected sleep byte %2X", ch);
 			break;
 
 		case Beep:
-			PIO_LOG_INFO("Beep duration %2X", ch);
+			APP_LOG_INFO("Beep duration %2X", ch);
 			break;
 
 		case GotoX:
@@ -312,23 +311,23 @@ static void readTelescope (State* state)
 		case GotoY:
 			state->yPos = (ch-1) % DisplayLines;
 			sendGotoPos (state);
-			PIO_LOG_DEBUG("Moving to %u,%u", state->xPos, state->yPos);
+			APP_LOG_DEBUG("Moving to %u,%u", state->xPos, state->yPos);
 			break;
 
 		case LcdBright:
-			PIO_LOG_INFO("LCD brightness %2X", ch);
+			APP_LOG_INFO("LCD brightness %2X", ch);
 			break;
 
 		case KeyBright:
-			PIO_LOG_INFO("Key-pad brightness %2X", ch);
+			APP_LOG_INFO("Key-pad brightness %2X", ch);
 			break;
 
 		case LcdContrast:
-			PIO_LOG_INFO("LCD contrast %2X", ch);
+			APP_LOG_INFO("LCD contrast %2X", ch);
 			break;
 
 		default:
-			PIO_LOG_FATAL("Logic error: unexpected state");
+			APP_LOG_FATAL("Logic error: unexpected state");
 		}
 		state->cmdState = newState;
 	}
@@ -337,15 +336,15 @@ static void readTelescope (State* state)
 		// nul terminate lines
 		for (int i = 0; i < DisplayLines; i++)
 			state->display[i][DisplayChars] = 0;
-		PIO_LOG_INFO("Display: |%s|", state->display[0]);
-		PIO_LOG_INFO("         |%s|", state->display[1]);
+		APP_LOG_INFO("Display: |%s|", state->display[0]);
+		APP_LOG_INFO("         |%s|", state->display[1]);
 	}
 }
 
 
 static void writeTelescope (State* state)
 {
-	PIO_LOG_TRACE("Serial ready for output");
+	APP_LOG_TRACE("Serial ready for output");
 	size_t writeFrom = BufferMask & (state->outputOffset - state->outputSize);
 	size_t writeEnd  = writeFrom + state->outputSize;
 	if (writeEnd > BufferLen)
@@ -354,10 +353,10 @@ static void writeTelescope (State* state)
 	ssize_t written = pixi_write (state->serialFd, state->outputBuf + writeFrom, size);
 	if (written < 0)
 	{
-		PIO_ERROR(-written, "Error writing buffer to serial device");
+		APP_ERROR(-written, "Error writing buffer to serial device");
 		return;
 	}
-	if (pio_isLogLevelEnabled (LogLevelDebug))
+	if (pixi_isAppLogLevelEnabled (LogLevelDebug))
 	{
 		char hexStr[1 + (BufferLen * 3)];
 		char* ptr = hexStr;
@@ -366,7 +365,7 @@ static void writeTelescope (State* state)
 			sprintf (ptr, "%02x ", state->outputBuf[writeFrom + i]);
 			ptr += 3;
 		}
-		PIO_LOG_DEBUG("Wrote %zd bytes to serial: %s", written, hexStr);
+		APP_LOG_DEBUG("Wrote %zd bytes to serial: %s", written, hexStr);
 	}
 	state->outputSize -= written;
 	if ((size_t) written == size && state->outputSize > 0)
@@ -378,7 +377,7 @@ static void appendBuffer (State* state, const char* buffer, size_t length)
 {
 	if (length + state->outputSize > BufferLen)
 	{
-		PIO_LOG_ERROR("Output buffer overflow");
+		APP_LOG_ERROR("Output buffer overflow");
 		return;
 	}
 	size_t off = state->outputOffset;
@@ -386,7 +385,7 @@ static void appendBuffer (State* state, const char* buffer, size_t length)
 		state->outputBuf[off & BufferMask] = buffer[i];
 	state->outputOffset = off & BufferMask;
 	state->outputSize  += length;
-	PIO_LOG_DEBUG("Added %zu bytes to buffer, total now %zu", length, state->outputSize);
+	APP_LOG_DEBUG("Added %zu bytes to buffer, total now %zu", length, state->outputSize);
 }
 
 
@@ -397,11 +396,11 @@ static void appendChar (State* state, char key)
 	{
 		int value = key - '0';
 		state->numKeys |= 1 << value;
-		PIO_LOG_DEBUG("numKeys: %x", state->numKeys);
+		APP_LOG_DEBUG("numKeys: %x", state->numKeys);
 		// Three fingered salute: hold, 1, 6, 7 to halt the machine
 		if (state->numKeys == ((1<<1) | (1<<6) | (1<<7)))
 		{
-			PIO_LOG_WARN("Halting");
+			APP_LOG_WARN("Halting");
 			system ("halt");
 			if (state->usePixi)
 			{
@@ -415,7 +414,7 @@ static void appendChar (State* state, char key)
 		// Four fingered salute: hold, 1, 3, 7, 9 to halt the machine
 		int value = (keyVal - 0x80) - '0';
 		state->numKeys &= ~(1 << value);
-		PIO_LOG_DEBUG("numKeys: %x", state->numKeys);
+		APP_LOG_DEBUG("numKeys: %x", state->numKeys);
 	}
 	appendBuffer (state, &key, 1);
 }
@@ -434,10 +433,10 @@ static void keyPressRelease (State* state, char key)
 
 static void readInput (State* state)
 {
-	PIO_LOG_TRACE("Keyboard input");
+	APP_LOG_TRACE("Keyboard input");
 	char buf[100];
 	ssize_t count = pixi_read (state->inputFd, buf, sizeof (buf));
-	PIO_LOG_TRACE("Keyboard input byte count = %zd", count);
+	APP_LOG_TRACE("Keyboard input byte count = %zd", count);
 /*
 	for (int i = 0; i < count; i++)
 		printf ("%2x ", (unsigned int) buf[i]);
@@ -490,26 +489,26 @@ static void readKeypad (State* state)
 		if (reg & KeyBufferEmpty)
 			return;
 
-		PIO_LOG_DEBUG("Handling key register %03x", reg);
+		APP_LOG_DEBUG("Handling key register %03x", reg);
 		if (!(reg & (KeyReleased | KeyPressed)))
 			continue;
 
 		uint key = reg & KeyMask;
 		if (reg & KeyReleased)
 		{
-			PIO_LOG_INFO("Key release: '%c'", key);
+			APP_LOG_INFO("Key release: '%c'", key);
 			if (key >= '0' && key <= '9')
 				key += 0x80;
 			else
 				key += 0x20;
 		}
 		else
-			PIO_LOG_INFO("Key press: '%c'", key);
+			APP_LOG_INFO("Key press: '%c'", key);
 
 		char ch = key;
 		appendChar (state, ch);
 	}
-	PIO_LOG_FATAL("Excessive key events!");
+	APP_LOG_FATAL("Excessive key events!");
 }
 
 
@@ -525,22 +524,22 @@ static void readRotary (State* state)
 		int8 delta = state->rotary1 - rotary1;
 		if (delta < - RotaryThreshold)
 		{
-			PIO_LOG_DEBUG("Rotary 1: %04x, change %d", rotary1, delta);
+			APP_LOG_DEBUG("Rotary 1: %04x, change %d", rotary1, delta);
 			state->rotary1 = rotary1;
-			PIO_LOG_INFO("Scroll up");
+			APP_LOG_INFO("Scroll up");
 			keyPressRelease (state, 'U');
 		}
 		else if (delta > RotaryThreshold)
 		{
-			PIO_LOG_DEBUG("Rotary 1: %04x, change %d", rotary1, delta);
+			APP_LOG_DEBUG("Rotary 1: %04x, change %d", rotary1, delta);
 			state->rotary1 = rotary1;
-			PIO_LOG_INFO("Scroll down");
+			APP_LOG_INFO("Scroll down");
 			keyPressRelease (state, 'D');
 		}
 	}
 	if (rotary2 != state->rotary2)
 	{
-		PIO_LOG_DEBUG("Rotary 2: %04x", rotary2);
+		APP_LOG_DEBUG("Rotary 2: %04x", rotary2);
 		state->rotary2 = rotary2;
 	}
 }
@@ -550,7 +549,7 @@ static int runRemote (State* state)
 {
 	int result = setupSerial (state->serialFd);
 	if (result < 0)
-		PIO_LOG_WARN("Failed to configure serial device, but continuing anyway");
+		APP_LOG_WARN("Failed to configure serial device, but continuing anyway");
 
 	const int count = 2;
 	struct pollfd polls[count];
@@ -567,7 +566,7 @@ static int runRemote (State* state)
 		polls[0].revents = 0;
 		polls[1].revents = 0;
 		result = poll (polls, count, PollInterval);
-//		PIO_LOG_TRACE("poll result = %d", result);
+//		APP_LOG_TRACE("poll result = %d", result);
 		if (result > 0)
 		{
 			if (polls[0].revents & POLLIN)
@@ -596,14 +595,14 @@ static int remoteFn (const Command* command, uint argc, char* argv[])
 	int serialFd = pixi_open (device, O_RDWR | O_NONBLOCK, 0);
 	if (serialFd < 0)
 	{
-		PIO_ERROR(-serialFd, "Failed to open serial device");
+		APP_ERROR(-serialFd, "Failed to open serial device");
 		return serialFd;
 	}
 	int result = pixi_lcdOpen();
 	if (result < 0)
 	{
 		state.usePixi = false;
-		PIO_ERROR(-result, "Failed to open PiXi, but continuing anyway");
+		APP_ERROR(-result, "Failed to open PiXi, but continuing anyway");
 	}
 	else
 	{
@@ -647,7 +646,7 @@ static CommandGroup telescopeGroup =
 	.nextGroup = NULL
 };
 
-static void PIO_CONSTRUCTOR (10003) initGroup (void)
+static void LIBPIXI_COMMAND_GROUP(2030) initGroup (void)
 {
 	addCommandGroup (&telescopeGroup);
 }

@@ -74,7 +74,7 @@ static inline int addCommandGroup (CommandGroup* group) {
 ///	@return program exit code
 int pixi_main (const char* description, const char* version, int argc, char* argv[]);
 
-#define LIBPIXI_COMMAND_GROUP(priority) LIBPIXI_CONSTRUCTOR(1000 + priority)
+#define LIBPIXI_COMMAND_GROUP(priority) LIBPIXI_CONSTRUCTOR(10000 + priority)
 
 ///@} defgroup
 
