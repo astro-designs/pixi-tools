@@ -162,7 +162,10 @@ $(build_htmldir)/%: html/%
 
 $(version_h): $(project_info)
 	$(ECHO) $@
-	$(CMD). $< && echo "#define LIBPIXI_VERSION \"$$PROJECT_VERSION\"" > $@
+	$(CMD). $< && ( \
+		echo "#define LIBPIXI_VERSION \"$$PROJECT_VERSION\"" ; \
+		echo "#define LIBPIXI_VERSION_INT $$LIBPIXI_VERSION_INT" ; \
+	) > $@
 
 include $(topdir)/Makefile.rules
 

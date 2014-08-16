@@ -23,14 +23,16 @@
 
 
 #include <libpixi/common.h>
+#include <libpixi/version.h>
 
 LIBPIXI_BEGIN_DECLS
 
 ///@defgroup libpixi libpixi core interface
 ///@{
 
-///	Initialise the library
-int pixi_initLib (void);
+///	Initialise the library.
+///	@param expectedVersion must pass LIBPIXI_VERSION_INT
+int pixi_initLib (int expectedVersion);
 
 ///	Get the runtime library version
 const char* pixi_getLibVersion (void);

@@ -37,8 +37,12 @@ static void LIBPIXI_CONSTRUCTOR (1) initLib (void)
 	LIBPIXI_LOG_TRACE("libpixi initialised");
 }
 
-int pixi_initLib (void)
+int pixi_initLib (int expectedVersion)
 {
+	int ver = LIBPIXI_VERSION_INT;
+	if (expectedVersion > ver)
+		LIBPIXI_LOG_WARN("Required libpixi version %x exceeds actual version %x", expectedVersion, ver);
+
 	int version = pixi_getPiBoardVersion();
 	if (version < 0)
 	{

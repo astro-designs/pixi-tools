@@ -81,7 +81,7 @@ static void displayHelp (const char* description, const char* program, bool verb
 	}
 }
 
-int pixi_main (const char* description, const char* version, int argc, char* argv[])
+int pixi_commandMain (int libpixiVersion, const char* description, const char* version, int argc, char* argv[])
 {
 	setlocale (LC_ALL, "");
 
@@ -123,7 +123,7 @@ int pixi_main (const char* description, const char* version, int argc, char* arg
 		return 0;
 	}
 
-	int result = pixi_initLib();
+	int result = pixi_initLib (libpixiVersion);
 //	if (result < 0)
 //		return 255;
 
