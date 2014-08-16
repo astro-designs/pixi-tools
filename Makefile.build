@@ -30,9 +30,12 @@ common_CXXFLAGS = -std=c++0x -fmessage-length=0 -Wall -Wextra
 common_CPPFLAGS = -I$(topdir) -D_GNU_SOURCE
 
 toolsdir = $(topdir)/tools
-version_h = $(topdir)/libpixi/private/version.h
+version_h = $(topdir)/libpixi/version.h
 
-project_version = $(shell . $(topdir)/project-info && echo $$PROJECT_VERSION)
+project_info = $(topdir)/project-info
+include $(project_info)
+project_version = $(PROJECT_VERSION)
+
 substitutions   = \
 	-e 's,@prefix@,$(prefix),' \
 	-e 's,@libdir@,$(libdir),' \
@@ -157,9 +160,9 @@ $(build_htmldir)/%: html/%
 	$(CMD)mkdir -p $(@D)
 	$(CMD)$(CP) $< $@
 
-$(version_h): $(topdir)/project-info
+$(version_h): $(project_info)
 	$(ECHO) $@
-	$(CMD). $< && echo "static const char LibPixiVersion[] = \"$$PROJECT_VERSION\";" > $@
+	$(CMD). $< && echo "#define LIBPIXI_VERSION \"$$PROJECT_VERSION\"" > $@
 
 include $(topdir)/Makefile.rules
 

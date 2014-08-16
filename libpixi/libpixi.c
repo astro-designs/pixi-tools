@@ -19,7 +19,7 @@
 */
 
 #include <libpixi/libpixi.h>
-#include <libpixi/private/version.h>
+#include <libpixi/version.h>
 #include <libpixi/util/log.h>
 #include <libpixi/util/string.h>
 #include <stdio.h>
@@ -50,7 +50,7 @@ int pixi_initLib (void)
 
 const char* pixi_getLibVersion (void)
 {
-	return LibPixiVersion;
+	return LIBPIXI_VERSION;
 }
 
 static char boardRevision[256] = "[unknown]";

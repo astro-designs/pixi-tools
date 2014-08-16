@@ -20,9 +20,9 @@
 
 #include "common.h"
 #include <libpixi/libpixi.h>
-#include <libpixi/private/version.h>
+#include <libpixi/version.h>
 
 int main (int argc, char* argv[])
 {
-	return pixi_main ("pio: Raspberry Pi / PiXi-200 general purpose utility", LibPixiVersion, argc, argv);
+	return pixi_main ("pio: Raspberry Pi / PiXi-200 general purpose utility", LIBPIXI_VERSION, argc, argv);
 }
