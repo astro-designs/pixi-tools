@@ -97,9 +97,13 @@ int pixi_piGpioSysGetPinDirection (uint pin);
 ///	@return 0 or 1 on success, -errno on error
 int pixi_piGpioSysGetActiveLow (uint pin);
 
-///	Get the edge state of a gpio pin using the /sys interface.
+///	Get the edge mode of a gpio pin using the /sys interface.
 ///	@return enum Edge on success, -errno on error
 int pixi_piGpioSysGetPinEdge (uint pin);
+
+///	Set the edge mode of a gpio pin using the /sys interface.
+///	@return 0 on success, -errno on error
+int pixi_piGpioSysSetPinEdge (uint pin, Edge edge);
 
 ///	Read the value of a gpio pin using the /sys interface.
 ///	@return 0 or 1 on success, -errno on error
@@ -166,6 +170,26 @@ int pixi_piGpioPhysGetPinState (uint pin, GpioState* state);
 ///	Get gpio pin states in range [0, @c count] using the memory mapped registers.
 ///	@return 0 on success, -errno on error
 int pixi_piGpioPhysGetPinStates (GpioState* states, uint count);
+
+///	Open a GPIO pin file descriptor for interrupt handling.
+///	Will first ensure pin is exported to /sys/.
+///	Close the file descriptor when finished.
+///	@return file descriptor on success, negative error number on error.
+int pixi_piGpioPhysOpenPin (uint pin);
+
+///	Open a GPIO pin file descriptor for interrupt handling.
+///	Will first ensure pin is exported to /sys/.
+///	Close the file descriptor when finished.
+///	@see pixi_piGpioWait()
+///	@see pixi_piGpioSysSetPinEdge()
+///	@return file descriptor on success, negative error number on error.
+int pixi_piGpioOpenPin (uint pin);
+
+///	Wait for an interrupt on @a fileDesc.
+///	@param fileDesc a file descriptor opened with pixi_piGpioOpenPin.
+///	@param timeout how long to wait (milliseconds), <0 for no timeout.
+///	@return >0 on interrupt (bit zero holds new value), 0 on timeout, negative error number on error.
+int pixi_piGpioWait (int fileDesc, int timeout);
 
 ///@} defgroup
 

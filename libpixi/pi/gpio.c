@@ -22,6 +22,7 @@
 #include <libpixi/pi/gpio.h>
 #include <libpixi/util/file.h>
 #include <libpixi/util/log.h>
+#include <poll.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -154,6 +155,18 @@ int pixi_piGpioSysGetPinEdge (uint gpio)
 	if (edge < 0)
 		LIBPIXI_LOG_ERROR("Unexpected value for gpio edge: %s is \"%s\"", fname, buf);
 	return edge;
+}
+
+int pixi_piGpioSysSetPinEdge (uint pin, Edge edge)
+{
+	const char* edgeStr = pixi_piGpioEdgeToStr (edge);
+	char fname[256];
+	sprintf (fname, sysGpioPin_edge, pin);
+
+	int result = pixi_fileWriteStr (fname, edgeStr);
+	if (result < 0)
+		LIBPIXI_LOG_ERROR("Error writing [%s] to [%s]", edgeStr, fname);
+	return result;
 }
 
 int pixi_piGpioSysReadPin (uint gpio)
@@ -523,3 +536,68 @@ int pixi_piGpioPhysGetPinStates (GpioState* states, uint count)
 	return 0;
 }
 
+int pixi_piGpioPhysOpenPin (uint pin)
+{
+	LIBPIXI_PRECONDITION (pin < GpioNumPins);
+	int result = pixi_piGpioSysExportPin (pin, DirectionIn);
+	if (result < 0 && result != -EBUSY) // EBUSY if already exported
+	{
+		LIBPIXI_ERROR(-result, "Failed to export gpio pin for interrupt use");
+		return result;
+	}
+	char fname[256];
+	sprintf (fname, sysGpioPin_value, pin);
+	result = pixi_open (fname, O_RDONLY | O_NONBLOCK, 0);
+	if (result < 0)
+	{
+		LIBPIXI_ERROR(-result, "Failed to open gpio pin for interrupt use");
+		return result;
+	}
+	return result;
+}
+
+int pixi_piGpioOpenPin (uint pin)
+{
+	uint physPin = pinToPhys (pin);
+	return pixi_piGpioPhysOpenPin (physPin);
+}
+
+int pixi_piGpioWait (int fileDesc, int timeout)
+{
+	LIBPIXI_PRECONDITION (fileDesc >= 0);
+	struct pollfd pol = {
+		.fd      = fileDesc,
+		.events  = POLLPRI,
+		.revents = 0
+	};
+	int result = poll (&pol, 1, timeout);
+	if (result < 0)
+	{
+		LIBPIXI_ERROR(-result, "poll() failed in pixi_piGpioWait()");
+		return result;
+	}
+	if (result == 0)
+		return 0; // timed out
+	// TODO: maybe check .revents?
+
+	// clear the interrupt, and read the value
+	char value;
+	do {
+		result = pread (fileDesc, &value, 1, 0);
+	} while (result < 0 && errno == EINTR);
+
+	if (result < 1)
+	{
+		if (result < 0)
+			LIBPIXI_ERROR(-result, "Failed to read GPIO value after interrupt");
+		else
+		{
+			LIBPIXI_LOG_ERROR("Short read of GPIO value after interrupt");
+			result = -EIO;
+		}
+		return result;
+	}
+	result = 0x10; // interrupt received
+	result |= (value == '1'); // put value in bit zero
+	return result;
+}
