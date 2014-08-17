@@ -72,13 +72,13 @@ int pixi_pixiGpioSetPinMode (uint gpioController, uint pin, uint mode)
 	if (pin > 16) address++;
 	uint shift = 2 * (pin & 0x7);
 	uint regValue = mode << shift;
-	uint regMask  = 1 << shift;
+	uint regMask  = 0x03 << shift;
 	LIBPIXI_LOG_DEBUG("Setting GPIO controller=%u pin=%u mode=%u [address=0x%x regValue=0x%x]",
 		gpioController, pin, mode, address, regValue);
 
 	int result = pixi_registerWriteMasked (address, regValue, regMask);
 	if (result < 0)
-		LIBPIXI_ERROR(-result, "pixi_pixiWriteValueMasked");
+		LIBPIXI_ERROR(-result, "pixi_registerWriteMasked failed for pixi_pixiGpioSetPinMode");
 	return result;
 }
 
@@ -111,7 +111,7 @@ int pixi_pixiGpioWritePin (uint gpioController, uint pin, uint value)
 	// Should instead store all register states internally.
 	int result = pixi_registerWriteMasked (address, regValue, regMask);
 	if (result < 0)
-		LIBPIXI_ERROR(-result, "pixi_pixiWriteValueMasked");
+		LIBPIXI_ERROR(-result, "pixi_registerWriteMasked failed for pixi_pixiGpioWritePin");
 	return result;
 }
 
