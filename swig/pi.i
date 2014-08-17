@@ -30,14 +30,19 @@
 #include <libpixi/libpixi.h>
 #include <libpixi/pi/gpio.h>
 #include <libpixi/pi/spi.h>
+#include <libpixi/version.h>
 %}
 %include <stdint.i>
 %include <libpixi/common.h>
 %include <libpixi/libpixi.h>
 %include <libpixi/pi/gpio.h>
 %include <libpixi/pi/spi.h>
+%include <libpixi/version.h>
 
 %pythoncode %{
 import pixitools
 pixitools._rewrap (vars(), vars (_pi))
+
+def initLib (expectedVersion = LIBPIXI_VERSION_INT):
+	return _pi.initLib (expectedVersion)
 %}
