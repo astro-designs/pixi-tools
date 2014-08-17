@@ -47,7 +47,7 @@ static inline int setControlReg (Uart* uart, uint8 value)
 	return setUartReg (uart, LineControlReg, value);
 }
 
-uint getBaudDivisor (uint baudRate)
+uint pixi_uartGetBaudDivisor (uint baudRate)
 {
 	if (baudRate == 0)
 	{
@@ -57,9 +57,9 @@ uint getBaudDivisor (uint baudRate)
 	return UartClock / (16 * baudRate);
 }
 
-int setBaudRate (Uart* uart)
+int pixi_uartSetBaudRate (Uart* uart)
 {
-	uint divisor = getBaudDivisor (uart->baudRate);
+	uint divisor = pixi_uartGetBaudDivisor (uart->baudRate);
 	LIBPIXI_LOG_INFO("Setting uart baud rate of %u [%u]", uart->baudRate, divisor);
 	int control = getControlReg (uart);
 	if (control < 0)
@@ -82,7 +82,7 @@ int pixi_uartOpen (Uart* uart, uint address, uint baudRate)
 	uart->softErrors = 0;
 	ioInit (&uart->txBuf);
 	ioInit (&uart->rxBuf);
-	int result = setBaudRate (uart);
+	int result = pixi_uartSetBaudRate (uart);
 	if (result < 0)
 		LIBPIXI_ERROR(-result, "Failed to set baud rate of UART at address 0x%02x", address);
 
@@ -110,7 +110,7 @@ int pixi_uartDebugOpen (Uart* uart, uint address, uint baudRate)
 	uint control = getControlReg (uart);
 	LIBPIXI_LOG_INFO("Control register = 0x%02x, setting divisor latch access", control);
 	setControlReg (uart, control | DivisorLatchAccess);
-	uint divisor = getBaudDivisor (uart->baudRate);
+	uint divisor = pixi_uartGetBaudDivisor (uart->baudRate);
 	LIBPIXI_LOG_INFO("Setting baud rate to %u, divisor to 0x%02x", uart->baudRate, divisor);
 	uint8 lo = divisor;
 	uint8 hi = divisor >> 8;

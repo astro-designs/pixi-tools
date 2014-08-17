@@ -216,9 +216,9 @@ int pixi_uartDebugOpen (Uart* uart, uint address, uint baudRate);
 ///	Get the status of @c count uarts, processing data read/write as requird.
 int pixi_uartProcess (Uart* uarts, uint count);
 
-uint getBaudDivisor (uint baudRate);
+uint pixi_uartGetBaudDivisor (uint baudRate);
 
-int setBaudRate (Uart* uart);
+int pixi_uartSetBaudRate (Uart* uart);
 
 ///@} defgroup
 
