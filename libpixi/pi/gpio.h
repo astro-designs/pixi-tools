@@ -60,6 +60,10 @@ enum PinValue
 	High = 1
 };
 
+///	Initialise GPIO library. Finds the board revision
+///	and sets up the pin map.
+int pixi_piGpioInit (void);
+
 ///	Parse a string as an Direction value.
 ///	@return enum Direction, or <0 on error
 int pixi_piGpioStrToDirection (const char* direction);
@@ -119,6 +123,9 @@ int pixi_piGpioMapRegisters (void);
 
 ///	Unmap the GPIO registers from memory.
 int pixi_piGpioUnmapRegisters (void);
+
+///	Map from the gpio numbering system to the physical pin number.
+uint pixi_piGpioMapPinToPhys (uint pin);
 
 ///	Set the mode of a GPIO pin using the memory mapped registers.
 ///	@return 0 on success, -errno on error.

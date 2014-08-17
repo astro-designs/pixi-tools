@@ -32,6 +32,14 @@
 #include <sys/user.h>
 #include <unistd.h>
 
+const char sysGpio_export[]        = "/sys/class/gpio/export";
+const char sysGpio_unexport[]      = "/sys/class/gpio/unexport";
+const char sysGpioPin_value[]      = "/sys/class/gpio/gpio%u/value";
+const char sysGpioPin_active_low[] = "/sys/class/gpio/gpio%u/active_low";
+const char sysGpioPin_direction[]  = "/sys/class/gpio/gpio%u/direction";
+const char sysGpioPin_edge[]       = "/sys/class/gpio/gpio%u/edge";
+
+
 static void trim (char* buf)
 {
 	if (!buf || !buf[0])
@@ -120,7 +128,7 @@ int pixi_piGpioSysGetPinDirection (uint gpio)
 	char buf[40];
 	char fname[256];
 
-	sprintf (fname, "/sys/class/gpio/gpio%u/direction", gpio);
+	sprintf (fname, sysGpioPin_direction, gpio);
 	int result = pixi_fileReadStr (fname, buf, sizeof (buf));
 	if (result < 0)
 		return result;
@@ -137,7 +145,7 @@ int pixi_piGpioSysGetPinEdge (uint gpio)
 	char buf[40];
 	char fname[256];
 
-	sprintf (fname, "/sys/class/gpio/gpio%u/edge", gpio);
+	sprintf (fname, sysGpioPin_edge, gpio);
 	int result = pixi_fileReadStr (fname, buf, sizeof (buf));
 	if (result < 0)
 		return result;
@@ -151,21 +159,21 @@ int pixi_piGpioSysGetPinEdge (uint gpio)
 int pixi_piGpioSysReadPin (uint gpio)
 {
 	char fname[256];
-	sprintf (fname, "/sys/class/gpio/gpio%u/value", gpio);
+	sprintf (fname, sysGpioPin_value, gpio);
 	return readSysFileBool (fname);
 }
 
 int pixi_piGpioSysWritePin (uint gpio, uint value)
 {
 	char fname[256];
-	sprintf (fname, "/sys/class/gpio/gpio%u/value", gpio);
+	sprintf (fname, sysGpioPin_value, gpio);
 	return writeSysFileBool (fname, 1 && value);
 }
 
 int pixi_piGpioSysGetActiveLow (uint gpio)
 {
 	char fname[256];
-	sprintf (fname, "/sys/class/gpio/gpio%u/active_low", gpio);
+	sprintf (fname, sysGpioPin_active_low, gpio);
 	return readSysFileBool (fname);
 }
 
@@ -215,7 +223,7 @@ int pixi_piGpioSysExportPin (uint gpio, Direction direction)
 {
 	const char* dirStr = pixi_piGpioDirectionToStr (direction);
 
-	ssize_t result = pixi_fileWriteInt ("/sys/class/gpio/export", gpio);
+	ssize_t result = pixi_fileWriteInt (sysGpio_export, gpio);
 	if (result < 0)
 	{
 		if (result == -EBUSY)
@@ -224,13 +232,13 @@ int pixi_piGpioSysExportPin (uint gpio, Direction direction)
 	}
 
 	char fname[256];
-	sprintf (fname, "/sys/class/gpio/gpio%d/direction", gpio);
+	sprintf (fname, sysGpioPin_direction, gpio);
 	return pixi_fileWriteStr (fname, dirStr);
 }
 
 int pixi_piGpioSysUnexportPin (uint gpio)
 {
-	return pixi_fileWriteInt ("/sys/class/gpio/unexport", gpio);
+	return pixi_fileWriteInt (sysGpio_unexport, gpio);
 }
 
 /// Address map:
@@ -317,6 +325,22 @@ static const int8 pinToGpioR2[64] =
 //	Mark?
 static const int8* pinMap = pinToGpioR1;
 
+int pixi_piGpioInit (void)
+{
+	int version = pixi_getPiBoardVersion();
+	if (version == 2)
+	{
+		LIBPIXI_LOG_DEBUG("Using Pi version 2 GPIO mappings");
+		pinMap = pinToGpioR2;
+	}
+	else
+	{
+		LIBPIXI_LOG_DEBUG("Using Pi version 1 GPIO mappings");
+		pinMap = pinToGpioR1;
+	}
+	return version;
+}
+
 static inline void* mapRegisters (int fd, off_t offset)
 {
 	void* mem = mmap (
@@ -333,20 +357,10 @@ static inline void* mapRegisters (int fd, off_t offset)
 
 int pixi_piGpioMapRegisters (void)
 {
-	int version = pixi_getPiBoardVersion();
-	if (version == 2)
-	{
-		LIBPIXI_LOG_DEBUG("Using Pi version 2 GPIO mappings");
-		pinMap = pinToGpioR2;
-	}
-	else
-	{
-		LIBPIXI_LOG_DEBUG("Using Pi version 1 GPIO mappings");
-		pinMap = pinToGpioR1;
-	}
-
 	if (gpioRegisters)
 		return 0; // ??
+
+	pixi_piGpioInit();
 
 	// Statically validate some of the offsets
 	LIBPIXI_STATIC_ASSERT(offsetof (struct BcmGpioRegisters, pinEventDetectStatus) == 0x40, "Validation of GPIO registers");
@@ -387,6 +401,11 @@ int pixi_piGpioUnmapRegisters (void)
 static inline uint pinToPhys (uint pin)
 {
 	return pinMap[pin & 63];
+}
+
+uint pixi_piGpioMapPinToPhys (uint pin)
+{
+	return pinToPhys (pin);
 }
 
 static inline void setPinRegisterBit (uint32* registers, uint pin)
