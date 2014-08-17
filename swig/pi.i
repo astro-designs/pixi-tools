@@ -22,6 +22,7 @@
 
 // strip pixi_ prefix for python symbols
 %rename("%(strip:[pixi_])s") "";
+%rename("%(regex:/(pixi_piGpio)(.*)/gpio\\2/)s") "";
 %feature("autodoc", "3");
 
 %{

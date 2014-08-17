@@ -73,7 +73,7 @@ static int writeSysFileBool (const char* fname, bool value)
 	return 0;
 }
 
-int pixi_gpioStrToDirection (const char* direction)
+int pixi_piGpioStrToDirection (const char* direction)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(direction);
 
@@ -82,7 +82,7 @@ int pixi_gpioStrToDirection (const char* direction)
 	return -EINVAL;
 }
 
-const char* pixi_gpioDirectionToStr (Direction direction)
+const char* pixi_piGpioDirectionToStr (Direction direction)
 {
 	switch (direction)
 	{
@@ -92,7 +92,7 @@ const char* pixi_gpioDirectionToStr (Direction direction)
 	}
 }
 
-int pixi_gpioStrToEdge (const char* edge)
+int pixi_piGpioStrToEdge (const char* edge)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(edge);
 
@@ -103,7 +103,7 @@ int pixi_gpioStrToEdge (const char* edge)
 	return -EINVAL;
 }
 
-const char* pixi_gpioEdgeToStr (Edge edge)
+const char* pixi_piGpioEdgeToStr (Edge edge)
 {
 	switch (edge)
 	{
@@ -115,7 +115,7 @@ const char* pixi_gpioEdgeToStr (Edge edge)
 	}
 }
 
-int pixi_gpioSysGetPinDirection (uint gpio)
+int pixi_piGpioSysGetPinDirection (uint gpio)
 {
 	char buf[40];
 	char fname[256];
@@ -126,13 +126,13 @@ int pixi_gpioSysGetPinDirection (uint gpio)
 		return result;
 
 	trim (buf);
-	result = pixi_gpioStrToDirection (buf);
+	result = pixi_piGpioStrToDirection (buf);
 	if (result < 0)
 		LIBPIXI_LOG_ERROR("Unexpected value for gpio direction: %s is \"%s\"", fname, buf);
 	return result;
 }
 
-int pixi_gpioSysGetPinEdge (uint gpio)
+int pixi_piGpioSysGetPinEdge (uint gpio)
 {
 	char buf[40];
 	char fname[256];
@@ -142,78 +142,78 @@ int pixi_gpioSysGetPinEdge (uint gpio)
 	if (result < 0)
 		return result;
 	trim (buf);
-	int edge = pixi_gpioStrToEdge (buf);
+	int edge = pixi_piGpioStrToEdge (buf);
 	if (edge < 0)
 		LIBPIXI_LOG_ERROR("Unexpected value for gpio edge: %s is \"%s\"", fname, buf);
 	return edge;
 }
 
-int pixi_gpioSysReadPin (uint gpio)
+int pixi_piGpioSysReadPin (uint gpio)
 {
 	char fname[256];
 	sprintf (fname, "/sys/class/gpio/gpio%u/value", gpio);
 	return readSysFileBool (fname);
 }
 
-int pixi_gpioSysWritePin (uint gpio, uint value)
+int pixi_piGpioSysWritePin (uint gpio, uint value)
 {
 	char fname[256];
 	sprintf (fname, "/sys/class/gpio/gpio%u/value", gpio);
 	return writeSysFileBool (fname, 1 && value);
 }
 
-int pixi_gpioSysGetActiveLow (uint gpio)
+int pixi_piGpioSysGetActiveLow (uint gpio)
 {
 	char fname[256];
 	sprintf (fname, "/sys/class/gpio/gpio%u/active_low", gpio);
 	return readSysFileBool (fname);
 }
 
-int pixi_gpioSysGetPinState (uint gpio, GpioState* state)
+int pixi_piGpioSysGetPinState (uint gpio, GpioState* state)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(state);
 
 	memset (state, 0, sizeof (*state));
 
 	int result;
-	state->direction = result = pixi_gpioSysGetPinDirection (gpio);
+	state->direction = result = pixi_piGpioSysGetPinDirection (gpio);
 	if (result == -ENOENT)
 		return 0; // not exported
 	else if (result < 0)
 		return result; // some other error
 	state->exported = true;
 
-	state->edge = result = pixi_gpioSysGetPinEdge (gpio);
+	state->edge = result = pixi_piGpioSysGetPinEdge (gpio);
 	if (result < 0)
 		return result;
 
-	state->value = result = pixi_gpioSysReadPin (gpio);
+	state->value = result = pixi_piGpioSysReadPin (gpio);
 	if (result < 0)
 		return result;
 
-	state->activeLow = result = pixi_gpioSysGetActiveLow (gpio);
+	state->activeLow = result = pixi_piGpioSysGetActiveLow (gpio);
 	if (result < 0)
 		return result;
 
 	return 1; // exported
 }
 
-int pixi_gpioSysGetPinStates (GpioState* states, uint count)
+int pixi_piGpioSysGetPinStates (GpioState* states, uint count)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(states);
 
 	uint exported = 0;
 	for (uint pin = 0; pin < count; pin++)
 	{
-		pixi_gpioSysGetPinState (pin, &states[pin]);
+		pixi_piGpioSysGetPinState (pin, &states[pin]);
 		exported += states[pin].exported;
 	}
 	return exported;
 }
 
-int pixi_gpioSysExportPin (uint gpio, Direction direction)
+int pixi_piGpioSysExportPin (uint gpio, Direction direction)
 {
-	const char* dirStr = pixi_gpioDirectionToStr (direction);
+	const char* dirStr = pixi_piGpioDirectionToStr (direction);
 
 	ssize_t result = pixi_fileWriteInt ("/sys/class/gpio/export", gpio);
 	if (result < 0)
@@ -228,7 +228,7 @@ int pixi_gpioSysExportPin (uint gpio, Direction direction)
 	return pixi_fileWriteStr (fname, dirStr);
 }
 
-int pixi_gpioSysUnexportPin (uint gpio)
+int pixi_piGpioSysUnexportPin (uint gpio)
 {
 	return pixi_fileWriteInt ("/sys/class/gpio/unexport", gpio);
 }
@@ -331,7 +331,7 @@ static inline void* mapRegisters (int fd, off_t offset)
 	return mem;
 }
 
-int pixi_gpioMapRegisters (void)
+int pixi_piGpioMapRegisters (void)
 {
 	int version = pixi_getPiBoardVersion();
 	if (version == 2)
@@ -369,7 +369,7 @@ int pixi_gpioMapRegisters (void)
 	return result;
 }
 
-int pixi_gpioUnmapRegisters (void)
+int pixi_piGpioUnmapRegisters (void)
 {
 	if (!gpioRegisters)
 		return 0;
@@ -405,22 +405,22 @@ static inline bool getPinRegisterBit (uint32* registers, uint pin)
 	return value;
 }
 
-int pixi_gpioSetPinMode (uint pin, Direction mode)
+int pixi_piGpioSetPinMode (uint pin, Direction mode)
 {
-	LIBPIXI_LOG_DEBUG("pixi_gpioSetPinMode (%u, %u)", pin, mode);
+	LIBPIXI_LOG_DEBUG("pixi_piGpioSetPinMode (%u, %u)", pin, mode);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
-	return pixi_gpioPhysSetPinMode (pinToPhys (pin), mode);
+	return pixi_piGpioPhysSetPinMode (pinToPhys (pin), mode);
 }
 
-int pixi_gpioGetPinMode (uint pin)
+int pixi_piGpioGetPinMode (uint pin)
 {
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
-	return pixi_gpioPhysGetPinMode (pinToPhys (pin));
+	return pixi_piGpioPhysGetPinMode (pinToPhys (pin));
 }
 
-int pixi_gpioPhysSetPinMode (uint pin, Direction mode)
+int pixi_piGpioPhysSetPinMode (uint pin, Direction mode)
 {
-	LIBPIXI_LOG_DEBUG("pixi_gpioPhysSetPinMode (%u, %u)", pin, mode);
+	LIBPIXI_LOG_DEBUG("pixi_piGpioPhysSetPinMode (%u, %u)", pin, mode);
 	LIBPIXI_PRECONDITION_NOT_NULL(gpioRegisters);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
 	uint index =      pin / 10;
@@ -433,7 +433,7 @@ int pixi_gpioPhysSetPinMode (uint pin, Direction mode)
 	return 0;
 }
 
-int pixi_gpioPhysGetPinMode (uint pin)
+int pixi_piGpioPhysGetPinMode (uint pin)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(gpioRegisters);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
@@ -444,26 +444,26 @@ int pixi_gpioPhysGetPinMode (uint pin)
 	return (*reg & mask) >> shift;
 }
 
-int pixi_gpioReadPin (uint pin)
+int pixi_piGpioReadPin (uint pin)
 {
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
-	return pixi_gpioPhysReadPin (pinToPhys (pin));
+	return pixi_piGpioPhysReadPin (pinToPhys (pin));
 }
 
-int pixi_gpioPhysReadPin (uint pin)
+int pixi_piGpioPhysReadPin (uint pin)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(gpioRegisters);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
 	return getPinRegisterBit (gpioRegisters->pinLevel, pin);
 }
 
-int pixi_gpioWritePin (uint pin, int value)
+int pixi_piGpioWritePin (uint pin, int value)
 {
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
-	return pixi_gpioPhysWritePin (pinToPhys (pin), value);
+	return pixi_piGpioPhysWritePin (pinToPhys (pin), value);
 }
 
-int pixi_gpioPhysWritePin (uint pin, int value)
+int pixi_piGpioPhysWritePin (uint pin, int value)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(gpioRegisters);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
@@ -472,32 +472,32 @@ int pixi_gpioPhysWritePin (uint pin, int value)
 	return 0;
 }
 
-int pixi_gpioGetPinState (uint pin, GpioState* state)
+int pixi_piGpioGetPinState (uint pin, GpioState* state)
 {
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
-	return pixi_gpioPhysGetPinState (pinToPhys (pin), state);
+	return pixi_piGpioPhysGetPinState (pinToPhys (pin), state);
 }
 
-int pixi_gpioPhysGetPinState (uint pin, GpioState* state)
+int pixi_piGpioPhysGetPinState (uint pin, GpioState* state)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(gpioRegisters);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
 	LIBPIXI_PRECONDITION_NOT_NULL(state);
 
 	memset (state, 0, sizeof (*state));
-	state->direction = pixi_gpioPhysGetPinMode (pin);
-	state->value     = pixi_gpioPhysReadPin (pin);
+	state->direction = pixi_piGpioPhysGetPinMode (pin);
+	state->value     = pixi_piGpioPhysReadPin (pin);
 	// TODO: the other fields
 	return 0;
 }
 
-int pixi_gpioPhysGetPinStates (GpioState* states, uint count)
+int pixi_piGpioPhysGetPinStates (GpioState* states, uint count)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(states);
 
 	for (uint pin = 0; pin < count; pin++)
 	{
-		int result = pixi_gpioPhysGetPinState (pin, &states[pin]);
+		int result = pixi_piGpioPhysGetPinState (pin, &states[pin]);
 		if (result < 0)
 			return result;
 	}

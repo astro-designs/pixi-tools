@@ -62,103 +62,103 @@ enum PinValue
 
 ///	Parse a string as an Direction value.
 ///	@return enum Direction, or <0 on error
-int pixi_gpioStrToDirection (const char* direction);
+int pixi_piGpioStrToDirection (const char* direction);
 
 ///	Convert a Direction to a string.
 ///	@return a direction string, or "[invalid-direction]" on error
-const char* pixi_gpioDirectionToStr (Direction direction);
+const char* pixi_piGpioDirectionToStr (Direction direction);
 
 ///	Parse a string as an Edge value.
 ///	@return enum Edge, or <0 on error
-int pixi_gpioStrToEdge (const char* edge);
+int pixi_piGpioStrToEdge (const char* edge);
 
 ///	Convert an Edge to a string.
 ///	@return an Edge string, or "[invalid-edge]" on error
-const char* pixi_gpioEdgeToStr (Edge edge);
+const char* pixi_piGpioEdgeToStr (Edge edge);
 
 ///	Get the state of @c pin using the /sys interface.
 ///	@return 1 if pin is exported, 0 if pin is not exported, -errno on error.
-int pixi_gpioSysGetPinState (uint pin, GpioState* state);
+int pixi_piGpioSysGetPinState (uint pin, GpioState* state);
 
 // TODO: work out how to get the python wrapper working
 ///	Get gpio pin states in range [0, @c count] using the /sys interface.
 ///	@return the number of exported gpios
-int pixi_gpioSysGetPinStates (GpioState* states, uint count);
+int pixi_piGpioSysGetPinStates (GpioState* states, uint count);
 
 ///	Get the direction of a gpio pin using the /sys interface.
 ///	@return enum Direction on success, -errno on error
-int pixi_gpioSysGetPinDirection (uint pin);
+int pixi_piGpioSysGetPinDirection (uint pin);
 
 ///	Get the direction of a gpio pin using the /sys interface.
 ///	@return 0 or 1 on success, -errno on error
-int pixi_gpioSysGetActiveLow (uint pin);
+int pixi_piGpioSysGetActiveLow (uint pin);
 
 ///	Get the edge state of a gpio pin using the /sys interface.
 ///	@return enum Edge on success, -errno on error
-int pixi_gpioSysGetPinEdge (uint pin);
+int pixi_piGpioSysGetPinEdge (uint pin);
 
 ///	Read the value of a gpio pin using the /sys interface.
 ///	@return 0 or 1 on success, -errno on error
-int pixi_gpioSysReadPin (uint pin);
+int pixi_piGpioSysReadPin (uint pin);
 
 ///	Write a value of to gpio pin using the /sys interface.
 ///	@return 0 or 1 on success, -errno on error
-int pixi_gpioSysWritePin (uint pin, uint value);
+int pixi_piGpioSysWritePin (uint pin, uint value);
 
 ///	Enable the /sys interface of a gpio pin in the given @c direction.
 ///	@return >=0 on success, -errno on error
-int pixi_gpioSysExportPin (uint pin, Direction direction);
+int pixi_piGpioSysExportPin (uint pin, Direction direction);
 
 ///	Disable the /sys interface of a gpio pin.
 ///	@return >=0 on success, -errno on error
-int pixi_gpioSysUnexportPin (uint pin);
+int pixi_piGpioSysUnexportPin (uint pin);
 
 ///	Map the GPIO registers into memory, in preparation for using
 ///	non-/sys GPIO API.
-int pixi_gpioMapRegisters (void);
+int pixi_piGpioMapRegisters (void);
 
 ///	Unmap the GPIO registers from memory.
-int pixi_gpioUnmapRegisters (void);
+int pixi_piGpioUnmapRegisters (void);
 
 ///	Set the mode of a GPIO pin using the memory mapped registers.
 ///	@return 0 on success, -errno on error.
-int pixi_gpioSetPinMode (uint pin, Direction mode);
+int pixi_piGpioSetPinMode (uint pin, Direction mode);
 
 ///	Get the mode of a GPIO pin using the memory mapped registers.
 ///	@return >=0 on success, -errno on error.
-int pixi_gpioGetPinMode (uint pin);
+int pixi_piGpioGetPinMode (uint pin);
 
-///	Like pixi_gpioSetPinMode, but uses physical pin number.
-int pixi_gpioPhysSetPinMode (uint pin, Direction mode);
+///	Like pixi_piGpioSetPinMode, but uses physical pin number.
+int pixi_piGpioPhysSetPinMode (uint pin, Direction mode);
 
-///	Like pixi_gpioSetPinMode, but uses physical pin number.
-int pixi_gpioPhysGetPinMode (uint pin);
+///	Like pixi_piGpioSetPinMode, but uses physical pin number.
+int pixi_piGpioPhysGetPinMode (uint pin);
 
 ///	Read a GPIO pin value using the memory mapped registers.
 ///	@return 0 or 1 on success, -errno on error.
-int pixi_gpioReadPin (uint pin);
+int pixi_piGpioReadPin (uint pin);
 
-///	Like pixi_gpioReadPin, but uses physical pin number.
-int pixi_gpioPhysReadPin (uint pin);
+///	Like pixi_piGpioReadPin, but uses physical pin number.
+int pixi_piGpioPhysReadPin (uint pin);
 
 ///	Write a GPIO pin value using the memory mapped registers.
 ///	@return 0 on success, -errno on error.
-int pixi_gpioWritePin (uint pin, int value);
+int pixi_piGpioWritePin (uint pin, int value);
 
-///	Like pixi_gpioWritePin, but uses physical pin number.
-int pixi_gpioPhysWritePin (uint pin, int value);
+///	Like pixi_piGpioWritePin, but uses physical pin number.
+int pixi_piGpioPhysWritePin (uint pin, int value);
 
 ///	Get the state of @c pin using the memory mapped registers.
 ///	@return 0 on success, -errno on error
-int pixi_gpioGetPinState (uint pin, GpioState* state);
+int pixi_piGpioGetPinState (uint pin, GpioState* state);
 
-///	Like pixi_gpioGetPinState, but uses physical pin number
-int pixi_gpioPhysGetPinState (uint pin, GpioState* state);
+///	Like pixi_piGpioGetPinState, but uses physical pin number
+int pixi_piGpioPhysGetPinState (uint pin, GpioState* state);
 
 // TODO: work out how to get the python wrapper working
 ///	Get gpio pin states in range [0, @c count] using the memory mapped registers.
 ///	@return 0 on success, -errno on error
-int pixi_gpioPhysGetPinStates (GpioState* states, uint count);
+int pixi_piGpioPhysGetPinStates (GpioState* states, uint count);
 
 ///@} defgroup
 

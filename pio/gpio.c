@@ -30,14 +30,14 @@ static int gpioPinsFn (const Command* command, uint argc, char* argv[])
 	if (argc > 1)
 		return commandUsageError (command);
 
-	int result = pixi_gpioMapRegisters();
+	int result = pixi_piGpioMapRegisters();
 	if (result < 0)
 	{
 		PIO_ERROR (-result, "could not map gpio registers");
 		return result;
 	}
 	GpioState states[GpioNumPins];
-	result = pixi_gpioPhysGetPinStates (states, ARRAY_COUNT(states));
+	result = pixi_piGpioPhysGetPinStates (states, ARRAY_COUNT(states));
 	if (result < 0)
 	{
 		PIO_ERROR (-result, "could not get gpio pin states");
@@ -72,7 +72,7 @@ static int listExportsFn (const Command* command, uint argc, char* argv[])
 		return commandUsageError (command);
 
 	GpioState states[64];
-	int result = pixi_gpioSysGetPinStates (states, ARRAY_COUNT(states));
+	int result = pixi_piGpioSysGetPinStates (states, ARRAY_COUNT(states));
 	printf ("%d gpio exports\n", result);
 	const char header[] = "gpio | direction | value |    edge | activeLow\n";
 	const char row[]    = "%4u | %9s | %5d | %7s | %9d\n";
@@ -84,9 +84,9 @@ static int listExportsFn (const Command* command, uint argc, char* argv[])
 			continue;
 		printf (row,
 			gpio,
-			pixi_gpioDirectionToStr (state->direction),
+			pixi_piGpioDirectionToStr (state->direction),
 			state->value,
-			pixi_gpioEdgeToStr (state->edge),
+			pixi_piGpioEdgeToStr (state->edge),
 			state->activeLow
 			);
 	}
@@ -109,13 +109,13 @@ static int exportGpioFn (const Command* command, uint argc, char* argv[])
 
 	int gpio = atoi (argv[1]);
 	const char* directionStr = argv[2];
-	Direction direction = pixi_gpioStrToDirection (directionStr);
+	Direction direction = pixi_piGpioStrToDirection (directionStr);
 	if ((int) direction < 0)
 	{
 		PIO_LOG_ERROR ("[%s] is not a valid direction", directionStr);
 		return -EINVAL;
 	}
-	int result = pixi_gpioSysExportPin (gpio, direction);
+	int result = pixi_piGpioSysExportPin (gpio, direction);
 	if (result < 0)
 	{
 		PIO_ERROR (-result, "Export of gpio %d (%s) failed", gpio, directionStr);
@@ -141,7 +141,7 @@ static int unexportGpioFn (const Command* command, uint argc, char* argv[])
 		return commandUsageError (command);
 
 	int gpio = atoi (argv[1]);
-	int result = pixi_gpioSysUnexportPin (gpio);
+	int result = pixi_piGpioSysUnexportPin (gpio);
 	if (result < 0)
 	{
 		PIO_ERROR (-result, "Unexport of gpio %d failed", gpio);

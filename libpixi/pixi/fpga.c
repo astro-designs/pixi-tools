@@ -40,17 +40,17 @@
 
 static void pinMode (int pin, int mode)
 {
-	pixi_gpioSetPinMode(pin, mode ? DirectionOut : DirectionIn);
+	pixi_piGpioSetPinMode(pin, mode ? DirectionOut : DirectionIn);
 }
 
 static void digitalWrite (int pin, int value)
 {
-	pixi_gpioWritePin(pin, value);
+	pixi_piGpioWritePin(pin, value);
 }
 
 static int digitalRead (int pin)
 {
-	return pixi_gpioReadPin(pin);
+	return pixi_piGpioReadPin(pin);
 }
 
 int64 pixi_pixiFpgaGetVersion (void)
@@ -110,7 +110,7 @@ int64 pixi_pixiFpgaVersionToTime (int64 version)
 
 int pixi_pixiFpgaLoadBuffer (const Buffer* _buffer)
 {
-	int result = pixi_gpioMapRegisters();
+	int result = pixi_piGpioMapRegisters();
 	if (result < 0)
 	{
 		LIBPIXI_LOG_ERROR("Unable to map GPIO registers");
