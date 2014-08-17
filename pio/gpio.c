@@ -19,6 +19,8 @@
 */
 
 #include <libpixi/pi/gpio.h>
+#include <libpixi/util/file.h>
+#include <libpixi/util/string.h>
 #include "common.h"
 #include "log.h"
 #include <stdio.h>
@@ -158,12 +160,68 @@ static Command unexportGpioCmd =
 };
 
 
+static int monitorPiGpio (uint pin)
+{
+	pixi_piGpioInit();
+
+	uint sysPin = pixi_piGpioMapPinToPhys (pin);
+	APP_LOG_INFO("Pin %u maps to /sys/ pin %u", pin, sysPin);
+	int fd = pixi_piGpioPhysOpenPin (sysPin);
+	if (fd < 0)
+	{
+		APP_ERROR(-fd, "Failed to open pin");
+		return fd;
+	}
+	int result = pixi_piGpioSysSetPinEdge (sysPin, EdgeBoth);
+	if (result < 0)
+		APP_ERROR(-result, "Failed to set pin edge mode");
+	else
+	{
+		const int timeout = 60000;
+		while (true)
+		{
+			result = pixi_piGpioWait (fd, timeout);
+			if (result < 0)
+			{
+				APP_ERROR(-result, "Wait for interrupt failed");
+				break;
+			}
+			if (result == 0)
+				APP_LOG_DEBUG("Interrupt timeout");
+			uint value = result & 0x1;
+			char timeStr[40] = "";
+			pixi_formatCurTime (timeStr, sizeof (timeStr));
+			printf ("%s value: %u\n", timeStr, value);
+		}
+	}
+	pixi_close (fd);
+	return result;
+}
+static int monitorPiGpioFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 2)
+		return commandUsageError (command);
+
+	int pin = pixi_parseLong (argv[1]);
+	return monitorPiGpio (pin);
+}
+static Command monitorPiGpioCmd =
+{
+	.name        = "monitor-pi-gpio",
+	.description = "Monitor value of Pi GPIO pin",
+	.usage       = "usage: %s PIN",
+	.function    = monitorPiGpioFn
+};
+
+
 static const Command* gpioCommands[] =
 {
 	&gpioPinsCmd,
 	&listExportsCmd,
 	&exportGpioCmd,
-	&unexportGpioCmd
+	&unexportGpioCmd,
+	&monitorPiGpioCmd,
 };
 
 static CommandGroup gpioGroup =
