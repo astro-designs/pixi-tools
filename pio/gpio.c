@@ -186,12 +186,15 @@ static int monitorPiGpio (uint pin)
 				APP_ERROR(-result, "Wait for interrupt failed");
 				break;
 			}
-			if (result == 0)
+			else if (result == 0)
 				APP_LOG_DEBUG("Interrupt timeout");
-			uint value = result & 0x1;
-			char timeStr[40] = "";
-			pixi_formatCurTime (timeStr, sizeof (timeStr));
-			printf ("%s value: %u\n", timeStr, value);
+			else
+			{
+				uint value = result & 0x1;
+				char timeStr[40] = "";
+				pixi_formatCurTime (timeStr, sizeof (timeStr));
+				printf ("%s value: %u\n", timeStr, value);
+			}
 		}
 	}
 	pixi_close (fd);
