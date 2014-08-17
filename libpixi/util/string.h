@@ -64,7 +64,7 @@ void pixi_strRStrip (char* str);
 
 ///	Terminate @c str immediately before any trailing whitespace, and
 ///	return a pointer to the first non whitespace character.
-char* pixi_strStrip (char* str);
+char* pixi_strStrip (char* str) LIBPIXI_USE_RESULT;
 
 ///	Parse an integer as decimal, hex (0x prefix) or octal (0 prefix).
 ///	This wraps around strtol(), but has the convenience (and issues) of atoi().

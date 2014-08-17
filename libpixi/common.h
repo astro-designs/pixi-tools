@@ -51,10 +51,17 @@ typedef uint64_t  uint64;
 #	define LIBPIXI_PRINTF_ARG(arg) __attribute__((format (printf, arg, arg+1)))
 #	define LIBPIXI_CONSTRUCTOR(priority) __attribute__((constructor (10000 + priority)))
 #	define LIBPIXI_DEPRECATED __attribute__((deprecated))
+///	Says a function's return value must be used.
+///	g++ < 4 supports this attribute, but produces spurious warnings.
+#	define LIBPIXI_USE_RESULT __attribute__((warn_unused_result))
+///	An alternate name for LIBSC_USE_RESULT when the result is an error value.
+#	define LIBPIXI_MUST_CHECK __attribute__((warn_unused_result))
 #else
 #	define LIBPIXI_PRINTF_ARG(arg)
 #	define LIBPIXI_CONSTRUCTOR(priority)
 #	define LIBPIXI_DEPRECATED
+#	define LIBPIXI_USE_RESULT
+#	define LIBPIXI_MUST_CHECK
 #endif
 
 
