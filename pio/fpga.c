@@ -35,7 +35,7 @@ static int64 getVersion (void)
 		return result;
 	}
 
-	int64 version = pixi_pixiFpgaGetVersion();
+	int64 version = pixi_fpgaGetVersion();
 	pixi_closePixi();
 	if (version < 0)
 	{
@@ -52,7 +52,7 @@ static int64 getVersion (void)
 
 static int formatBuildTime (int64 version, char* buffer, size_t bufferLen)
 {
-	time_t time = pixi_pixiFpgaVersionToTime (version);
+	time_t time = pixi_fpgaVersionToTime (version);
 	if (time < 0)
 	{
 		PIO_ERROR(-time, "Error converting FPGA version to time");
@@ -78,7 +78,7 @@ static int fpgaLoadFn (const Command* command, uint argc, char* argv[])
 		filename = argv[1];
 	else
 		filename = DefaultFpga;
-	int result = pixi_pixiFpgaLoadFile(filename);
+	int result = pixi_fpgaLoadFile(filename);
 	if (result < 0)
 	{
 		PIO_ERROR(-result, "Could not load FPGA file from [%s]", filename);

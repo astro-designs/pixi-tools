@@ -43,7 +43,7 @@ static inline int64 pixiOpen (void) {
 		LIBPIXI_ERROR(-result, "Failed to open PiXi SPI channel");
 		return result;
 	}
-	int64 version = pixi_pixiFpgaGetVersion();
+	int64 version = pixi_fpgaGetVersion();
 	if (version <= 0)
 		LIBPIXI_LOG_ERROR("Failed to get valid PiXi FPGA version, got: %d", (int) result);
 	return version;

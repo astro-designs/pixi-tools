@@ -60,7 +60,7 @@ function init() {
 	var pixiFpgaBuildTime = $('#pixiFpgaBuildTime');
 
 	logPostCommand (
-			{ method: 'pixiFpgaGetBuildTime' },
+			{ method: 'fpgaGetBuildTime' },
 			function (result) {
 				pixiFpgaBuildTime.text (new Date(1000 * result).toString());
 			},

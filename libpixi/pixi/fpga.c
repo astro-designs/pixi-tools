@@ -53,7 +53,7 @@ static int digitalRead (int pin)
 	return pixi_piGpioReadPin(pin);
 }
 
-int64 pixi_pixiFpgaGetVersion (void)
+int64 pixi_fpgaGetVersion (void)
 {
 	int h = pixi_registerRead (Pixi_FPGA_build_time2);
 	if (h < 0)
@@ -79,18 +79,18 @@ static int versionPart (const char* text, uint offset)
 	return (high * 10) + low;
 }
 
-int64 pixi_pixiFpgaVersionToTime (int64 version)
+int64 pixi_fpgaVersionToTime (int64 version)
 {
 	if (version <= 0)
 	{
-		LIBPIXI_LOG_DEBUG("pixi_pixiFpgaVersionToTime invalid version %012llx", (ulonglong) version);
+		LIBPIXI_LOG_DEBUG("pixi_fpgaVersionToTime invalid version %012llx", (ulonglong) version);
 		return -EINVAL;
 	}
 	char buf[80];
 	int chars = snprintf (buf, sizeof (buf), "%012llx", (ulonglong) version);
 	if (chars != 12)
 	{
-		LIBPIXI_LOG_DEBUG("pixi_pixiFpgaVersionToTime invalid version [%s]", buf);
+		LIBPIXI_LOG_DEBUG("pixi_fpgaVersionToTime invalid version [%s]", buf);
 		return -EINVAL;
 	}
 
@@ -108,7 +108,7 @@ int64 pixi_pixiFpgaVersionToTime (int64 version)
 	return time;
 }
 
-int pixi_pixiFpgaLoadBuffer (const Buffer* _buffer)
+int pixi_fpgaLoadBuffer (const Buffer* _buffer)
 {
 	int result = pixi_piGpioMapRegisters();
 	if (result < 0)
@@ -208,7 +208,7 @@ int pixi_pixiFpgaLoadBuffer (const Buffer* _buffer)
 	return 0;
 }
 
-int pixi_pixiFpgaLoadFile (const char* filename)
+int pixi_fpgaLoadFile (const char* filename)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(filename);
 
@@ -222,7 +222,7 @@ int pixi_pixiFpgaLoadFile (const char* filename)
 	if (buffer.size > 0) // TODO: check for some larger minimum size?
 	{
 		LIBPIXI_LOG_DEBUG("Loaded FPGA image [%s] size=%zu", filename, buffer.size);
-		result = pixi_pixiFpgaLoadBuffer (&buffer);
+		result = pixi_fpgaLoadBuffer (&buffer);
 		if (result < 0)
 			LIBPIXI_ERROR(-result, "Could not load FPGA taken from file [%s]", filename);
 	}
@@ -236,11 +236,11 @@ int pixi_pixiFpgaLoadFile (const char* filename)
 	return result;
 }
 
-int64 pixi_pixiFpgaGetBuildTime (void)
+int64 pixi_fpgaGetBuildTime (void)
 {
-	int64 version = pixi_pixiFpgaGetVersion();
+	int64 version = pixi_fpgaGetVersion();
 	if (version < 0)
 		return version;
-	int64 build = pixi_pixiFpgaVersionToTime (version);
+	int64 build = pixi_fpgaVersionToTime (version);
 	return build;
 }

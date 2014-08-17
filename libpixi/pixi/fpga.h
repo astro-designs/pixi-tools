@@ -32,23 +32,23 @@ LIBPIXI_BEGIN_DECLS
 
 ///	Load an FPGA image from a file to the PiXi.
 ///	@return 0 on success, -errno on error.
-int pixi_pixiFpgaLoadFile (const char* filename);
+int pixi_fpgaLoadFile (const char* filename);
 
 ///	Load an FPGA image from a buffer to the PiXi.
 ///	@return 0 on success, -errno on error.
-int pixi_pixiFpgaLoadBuffer (const Buffer* buffer);
+int pixi_fpgaLoadBuffer (const Buffer* buffer);
 
 ///	Get the version of the FPGA from the PiXi.
 ///	@return >=0 on success, -errno on error.
-int64 pixi_pixiFpgaGetVersion (void);
+int64 pixi_fpgaGetVersion (void);
 
 ///	Convert an FPGA version to a time_t compatible value.
 ///	@return >=0 on success, -errno on error.
-int64 pixi_pixiFpgaVersionToTime (int64 version);
+int64 pixi_fpgaVersionToTime (int64 version);
 
-///	More or less: pixi_pixiFpgaVersionToTime (pixi_pixiFpgaGetVersion())
+///	More or less: pixi_fpgaVersionToTime (pixi_fpgaGetVersion())
 ///	@return >=0 on success, -errno on error.
-int64 pixi_pixiFpgaGetBuildTime (void);
+int64 pixi_fpgaGetBuildTime (void);
 
 ///@} defgroup
 

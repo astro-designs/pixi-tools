@@ -20,7 +20,7 @@ from pixitools import pi
 from pixitools.pi import gpioSysGetPinState, gpioGetPinState, gpioMapRegisters, gpioUnmapRegisters, gpioDirectionToStr, gpioEdgeToStr, GpioState
 from pixitools.pixi import openPixi, registerWrite as _registerWrite, pixiGpioSetPinMode as _pixiGpioSetPinMode
 from pixitools.pixi import pixiGpioWritePin as _pixiGpioWritePin, pwmWritePin as _pwmWritePin, pwmWritePinPercent as _pwmWritePinPercent
-from pixitools.pixi import pixiFpgaGetBuildTime as _pixiFpgaGetBuildTime
+from pixitools.pixi import fpgaGetBuildTime as _fpgaGetBuildTime
 from pixitools.pixix import Lcd
 from pixitools.rover import setMotion
 from os.path import isdir, join
@@ -138,10 +138,10 @@ def pwmWritePinPercent (pwm, dutyCycle):
 	_pwmWritePinPercent (pwm, dutyCycle)
 addCommand (pwmWritePinPercent)
 
-def pixiFpgaGetBuildTime():
+def fpgaGetBuildTime():
 	'Get the build time of the PiXi FPGA as seconds-since-epoch'
-	return _pixiFpgaGetBuildTime()
-addCommand (pixiFpgaGetBuildTime)
+	return _fpgaGetBuildTime()
+addCommand (fpgaGetBuildTime)
 
 def validateNameParam (paramName, name):
 	if not isinstance (name, basestring):
