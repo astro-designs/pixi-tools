@@ -38,7 +38,7 @@ static int setGpioMode (PixiGpioMode mode, int addr1, int addr2, int addr3)
 	return result;
 }
 
-int pixi_pixiGpioSetMode (uint gpio, PixiGpioMode mode)
+int pixi_gpioSetMode (uint gpio, PixiGpioMode mode)
 {
 	LIBPIXI_PRECONDITION(gpio >= 1 && gpio <= 3);
 
@@ -51,7 +51,7 @@ int pixi_pixiGpioSetMode (uint gpio, PixiGpioMode mode)
 	return -EINVAL; // unreachable
 }
 
-int pixi_pixiGpioSetPinMode (uint gpioController, uint pin, uint mode)
+int pixi_gpioSetPinMode (uint gpioController, uint pin, uint mode)
 {
 	LIBPIXI_PRECONDITION(gpioController >= 1 && gpioController <= 3);
 	LIBPIXI_PRECONDITION(mode < 4);
@@ -78,11 +78,11 @@ int pixi_pixiGpioSetPinMode (uint gpioController, uint pin, uint mode)
 
 	int result = pixi_registerWriteMasked (address, regValue, regMask);
 	if (result < 0)
-		LIBPIXI_ERROR(-result, "pixi_registerWriteMasked failed for pixi_pixiGpioSetPinMode");
+		LIBPIXI_ERROR(-result, "pixi_registerWriteMasked failed for pixi_gpioSetPinMode");
 	return result;
 }
 
-int pixi_pixiGpioWritePin (uint gpioController, uint pin, uint value)
+int pixi_gpioWritePin (uint gpioController, uint pin, uint value)
 {
 	LIBPIXI_PRECONDITION(gpioController >= 1 && gpioController <= 3);
 	LIBPIXI_PRECONDITION(value <= 1);
@@ -111,7 +111,7 @@ int pixi_pixiGpioWritePin (uint gpioController, uint pin, uint value)
 	// Should instead store all register states internally.
 	int result = pixi_registerWriteMasked (address, regValue, regMask);
 	if (result < 0)
-		LIBPIXI_ERROR(-result, "pixi_registerWriteMasked failed for pixi_pixiGpioWritePin");
+		LIBPIXI_ERROR(-result, "pixi_registerWriteMasked failed for pixi_gpioWritePin");
 	return result;
 }
 

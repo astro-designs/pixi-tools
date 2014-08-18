@@ -43,7 +43,7 @@ typedef enum PixiGpioMode
 ///	@param gpio GPIO device [1,3]
 ///	@param mode GPIO mode
 ///	@return 0 on success, -errno on error
-int pixi_pixiGpioSetMode (uint gpio, PixiGpioMode mode);
+int pixi_gpioSetMode (uint gpio, PixiGpioMode mode) LIBPIXI_DEPRECATED;
 
 ///	Set the @c mode of a @c pin on a @c gpioController.
 ///	@param gpioController a PiXi GPIO in the range [1,3]
@@ -51,7 +51,7 @@ int pixi_pixiGpioSetMode (uint gpio, PixiGpioMode mode);
 ///	@param pin pin on the controller
 ///	@param mode pin mode
 ///	@return >=0 on success, -errno on error
-int pixi_pixiGpioSetPinMode (uint gpioController, uint pin, uint mode);
+int pixi_gpioSetPinMode (uint gpioController, uint pin, uint mode);
 
 ///	Set the @c value of a @c pin on a @c gpioController.
 ///	@param gpioController a PiXi GPIO in the range [1,3]
@@ -59,7 +59,7 @@ int pixi_pixiGpioSetPinMode (uint gpioController, uint pin, uint mode);
 ///	@param pin pin on the controller
 ///	@param value 0 or 1
 ///	@return >0 on success, -errno on error
-int pixi_pixiGpioWritePin (uint gpioController, uint pin, uint value);
+int pixi_gpioWritePin (uint gpioController, uint pin, uint value);
 
 ///@} defgroup
 

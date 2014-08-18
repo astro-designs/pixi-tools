@@ -39,7 +39,7 @@ enum
 
 int pixi_lcdEnable (void)
 {
-	int result = pixi_pixiGpioSetMode (3, PixiGpioAllOutputVfdLcd);
+	int result = pixi_gpioSetMode (3, PixiGpioAllOutputVfdLcd);
 	if (result < 0)
 		LIBPIXI_ERROR (-result, "Could not set GPIO 3 mode to enable LCD");
 	return result;

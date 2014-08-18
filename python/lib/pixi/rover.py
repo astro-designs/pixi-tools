@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from pixitools.pixi import pixiGpioWritePin, pwmWritePin
+from pixitools.pixi import gpioWritePin, pwmWritePin
 import logging
 
 log = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ motorEnabled = False
 
 def enableMotor (enable = True):
 	info ("Setting motor enable to %s", enable)
-	pixiGpioWritePin (motorGpio, motorGpioPin, enable)
+	gpioWritePin (motorGpio, motorGpioPin, enable)
 	global motorEnabled
 	motorEnabled = enable
 

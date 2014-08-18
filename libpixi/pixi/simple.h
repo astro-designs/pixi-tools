@@ -102,14 +102,14 @@ static inline int multiRegisterOp (RegisterOp* operations, uint opCount) {
 	return pixi_multiRegisterOp (operations, opCount);
 }
 
-///	Wrapper for @ref pixi_pixiGpioSetPinMode
+///	Wrapper for @ref pixi_gpioSetPinMode
 static inline int gpioSetPinMode (uint gpioController, uint pin, uint mode) {
-	return pixi_pixiGpioSetPinMode (gpioController, pin, mode);
+	return pixi_gpioSetPinMode (gpioController, pin, mode);
 }
 
-///	Wrapper for @ref pixi_pixiGpioWritePin
+///	Wrapper for @ref pixi_gpioWritePin
 static inline int gpioWritePin (uint gpioController, uint pin, uint value) {
-	return pixi_pixiGpioWritePin (gpioController, pin, value);
+	return pixi_gpioWritePin (gpioController, pin, value);
 }
 
 ///	Wrapper for @ref pixi_pwmWritePin

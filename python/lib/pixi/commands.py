@@ -18,8 +18,8 @@
 
 from pixitools import pi
 from pixitools.pi import gpioSysGetPinState, gpioGetPinState, gpioMapRegisters, gpioUnmapRegisters, gpioDirectionToStr, gpioEdgeToStr, GpioState
-from pixitools.pixi import openPixi, registerWrite as _registerWrite, pixiGpioSetPinMode as _pixiGpioSetPinMode
-from pixitools.pixi import pixiGpioWritePin as _pixiGpioWritePin, pwmWritePin as _pwmWritePin, pwmWritePinPercent as _pwmWritePinPercent
+from pixitools.pixi import openPixi, registerWrite as _registerWrite, gpioSetPinMode as _gpioSetPinMode
+from pixitools.pixi import gpioWritePin as _gpioWritePin, pwmWritePin as _pwmWritePin, pwmWritePinPercent as _pwmWritePinPercent
 from pixitools.pixi import fpgaGetBuildTime as _fpgaGetBuildTime
 from pixitools.pixix import Lcd
 from pixitools.rover import setMotion
@@ -120,12 +120,12 @@ addCommand (lcdSetText)
 
 def gpioWritePin (gpioController, pin, value):
 	'Set the output value of a PiXi GPIO pin'
-	_pixiGpioWritePin (gpioController, pin, value)
+	_gpioWritePin (gpioController, pin, value)
 addCommand (gpioWritePin)
 
 def gpioSetMode (gpioController, pin, mode):
 	'Set the mode of a PiXi GPIO pin'
-	_pixiGpioSetPinMode (gpioController, pin, mode)
+	_gpioSetPinMode (gpioController, pin, mode)
 addCommand (gpioSetMode)
 
 def pwmWritePin (pwm, dutyCycle):
