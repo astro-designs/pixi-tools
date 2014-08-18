@@ -205,6 +205,7 @@ typedef struct Uart
 	uint      softErrors; ///< Bitmap of software errors, such as OverrunError;
 	IoBuffer  txBuf;
 	IoBuffer  rxBuf;
+	intptr    _reserved[4];
 } Uart;
 
 ///	Open a UART at the given address, set the baud-rate and clear buffers.

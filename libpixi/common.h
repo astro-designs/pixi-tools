@@ -44,6 +44,9 @@ typedef uint32_t  uint32;
 typedef  int64_t   int64;
 typedef uint64_t  uint64;
 
+typedef  intptr_t  intptr;
+typedef uintptr_t uintptr;
+
 #define LIBPIXI_UNUSED(var) (void) (var)
 #define ARRAY_COUNT(array) (sizeof (array) / sizeof (array[0]))
 

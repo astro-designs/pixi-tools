@@ -42,6 +42,7 @@ struct Command
 	const char*  description; ///< one line description of command
 	const char*  usage;       ///< detailed usage message
 	CommandFn    function;    ///< implementation
+	intptr       _reserved[4];
 };
 
 ///	Display command usage error for @a command
@@ -58,6 +59,7 @@ typedef struct CommandGroup
 	uint                        count;    ///< size of @c commands array
 	const Command**             commands; ///< array of commands
 	const struct CommandGroup*  nextGroup;///< internal pointer to next command group
+	intptr                      _reserved[4];
 } CommandGroup;
 
 ///	Add a command group to the global list

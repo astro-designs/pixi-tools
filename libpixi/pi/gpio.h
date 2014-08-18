@@ -52,6 +52,7 @@ typedef struct GpioState
 	int        value;
 	Edge       edge;
 	int        activeLow;
+	intptr     _reserved[2];
 } GpioState;
 
 enum PinValue

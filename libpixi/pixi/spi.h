@@ -70,8 +70,7 @@ typedef struct RegisterOp
 	uint8   function;   ///< e.g. PixiSpiEnableRead16 / PixiSpiEnableWrite16
 	uint8   _valueHi;   ///< internal
 	uint8   _valueLo;   ///< internal
-	uint8   _reserved1; ///< internal
-	uint8   _reserved2; ///< internal
+	intptr  _reserved[2]; ///< internal
 	uint    value;      ///< read/write value
 	ulong   userData;   ///< Ignored: available for client code
 } RegisterOp;
