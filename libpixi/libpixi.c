@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include "private.h"
 
 
 #define SYS_GPIO "/sys/class/gpio"
@@ -34,6 +35,7 @@
 static void LIBPIXI_CONSTRUCTOR (1) initLib (void)
 {
 	pixi_logInit();
+	pixi_piGpioInit();
 	LIBPIXI_LOG_TRACE("libpixi initialised");
 }
 

@@ -162,8 +162,6 @@ static Command unexportGpioCmd =
 
 static int monitorPiGpio (uint pin)
 {
-	pixi_piGpioInit();
-
 	uint sysPin = pixi_piGpioMapPinToPhys (pin);
 	APP_LOG_INFO("Pin %u maps to /sys/ pin %u", pin, sysPin);
 	int fd = pixi_piGpioPhysOpenPin (sysPin);

@@ -61,10 +61,6 @@ enum PinValue
 	High = 1
 };
 
-///	Initialise GPIO library. Finds the board revision
-///	and sets up the pin map.
-int pixi_piGpioInit (void);
-
 ///	Parse a string as an Direction value.
 ///	@return enum Direction, or <0 on error
 int pixi_piGpioStrToDirection (const char* direction);

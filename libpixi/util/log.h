@@ -60,7 +60,6 @@ typedef struct LogContext
 	intptr       _reserved[2];
 } LogContext;
 
-void pixi_logInit (void);
 LogLevel pixi_strToLogLevel (const char* levelStr, LogLevel defaultLevel);
 const char* pixi_logLevelToStr (LogLevel level);
 

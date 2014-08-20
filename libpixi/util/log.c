@@ -28,6 +28,7 @@
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
+#include "../private.h"
 
 LogLevel pixi_logLevel = LogLevelInfo;
 LogLevel pixi_appLogLevel = LogLevelInfo;

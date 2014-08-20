@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/user.h>
 #include <unistd.h>
+#include "../private.h"
 
 const char sysGpio_export[]        = "/sys/class/gpio/export";
 const char sysGpio_unexport[]      = "/sys/class/gpio/unexport";
