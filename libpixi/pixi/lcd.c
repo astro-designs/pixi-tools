@@ -24,6 +24,7 @@
 #include <libpixi/pixi/spi.h>
 #include <libpixi/util/log.h>
 #include <string.h>
+#include "../private.h"
 
 enum
 {

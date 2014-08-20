@@ -22,6 +22,7 @@
 #include <libpixi/pixi/spi.h>
 #include <libpixi/pixi/registers.h>
 #include <libpixi/util/log.h>
+#include "../private.h"
 
 // TODO: named constants for addresses
 // TODO: check with Mark that these are really doing the right thing
