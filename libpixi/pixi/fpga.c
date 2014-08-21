@@ -26,31 +26,23 @@
 #include <string.h>
 #include <stdio.h>
 
-#define INPUT 0
-#define OUTPUT 1
-
 #define LOW 0
 #define HIGH 1
 
-#define PROG_PIN 6                                      // GPIO(6)
-#define INIT_PIN 2                                      // GPIO(2) Note this pin is different for a rev1 or rev 2 board but wiringPi sorts this out very nicely!
-#define CCLK_PIN 0                                      // GPIO(0)
-#define DATA_PIN 1                                      // GPIO(1)
 
-
-static void pinMode (int pin, int mode)
+static void pinMode (int pin, Direction direction)
 {
-	pixi_piGpioSetPinMode(pin, mode ? DirectionOut : DirectionIn);
+	pixi_piGpioPhysSetPinMode(pin, direction);
 }
 
 static void digitalWrite (int pin, int value)
 {
-	pixi_piGpioWritePin(pin, value);
+	pixi_piGpioPhysWritePin(pin, value);
 }
 
 static int digitalRead (int pin)
 {
-	return pixi_piGpioReadPin(pin);
+	return pixi_piGpioPhysReadPin(pin);
 }
 
 int64 pixi_fpgaGetVersion (void)
@@ -117,11 +109,16 @@ int pixi_fpgaLoadBuffer (const Buffer* _buffer)
 		return result;
 	}
 
+	const int PROG_PIN = pixi_piGpioMapWiringPiToChip (6);
+	const int INIT_PIN = pixi_piGpioMapWiringPiToChip (2);
+	const int CCLK_PIN = pixi_piGpioMapWiringPiToChip (0);
+	const int DATA_PIN = pixi_piGpioMapWiringPiToChip (1);
+
 	LIBPIXI_LOG_INFO("Setting pin I/O Direction...");
-	pinMode(PROG_PIN, OUTPUT);
-	pinMode(INIT_PIN, INPUT);
-	pinMode(CCLK_PIN, OUTPUT);
-	pinMode(DATA_PIN, OUTPUT);
+	pinMode(PROG_PIN, DirectionOut);
+	pinMode(INIT_PIN, DirectionIn);
+	pinMode(CCLK_PIN, DirectionOut);
+	pinMode(DATA_PIN, DirectionOut);
 
 //	int demo_build = spi_single_read(0, 0xff); // Check if a demo build is currently active in the FPGA
 

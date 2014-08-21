@@ -260,7 +260,7 @@ int pixi_piGpioSysUnexportPin (uint gpio)
 /// from BCM2835-ARM-Peripherals.pdf [page 6]: <blockquote>
 ///  Peripherals (at physical address 0x20000000 on) are mapped into the kernel virtual address
 ///   space starting at address 0xF2000000. Thus a peripheral advertised here at bus address
-///   0x7Ennnnnn is available in the ARM kenel at virtual address 0xF2nnnnnn.
+///   0x7Ennnnnn is available in the ARM kernel at virtual address 0xF2nnnnnn.
 /// </blockquote>
 /// However, /dev/mem is a map of physical memory, so for the 0x7E000000
 /// described in the pdf, we do actually need 0x20000000
@@ -306,7 +306,7 @@ struct BcmGpioRegisters
 static struct BcmGpioRegisters* gpioRegisters = NULL;
 
 //	Values copied from wiringPi.c
-static const int8 pinToGpioR1[64] =
+static const int8 wiringPiGpioMapR1[64] =
 {
 	17, 18, 21, 22, 23, 24, 25,  4,
 	 0,  1,  8,  7, 10,  9, 11, 14,
@@ -320,7 +320,7 @@ static const int8 pinToGpioR1[64] =
 };
 
 //	Values copied from wiringPi.c
-static const int8 pinToGpioR2[64] =
+static const int8 wiringPiGpioMapR2[64] =
 {
 	17, 18, 27, 22, 23, 24, 25,  4,
 	 2,  3,  8,  7, 10,  9, 11, 14,
@@ -333,11 +333,12 @@ static const int8 pinToGpioR2[64] =
 	-1, -1, -1, -1, -1, -1, -1, -1
 };
 
-//	We're using the Wiring Pi pin mappings. I've no idea if these
-//	mappings are a good choice, although we should definitely support
-//	compatibility. Perhaps allow client code to define its own mapping?
-//	Mark?
-static const int8* pinMap = pinToGpioR1;
+static const int8* wiringPiGpioMap = wiringPiGpioMapR1;
+
+uint pixi_piGpioMapWiringPiToChip (uint pin)
+{
+	return wiringPiGpioMap[pin & 0x3F];
+}
 
 int pixi_piGpioInit (void)
 {
@@ -345,12 +346,12 @@ int pixi_piGpioInit (void)
 	if (version == 2)
 	{
 		LIBPIXI_LOG_DEBUG("Using Pi version 2 GPIO mappings");
-		pinMap = pinToGpioR2;
+		wiringPiGpioMap = wiringPiGpioMapR2;
 	}
 	else
 	{
 		LIBPIXI_LOG_DEBUG("Using Pi version 1 GPIO mappings");
-		pinMap = pinToGpioR1;
+		wiringPiGpioMap = wiringPiGpioMapR1;
 	}
 	return version;
 }
@@ -414,12 +415,7 @@ int pixi_piGpioUnmapRegisters (void)
 
 static inline uint pinToPhys (uint pin)
 {
-	return pinMap[pin & 63];
-}
-
-uint pixi_piGpioMapPinToPhys (uint pin)
-{
-	return pinToPhys (pin);
+	return wiringPiGpioMap[pin & 63];
 }
 
 static inline void setPinRegisterBit (uint32* registers, uint pin)
