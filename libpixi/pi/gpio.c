@@ -413,11 +413,6 @@ int pixi_piGpioUnmapRegisters (void)
 	return 0;
 }
 
-static inline uint pinToPhys (uint pin)
-{
-	return wiringPiGpioMap[pin & 63];
-}
-
 static inline void setPinRegisterBit (uint32* registers, uint pin)
 {
 	uint index = (pin & 32) && 1;
@@ -432,19 +427,6 @@ static inline bool getPinRegisterBit (uint32* registers, uint pin)
 	uint bits = registers[index];
 	bool value = true && (bits & (1 << bit));
 	return value;
-}
-
-int pixi_piGpioSetPinMode (uint pin, Direction mode)
-{
-	LIBPIXI_LOG_DEBUG("pixi_piGpioSetPinMode (%u, %u)", pin, mode);
-	LIBPIXI_PRECONDITION (pin < GpioNumPins);
-	return pixi_piGpioPhysSetPinMode (pinToPhys (pin), mode);
-}
-
-int pixi_piGpioGetPinMode (uint pin)
-{
-	LIBPIXI_PRECONDITION (pin < GpioNumPins);
-	return pixi_piGpioPhysGetPinMode (pinToPhys (pin));
 }
 
 int pixi_piGpioPhysSetPinMode (uint pin, Direction mode)
@@ -473,23 +455,11 @@ int pixi_piGpioPhysGetPinMode (uint pin)
 	return (*reg & mask) >> shift;
 }
 
-int pixi_piGpioReadPin (uint pin)
-{
-	LIBPIXI_PRECONDITION (pin < GpioNumPins);
-	return pixi_piGpioPhysReadPin (pinToPhys (pin));
-}
-
 int pixi_piGpioPhysReadPin (uint pin)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(gpioRegisters);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
 	return getPinRegisterBit (gpioRegisters->pinLevel, pin);
-}
-
-int pixi_piGpioWritePin (uint pin, int value)
-{
-	LIBPIXI_PRECONDITION (pin < GpioNumPins);
-	return pixi_piGpioPhysWritePin (pinToPhys (pin), value);
 }
 
 int pixi_piGpioPhysWritePin (uint pin, int value)
@@ -499,12 +469,6 @@ int pixi_piGpioPhysWritePin (uint pin, int value)
 	uint32* registers = value ? gpioRegisters->pinOutputSet : gpioRegisters->pinOutputClear;
 	setPinRegisterBit (registers, pin);
 	return 0;
-}
-
-int pixi_piGpioGetPinState (uint pin, GpioState* state)
-{
-	LIBPIXI_PRECONDITION (pin < GpioNumPins);
-	return pixi_piGpioPhysGetPinState (pinToPhys (pin), state);
 }
 
 int pixi_piGpioPhysGetPinState (uint pin, GpioState* state)
@@ -551,12 +515,6 @@ int pixi_piGpioPhysOpenPin (uint pin)
 		return result;
 	}
 	return result;
-}
-
-int pixi_piGpioOpenPin (uint pin)
-{
-	uint physPin = pinToPhys (pin);
-	return pixi_piGpioPhysOpenPin (physPin);
 }
 
 int pixi_piGpioWait (int fileDesc, int timeout)

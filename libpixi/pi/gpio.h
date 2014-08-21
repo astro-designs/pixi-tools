@@ -130,37 +130,22 @@ int pixi_piGpioUnmapRegisters (void);
 
 ///	Set the mode of a GPIO pin using the memory mapped registers.
 ///	@return 0 on success, -errno on error.
-int pixi_piGpioSetPinMode (uint pin, Direction mode);
+int pixi_piGpioPhysSetPinMode (uint pin, Direction mode);
 
 ///	Get the mode of a GPIO pin using the memory mapped registers.
 ///	@return >=0 on success, -errno on error.
-int pixi_piGpioGetPinMode (uint pin);
-
-///	Like pixi_piGpioSetPinMode, but uses physical pin number.
-int pixi_piGpioPhysSetPinMode (uint pin, Direction mode);
-
-///	Like pixi_piGpioSetPinMode, but uses physical pin number.
 int pixi_piGpioPhysGetPinMode (uint pin);
 
 ///	Read a GPIO pin value using the memory mapped registers.
 ///	@return 0 or 1 on success, -errno on error.
-int pixi_piGpioReadPin (uint pin);
-
-///	Like pixi_piGpioReadPin, but uses physical pin number.
 int pixi_piGpioPhysReadPin (uint pin);
 
 ///	Write a GPIO pin value using the memory mapped registers.
 ///	@return 0 on success, -errno on error.
-int pixi_piGpioWritePin (uint pin, int value);
-
-///	Like pixi_piGpioWritePin, but uses physical pin number.
 int pixi_piGpioPhysWritePin (uint pin, int value);
 
 ///	Get the state of @c pin using the memory mapped registers.
 ///	@return 0 on success, -errno on error
-int pixi_piGpioGetPinState (uint pin, GpioState* state);
-
-///	Like pixi_piGpioGetPinState, but uses physical pin number
 int pixi_piGpioPhysGetPinState (uint pin, GpioState* state);
 
 // TODO: work out how to get the python wrapper working
@@ -171,16 +156,10 @@ int pixi_piGpioPhysGetPinStates (GpioState* states, uint count);
 ///	Open a GPIO pin file descriptor for interrupt handling.
 ///	Will first ensure pin is exported to /sys/.
 ///	Close the file descriptor when finished.
-///	@return file descriptor on success, negative error number on error.
-int pixi_piGpioPhysOpenPin (uint pin);
-
-///	Open a GPIO pin file descriptor for interrupt handling.
-///	Will first ensure pin is exported to /sys/.
-///	Close the file descriptor when finished.
 ///	@see pixi_piGpioWait()
 ///	@see pixi_piGpioSysSetPinEdge()
 ///	@return file descriptor on success, negative error number on error.
-int pixi_piGpioOpenPin (uint pin);
+int pixi_piGpioPhysOpenPin (uint pin);
 
 ///	Wait for an interrupt on @a fileDesc.
 ///	@param fileDesc a file descriptor opened with pixi_piGpioOpenPin.
