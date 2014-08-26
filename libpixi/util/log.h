@@ -31,16 +31,16 @@ LIBPIXI_BEGIN_DECLS
 
 typedef enum LogLevel
 {
-	LogLevelAll,
+	LogLevelAll   = - 0x100000,
 
-	LogLevelTrace,
-	LogLevelDebug,
-	LogLevelInfo,
-	LogLevelWarn,
-	LogLevelError,
-	LogLevelFatal,
+	LogLevelTrace =     0x1000,
+	LogLevelDebug =     0x2000,
+	LogLevelInfo  =     0x3000,
+	LogLevelWarn  =     0x4000,
+	LogLevelError =     0x5000,
+	LogLevelFatal =     0x6000,
 
-	LogLevelOff
+	LogLevelOff   =   0x100000
 } LogLevel;
 
 extern LogLevel pixi_logLevel;
