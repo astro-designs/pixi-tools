@@ -122,7 +122,7 @@ class TestServer (TestCase):
 			assertEqual (value, localState.value)
 
 	def test_gpio (self):
-		from pixitools.pi import gpioDirectionToStr, gpioGetPinState, gpioMapRegisters, gpioUnmapRegisters, GpioState
+		from pixitools.pi import gpioDirectionToStr, gpioPhysGetPinState, gpioMapWiringPiToChip, gpioMapRegisters, gpioUnmapRegisters, GpioState
 		assertEqual = self.assertEqual
 		states = runCommand ('gpioGetStates')
 		assert gpioMapRegisters() >= 0
@@ -131,7 +131,7 @@ class TestServer (TestCase):
 				localState = GpioState()
 				pin = state['gpio']
 				assert isinstance (pin, int)
-				assert gpioGetPinState (pin, localState) >= 0
+				assert gpioPhysGetPinState (gpioMapWiringPiToChip (pin), localState) >= 0
 				direction = state['direction']
 				localDirection = gpioDirectionToStr (localState.direction)
 				if not 'invalid' in localDirection:

@@ -17,7 +17,7 @@
 #    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 from pixitools import pi
-from pixitools.pi import gpioSysGetPinState, gpioGetPinState, gpioMapRegisters, gpioUnmapRegisters, gpioDirectionToStr, gpioEdgeToStr, GpioState
+from pixitools.pi import gpioSysGetPinState, gpioPhysGetPinState, gpioMapWiringPiToChip, gpioMapRegisters, gpioUnmapRegisters, gpioDirectionToStr, gpioEdgeToStr, GpioState
 from pixitools.pixi import openPixi, registerWrite as _registerWrite, gpioSetPinMode as _gpioSetPinMode
 from pixitools.pixi import gpioWritePin as _gpioWritePin, pwmWritePin as _pwmWritePin, pwmWritePinPercent as _pwmWritePinPercent
 from pixitools.pixi import fpgaGetBuildTime as _fpgaGetBuildTime
@@ -69,7 +69,7 @@ def gpioGetStates():
 		states = []
 		for n in range (20):
 			gs = GpioState()
-			if gpioGetPinState (n, gs) >= 0:
+			if gpioPhysGetPinState (gpioMapWiringPiToChip (n), gs) >= 0:
 				direction = gpioDirectionToStr (gs.direction)
 				if "invalid" in direction:
 					direction = "mode:0x%x" % gs.direction
