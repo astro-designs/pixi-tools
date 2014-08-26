@@ -1,7 +1,7 @@
 /*
     pixi-tools: a set of software to interface with the Raspberry Pi
     and PiXi-200 hardware
-    Copyright (C) 2013 Simon Cantrill
+    Copyright (C) 2014 Simon Cantrill
 
     pixi-tools is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -18,33 +18,24 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-%module pi
+#ifndef libpixi_pi_i2c_h__included
+#define libpixi_pi_i2c_h__included
 
-// strip pixi_ prefix for python symbols
-%rename("%(strip:[pixi_])s") "";
-%rename("%(regex:/(pixi_piGpio)(.*)/gpio\\2/)s") "";
-%feature("autodoc", "3");
 
-%{
 #include <libpixi/common.h>
-#include <libpixi/libpixi.h>
-#include <libpixi/pi/gpio.h>
-#include <libpixi/pi/i2c.h>
-#include <libpixi/pi/spi.h>
-#include <libpixi/version.h>
-%}
-%include <stdint.i>
-%include <libpixi/common.h>
-%include <libpixi/libpixi.h>
-%include <libpixi/pi/gpio.h>
-%include <libpixi/pi/i2c.h>
-%include <libpixi/pi/spi.h>
-%include <libpixi/version.h>
+#include <stddef.h>
 
-%pythoncode %{
-import pixitools
-pixitools._rewrap (vars(), vars (_pi))
+LIBPIXI_BEGIN_DECLS
 
-def initLib (expectedVersion = LIBPIXI_VERSION_INT):
-	return _pi.initLib (expectedVersion)
-%}
+///@defgroup PiI2C Raspberry Pi i2c interface
+///@{
+
+///	Open the i2c device on @c channel, at @c address
+///	@return file descriptor on success, or negative error code
+int pixi_i2cOpen (uint channel, uint address);
+
+///@} defgroup
+
+LIBPIXI_END_DECLS
+
+#endif // !defined libpixi_pi_i2c_h__included

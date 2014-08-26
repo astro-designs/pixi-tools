@@ -18,46 +18,12 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <libpixi/pi/i2c.h>
 #include <libpixi/util/file.h>
 #include <libpixi/util/string.h>
+#include <stdio.h>
 #include "common.h"
 #include "log.h"
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#include <linux/i2c-dev.h>
-
-const char spiDevice[] = "/dev/i2c-%d";
-
-int pixi_i2cOpen (uint channel, uint address);
-int pixi_i2cOpen (uint channel, uint address)
-{
-	LIBPIXI_PRECONDITION(channel < 16);
-	LIBPIXI_PRECONDITION(address < 1024);
-
-	char filename[40];
-	snprintf (filename, sizeof (filename), spiDevice, channel);
-	int fd = pixi_open (filename, O_RDWR, 0);
-	if (fd < 0)
-	{
-		LIBPIXI_ERROR_DEBUG(-fd, "failed to open i2c device [%s] failed", filename);
-		return fd;
-	}
-
-	LIBPIXI_LOG_DEBUG("Opened i2c name=%s fd=%d", filename, fd);
-	int result = ioctl (fd, I2C_SLAVE, address);
-	if (result < 0)
-	{
-		int err = errno;
-		LIBPIXI_ERROR(err, "failed to set i2c address to %u", address);
-		pixi_close (fd);
-		return -err;
-	}
-
-	return fd;
-}
 
 
 static int i2cRead (const Command* command, uint argc, char* argv[])
