@@ -30,6 +30,7 @@
 #include <libpixi/pixi/gpio.h>
 #include <libpixi/pixi/spi.h>
 #include <libpixi/pixi/lcd.h>
+#include <libpixi/pixi/mpu.h>
 #include <libpixi/pixi/pwm.h>
 #include <libpixi/pixi/fpga.h>
 #include <libpixi/pixi/registers.h>
@@ -40,6 +41,7 @@
 %include <libpixi/pixi/gpio.h>
 %include <libpixi/pixi/spi.h>
 %include <libpixi/pixi/lcd.h>
+%include <libpixi/pixi/mpu.h>
 %include <libpixi/pixi/pwm.h>
 %include <libpixi/pixi/fpga.h>
 %include <libpixi/pixi/registers.h>
