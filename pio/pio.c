@@ -19,6 +19,7 @@
 */
 
 #include <libpixi/util/command.h>
+#include <build-version.h>
 
 static ProgramInfo info =
 {
@@ -26,7 +27,7 @@ static ProgramInfo info =
 	.description     = "pio: Raspberry Pi / PiXi-200 general purpose utility",
 	.version         = LIBPIXI_VERSION,
 	.versionInt      = LIBPIXI_VERSION_INT,
-	.buildVersion    = NULL,
+	.buildVersion    = PIXI_TOOLS_BUILD_VERSION,
 	.buildDate       = __DATE__,
 	.buildTime       = __TIME__,
 };

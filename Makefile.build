@@ -27,7 +27,7 @@ INSTALL_DATA = install -v -m 0644
 
 common_CFLAGS   = -std=c99   -fmessage-length=0 -Wall -Wextra -Wstrict-prototypes -Wmissing-declarations -Wmissing-prototypes -pedantic
 common_CXXFLAGS = -std=c++0x -fmessage-length=0 -Wall -Wextra
-common_CPPFLAGS = -I$(topdir) -D_GNU_SOURCE
+common_CPPFLAGS = -I$(topdir) -I. -D_GNU_SOURCE
 
 toolsdir = $(topdir)/tools
 version_h = $(topdir)/libpixi/version.h
@@ -35,6 +35,8 @@ version_h = $(topdir)/libpixi/version.h
 project_info = $(topdir)/project-info
 include $(project_info)
 project_version = $(PROJECT_VERSION)
+
+build_version := $(shell (GIT_DIR=$(topdir)/.git git describe 2>/dev/null || echo $(project_version)) | sed 's/pixi-tools-//')
 
 substitutions   = \
 	-e 's,@prefix@,$(prefix),' \
@@ -127,18 +129,25 @@ build_CXXFLAGS = $(common_CXXFLAGS)
 .PHONY: all most check check-python check-header-syntax run-python run-python-demo run-server help-custom temp-install
 .SECONDARY: $(_pi_SOURCES) $(_pixi_SOURCES)
 
-all: $(version_h) $(TARGETS)
+all: build-version.h $(version_h) $(TARGETS)
 
 most: $(version_h) $(MOST_TARGETS)
 	echo $(BUILD_MODE) $(MOST_TARGETS)
 
+build-version.h: buildver-$(build_version)
+	echo '#define PIXI_TOOLS_BUILD_VERSION "$(build_version)"' > $@
+
+buildver-$(build_version):
+	rm -f buildver-*
+	echo $(build_version) > $@
+
 $(libpixi): build_CFLAGS += -fPIC
-$(libpixi): $(libpixi_OBJECTS)
+$(libpixi): build-version.h $(libpixi_OBJECTS)
 
 $(pixisim): build_CFLAGS += -fPIC
 $(pixisim): $(libpixi) $(pixisim_OBJECTS)
 
-$(pio): $(libpixi) $(pio_OBJECTS)
+$(pio): build-version.h $(libpixi) $(pio_OBJECTS)
 
 $(pixi-ext): $(libpixi) $(pixi-ext_OBJECTS)
 

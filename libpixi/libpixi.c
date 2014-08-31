@@ -22,6 +22,7 @@
 #include <libpixi/version.h>
 #include <libpixi/util/log.h>
 #include <libpixi/util/string.h>
+#include <build-version.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -65,7 +66,7 @@ const ProgramInfo programInfo =
 	.description     = "Raspberry Pi / PiXi-200 general purpose library",
 	.version         = LIBPIXI_VERSION,
 	.versionInt      = LIBPIXI_VERSION_INT,
-	.buildVersion    = 0,
+	.buildVersion    = PIXI_TOOLS_BUILD_VERSION,
 	.buildDate       = __DATE__,
 	.buildTime       = __TIME__,
 };
