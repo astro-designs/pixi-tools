@@ -45,7 +45,7 @@ while test $# -gt 0; do
 done
 
 if test -z "$BUILD_MODE"; then
-	BUILD_MODE=debug
+	BUILD_MODE=release
 fi
 
 make_BM="BUILD_MODE=$BUILD_MODE"
