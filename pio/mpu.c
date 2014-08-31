@@ -47,11 +47,11 @@ static int mpuMonitorTemp (void)
 	int result = 0;
 	while (true)
 	{
-		result = pixi_mpuReadRegister16 (i2c, MpuTemperateHigh);
+		result = pixi_mpuReadRegister16 (i2c, MpuTemperatureHigh);
 		if (result < 0)
 			break;
 		int16 raw = result;
-		double temp = (raw / 340.0) + 35;
+		double temp = mpuTemperatureToDegrees (raw);
 		printf ("\rhex=0x%04x dec=%6d temperature=%7.3f degrees C", (uint16) raw, raw, temp);
 		fflush (stdout);
 

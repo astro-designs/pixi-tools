@@ -41,8 +41,8 @@ enum MpuRegister
 	MpuAccelXHigh          = 0x3B,
 	MpuAccelZLow           = 0x40,
 
-	MpuTemperateHigh       = 0x41,
-	MpuTemperateLow        = 0x42,
+	MpuTemperatureHigh     = 0x41,
+	MpuTemperatureLow      = 0x42,
 
 	MpuGyroXHigh           = 0x43,
 	MpuGyroZLow            = 0x48,
@@ -62,6 +62,10 @@ int pixi_mpuReadRegisters16 (int fd, uint address1, int16* values, uint count);
 ///	Write an 8 bit value to register @a address
 ///	Return 0 success, negative error code on error
 int pixi_mpuWriteRegister (int fd, uint address, uint value);
+
+static inline int mpuTemperatureToDegrees (int16 rawValue) {
+	return (rawValue / 340.0) + 35;
+}
 
 ///@} defgroup
 
