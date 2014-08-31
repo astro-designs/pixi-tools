@@ -24,6 +24,7 @@
 #include <locale.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <strings.h>
 
 static CommandGroup* groups = NULL;
@@ -51,8 +52,11 @@ int pixi_commandUsageError (const Command* command)
 	return -EINVAL;
 }
 
-static void displayHelp (const char* description, const char* program, bool verbose)
+static void displayHelp (const ProgramInfo* info, const char* program, bool verbose)
 {
+	const char* description = program;
+	if (info && info->description)
+		description = info->description;
 	printf (
 		"%s\n"
 		"usage: %s COMMAND [ARGS]\n"
@@ -81,13 +85,38 @@ static void displayHelp (const char* description, const char* program, bool verb
 	}
 }
 
-int pixi_commandMain (int libpixiVersion, const char* description, const char* version, int argc, char* argv[])
+static void printInfo (const char* name, const ProgramInfo* info)
+{
+	if (info && info->name)
+		name = info->name;
+	printf ("%s", name);
+
+	if (info)
+	{
+		if (info->version)
+			printf (" version %s", info->version);
+
+		const char* buildVersion = info->buildVersion;
+		if (buildVersion && info->version && 0 == strcmp (buildVersion, info->version))
+			buildVersion = NULL;
+
+		if (buildVersion)
+			printf ("\n\tbuild %s", buildVersion);
+		if (info->buildDate && info->buildTime)
+			printf ("\n\tbuild-time %s %s", info->buildDate, info->buildTime);
+		else if (info->buildDate)
+			printf ("\n\tbuild-date %s", info->buildDate);
+	}
+	printf ("\n");
+}
+
+int pixi_commandMain (int libpixiVersion, const ProgramInfo* info, int argc, char* argv[])
 {
 	setlocale (LC_ALL, "");
 
 	if (argc < 2)
 	{
-		displayHelp (description, argv[0], false);
+		displayHelp (info, argv[0], false);
 		return 1;
 	}
 
@@ -99,7 +128,7 @@ int pixi_commandMain (int libpixiVersion, const char* description, const char* v
 		0 == strcasecmp (command, "help")
 		)
 	{
-		displayHelp (description, argv[0], false);
+		displayHelp (info, argv[0], false);
 		return 0;
 	}
 
@@ -108,7 +137,7 @@ int pixi_commandMain (int libpixiVersion, const char* description, const char* v
 		0 == strcasecmp (command, "help-all")
 		)
 	{
-		displayHelp (description, argv[0], true);
+		displayHelp (info, argv[0], true);
 		return 0;
 	}
 
@@ -117,9 +146,8 @@ int pixi_commandMain (int libpixiVersion, const char* description, const char* v
 		0 == strcasecmp (command, "version")
 		)
 	{
-		printf ("libpixi version %s\n", pixi_getLibVersion());
-		if (version)
-			printf ("%s version %s\n", program_invocation_short_name, version);
+		printInfo (program_invocation_short_name, info);
+		printInfo ("libpixi", pixi_getLibInfo());
 		return 0;
 	}
 

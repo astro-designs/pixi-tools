@@ -20,7 +20,18 @@
 
 #include <libpixi/util/command.h>
 
+static ProgramInfo info =
+{
+	.name            = "pio",
+	.description     = "pio: Raspberry Pi / PiXi-200 general purpose utility",
+	.version         = LIBPIXI_VERSION,
+	.versionInt      = LIBPIXI_VERSION_INT,
+	.buildVersion    = NULL,
+	.buildDate       = __DATE__,
+	.buildTime       = __TIME__,
+};
+
 int main (int argc, char* argv[])
 {
-	return pixi_main ("pio: Raspberry Pi / PiXi-200 general purpose utility", LIBPIXI_VERSION, argc, argv);
+	return pixi_main (&info, argc, argv);
 }

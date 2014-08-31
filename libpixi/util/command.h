@@ -70,24 +70,22 @@ static inline int addCommandGroup (CommandGroup* group) {
 }
 
 ///	Invoke the command specified on the command line, or process --help/--version commands.
-///	@param libpixiVersion	must pass LIBPIXI_VERSION_INT
-///	@param description	description of this application
-///	@param version	version of the application (NULL is allowed)
-///	@param argc		argc that was passed to main
-///	@param argv		argv that was passed to main
+///	@param libpixiVersion   must pass LIBPIXI_VERSION_INT
+///	@param info             description of this application (NULL is allowed)
+///	@param argc             argc that was passed to main()
+///	@param argv             argv that was passed to main()
 ///	@return program exit code
-int pixi_commandMain (int libpixiVersion, const char* description, const char* version, int argc, char* argv[]);
+int pixi_commandMain (int libpixiVersion, const ProgramInfo* info, int argc, char* argv[]);
 
 ///	Wrapper for pixi_commandMain
 ///	Invoke the command specified on the command line, or process --help/--version commands.
-///	@param libpixiVersion	must pass LIBPIXI_VERSION_INT
-///	@param description	description of this application
-///	@param version	version of the application (NULL is allowed)
-///	@param argc		argc that was passed to main
-///	@param argv		argv that was passed to main
+///	@param libpixiVersion   must pass LIBPIXI_VERSION_INT
+///	@param info             description of this application (NULL is allowed)
+///	@param argc             argc that was passed to main()
+///	@param argv             argv that was passed to main()
 ///	@return program exit code
-static inline int pixi_main (const char* description, const char* version, int argc, char* argv[]) {
-	return pixi_commandMain (LIBPIXI_VERSION_INT, description, version, argc, argv);
+static inline int pixi_main (const ProgramInfo* info, int argc, char* argv[]) {
+	return pixi_commandMain (LIBPIXI_VERSION_INT, info, argc, argv);
 }
 
 #define LIBPIXI_COMMAND_GROUP(priority) LIBPIXI_CONSTRUCTOR(10000 + priority)

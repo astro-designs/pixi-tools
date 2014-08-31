@@ -59,6 +59,22 @@ const char* pixi_getLibVersion (void)
 	return LIBPIXI_VERSION;
 }
 
+const ProgramInfo programInfo =
+{
+	.name            = "libpixi",
+	.description     = "Raspberry Pi / PiXi-200 general purpose library",
+	.version         = LIBPIXI_VERSION,
+	.versionInt      = LIBPIXI_VERSION_INT,
+	.buildVersion    = 0,
+	.buildDate       = __DATE__,
+	.buildTime       = __TIME__,
+};
+
+const ProgramInfo* pixi_getLibInfo (void)
+{
+	return &programInfo;
+}
+
 static char boardRevision[256] = "[unknown]";
 static int boardVersion = -EINVAL;
 

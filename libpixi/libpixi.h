@@ -34,8 +34,24 @@ LIBPIXI_BEGIN_DECLS
 ///	@param expectedVersion must pass LIBPIXI_VERSION_INT
 int pixi_initLib (int expectedVersion);
 
+///	Describes a library/application. All fields are optional.
+typedef struct ProgramInfo
+{
+	const char*   name;
+	const char*   description;
+	const char*   version;
+	int           versionInt;
+	const char*   buildVersion;
+	const char*   buildDate;
+	const char*   buildTime;
+	intptr        _reserved[4];
+} ProgramInfo;
+
 ///	Get the runtime library version
 const char* pixi_getLibVersion (void);
+
+///	Get the runtime library version
+const ProgramInfo* pixi_getLibInfo (void);
 
 ///	Return the revision string from /proc/cpuinfo
 ///	@see pixi_getPiBoardVersion()

@@ -20,7 +20,18 @@
 
 #include <libpixi/util/command.h>
 
+static ProgramInfo info =
+{
+	.name            = NULL,
+	.description     = "A libpixi based utility",
+	.version         = NULL,
+	.versionInt      = -1,
+	.buildVersion    = 0,
+	.buildDate       = __DATE__,
+	.buildTime       = __TIME__,
+};
+
 int main (int argc, char* argv[])
 {
-	return pixi_main ("A PiXi-200 utility", NULL, argc, argv);
+	return pixi_main (&info, argc, argv);
 }
