@@ -45,7 +45,7 @@ static int gpioPinsFn (const Command* command, uint argc, char* argv[])
 	for (uint gpio = 0; gpio < GpioNumPins; gpio++)
 	{
 		GpioState state;
-		result = pixi_piGpioPhysGetPinState (gpio, &state);
+		result = pixi_piGpioChipGetPinState (gpio, &state);
 		if (result < 0)
 			PIO_ERROR (-result, "could not get state of gpio pin %u", gpio);
 		printf (row,
@@ -169,7 +169,7 @@ static int monitorPiGpio (uint pin)
 {
 	uint sysPin = pixi_piGpioMapWiringPiToChip (pin);
 	APP_LOG_INFO("Pin %u maps to /sys/ pin %u", pin, sysPin);
-	int fd = pixi_piGpioPhysOpenPin (sysPin);
+	int fd = pixi_piGpioChipOpenPin (sysPin);
 	if (fd < 0)
 	{
 		APP_ERROR(-fd, "Failed to open pin");

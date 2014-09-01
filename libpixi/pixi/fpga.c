@@ -32,17 +32,17 @@
 
 static void pinMode (int pin, Direction direction)
 {
-	pixi_piGpioPhysSetPinMode(pin, direction);
+	pixi_piGpioChipSetPinMode(pin, direction);
 }
 
 static void digitalWrite (int pin, int value)
 {
-	pixi_piGpioPhysWritePin(pin, value);
+	pixi_piGpioChipWritePin(pin, value);
 }
 
 static int digitalRead (int pin)
 {
-	return pixi_piGpioPhysReadPin(pin);
+	return pixi_piGpioChipReadPin(pin);
 }
 
 int64 pixi_fpgaGetVersion (void)

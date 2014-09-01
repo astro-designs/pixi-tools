@@ -125,23 +125,23 @@ int pixi_piGpioUnmapRegisters (void);
 
 ///	Set the mode of a GPIO pin using the memory mapped registers.
 ///	@return 0 on success, -errno on error.
-int pixi_piGpioPhysSetPinMode (uint pin, Direction mode);
+int pixi_piGpioChipSetPinMode (uint pin, Direction mode);
 
 ///	Get the mode of a GPIO pin using the memory mapped registers.
 ///	@return >=0 on success, -errno on error.
-int pixi_piGpioPhysGetPinMode (uint pin);
+int pixi_piGpioChipGetPinMode (uint pin);
 
 ///	Read a GPIO pin value using the memory mapped registers.
 ///	@return 0 or 1 on success, -errno on error.
-int pixi_piGpioPhysReadPin (uint pin);
+int pixi_piGpioChipReadPin (uint pin);
 
 ///	Write a GPIO pin value using the memory mapped registers.
 ///	@return 0 on success, -errno on error.
-int pixi_piGpioPhysWritePin (uint pin, int value);
+int pixi_piGpioChipWritePin (uint pin, int value);
 
 ///	Get the state of @c pin using the memory mapped registers.
 ///	@return 0 on success, -errno on error
-int pixi_piGpioPhysGetPinState (uint pin, GpioState* state);
+int pixi_piGpioChipGetPinState (uint pin, GpioState* state);
 
 ///	Open a GPIO pin file descriptor for interrupt handling.
 ///	Will first ensure pin is exported to /sys/.
@@ -149,7 +149,7 @@ int pixi_piGpioPhysGetPinState (uint pin, GpioState* state);
 ///	@see pixi_piGpioWait()
 ///	@see pixi_piGpioSysSetPinEdge()
 ///	@return file descriptor on success, negative error number on error.
-int pixi_piGpioPhysOpenPin (uint pin);
+int pixi_piGpioChipOpenPin (uint pin);
 
 ///	Wait for an interrupt on @a fileDesc.
 ///	@param fileDesc a file descriptor opened with pixi_piGpioOpenPin.

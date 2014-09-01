@@ -416,9 +416,9 @@ static inline bool getPinRegisterBit (uint32* registers, uint pin)
 	return value;
 }
 
-int pixi_piGpioPhysSetPinMode (uint pin, Direction mode)
+int pixi_piGpioChipSetPinMode (uint pin, Direction mode)
 {
-	LIBPIXI_LOG_DEBUG("pixi_piGpioPhysSetPinMode (%u, %u)", pin, mode);
+	LIBPIXI_LOG_DEBUG("pixi_piGpioChipSetPinMode (%u, %u)", pin, mode);
 	LIBPIXI_PRECONDITION_NOT_NULL(gpioRegisters);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
 	uint index =      pin / 10;
@@ -431,7 +431,7 @@ int pixi_piGpioPhysSetPinMode (uint pin, Direction mode)
 	return 0;
 }
 
-int pixi_piGpioPhysGetPinMode (uint pin)
+int pixi_piGpioChipGetPinMode (uint pin)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(gpioRegisters);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
@@ -442,14 +442,14 @@ int pixi_piGpioPhysGetPinMode (uint pin)
 	return (*reg & mask) >> shift;
 }
 
-int pixi_piGpioPhysReadPin (uint pin)
+int pixi_piGpioChipReadPin (uint pin)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(gpioRegisters);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
 	return getPinRegisterBit (gpioRegisters->pinLevel, pin);
 }
 
-int pixi_piGpioPhysWritePin (uint pin, int value)
+int pixi_piGpioChipWritePin (uint pin, int value)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(gpioRegisters);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
@@ -458,20 +458,20 @@ int pixi_piGpioPhysWritePin (uint pin, int value)
 	return 0;
 }
 
-int pixi_piGpioPhysGetPinState (uint pin, GpioState* state)
+int pixi_piGpioChipGetPinState (uint pin, GpioState* state)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(gpioRegisters);
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
 	LIBPIXI_PRECONDITION_NOT_NULL(state);
 
 	memset (state, 0, sizeof (*state));
-	state->direction = pixi_piGpioPhysGetPinMode (pin);
-	state->value     = pixi_piGpioPhysReadPin (pin);
+	state->direction = pixi_piGpioChipGetPinMode (pin);
+	state->value     = pixi_piGpioChipReadPin (pin);
 	// TODO: the other fields
 	return 0;
 }
 
-int pixi_piGpioPhysOpenPin (uint pin)
+int pixi_piGpioChipOpenPin (uint pin)
 {
 	LIBPIXI_PRECONDITION (pin < GpioNumPins);
 	int result = pixi_piGpioSysExportPin (pin, DirectionIn);
