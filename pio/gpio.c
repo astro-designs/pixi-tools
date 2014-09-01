@@ -38,23 +38,20 @@ static int gpioPinsFn (const Command* command, uint argc, char* argv[])
 		PIO_ERROR (-result, "could not map gpio registers");
 		return result;
 	}
-	GpioState states[GpioNumPins];
-	result = pixi_piGpioPhysGetPinStates (states, ARRAY_COUNT(states));
-	if (result < 0)
-	{
-		PIO_ERROR (-result, "could not get gpio pin states");
-		return result;
-	}
+
 	const char header[] = "gpio | mode | value\n";
 	const char row[]    = "%4u | %4x | %5x\n";
 	printf (header);
-	for (uint gpio = 0; gpio < ARRAY_COUNT(states); gpio++)
+	for (uint gpio = 0; gpio < GpioNumPins; gpio++)
 	{
-		const GpioState* state = &states[gpio];
+		GpioState state;
+		result = pixi_piGpioPhysGetPinState (gpio, &state);
+		if (result < 0)
+			PIO_ERROR (-result, "could not get state of gpio pin %u", gpio);
 		printf (row,
 			gpio,
-			state->direction,
-			state->value
+			state.direction,
+			state.value
 			);
 	}
 	return 0;
@@ -74,8 +71,16 @@ static int listExportsFn (const Command* command, uint argc, char* argv[])
 		return commandUsageError (command);
 
 	GpioState states[64];
-	int result = pixi_piGpioSysGetPinStates (states, ARRAY_COUNT(states));
-	printf ("%d gpio exports\n", result);
+	uint exported = 0;
+	for (uint gpio = 0; gpio < ARRAY_COUNT(states); gpio++)
+	{
+		int result = pixi_piGpioSysGetPinState (gpio, &states[gpio]);
+		if (result < 0)
+			PIO_ERROR (-result, "could not get state of gpio pin %u", gpio);
+		else
+			exported += states[gpio].exported;
+	}
+	printf ("%d gpio exports\n", exported);
 	const char header[] = "gpio | direction | value |    edge | activeLow\n";
 	const char row[]    = "%4u | %9s | %5d | %7s | %9d\n";
 	printf (header);
