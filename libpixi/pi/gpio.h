@@ -84,11 +84,6 @@ const char* pixi_piGpioEdgeToStr (Edge edge);
 ///	@return 1 if pin is exported, 0 if pin is not exported, -errno on error.
 int pixi_piGpioSysGetPinState (uint pin, GpioState* state);
 
-// TODO: work out how to get the python wrapper working
-///	Get gpio pin states in range [0, @c count] using the /sys interface.
-///	@return the number of exported gpios
-int pixi_piGpioSysGetPinStates (GpioState* states, uint count);
-
 ///	Get the direction of a gpio pin using the /sys interface.
 ///	@return enum Direction on success, -errno on error
 int pixi_piGpioSysGetPinDirection (uint pin);
@@ -147,11 +142,6 @@ int pixi_piGpioPhysWritePin (uint pin, int value);
 ///	Get the state of @c pin using the memory mapped registers.
 ///	@return 0 on success, -errno on error
 int pixi_piGpioPhysGetPinState (uint pin, GpioState* state);
-
-// TODO: work out how to get the python wrapper working
-///	Get gpio pin states in range [0, @c count] using the memory mapped registers.
-///	@return 0 on success, -errno on error
-int pixi_piGpioPhysGetPinStates (GpioState* states, uint count);
 
 ///	Open a GPIO pin file descriptor for interrupt handling.
 ///	Will first ensure pin is exported to /sys/.

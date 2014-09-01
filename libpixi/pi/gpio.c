@@ -220,19 +220,6 @@ int pixi_piGpioSysGetPinState (uint gpio, GpioState* state)
 	return 1; // exported
 }
 
-int pixi_piGpioSysGetPinStates (GpioState* states, uint count)
-{
-	LIBPIXI_PRECONDITION_NOT_NULL(states);
-
-	uint exported = 0;
-	for (uint pin = 0; pin < count; pin++)
-	{
-		pixi_piGpioSysGetPinState (pin, &states[pin]);
-		exported += states[pin].exported;
-	}
-	return exported;
-}
-
 int pixi_piGpioSysExportPin (uint gpio, Direction direction)
 {
 	const char* dirStr = pixi_piGpioDirectionToStr (direction);
@@ -481,19 +468,6 @@ int pixi_piGpioPhysGetPinState (uint pin, GpioState* state)
 	state->direction = pixi_piGpioPhysGetPinMode (pin);
 	state->value     = pixi_piGpioPhysReadPin (pin);
 	// TODO: the other fields
-	return 0;
-}
-
-int pixi_piGpioPhysGetPinStates (GpioState* states, uint count)
-{
-	LIBPIXI_PRECONDITION_NOT_NULL(states);
-
-	for (uint pin = 0; pin < count; pin++)
-	{
-		int result = pixi_piGpioPhysGetPinState (pin, &states[pin]);
-		if (result < 0)
-			return result;
-	}
 	return 0;
 }
 
