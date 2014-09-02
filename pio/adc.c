@@ -52,11 +52,56 @@ static Command adcReadCmd =
 	.function    = adcReadFn
 };
 
+static int adcMonitor (void)
+{
+	adcOpenOrDie();
+
+	int result = 0;
+	while (true)
+	{
+		printf ("\r");
+		for (uint i = 0; i < PixiAdcMaxChannels; i++)
+		{
+			result = adcRead (i);
+			if (result < PixiAdcError)
+			{
+				PIO_ERROR(-result, "ADC SPI read failed");
+				result = result - PixiAdcError;
+				break;
+			}
+			printf ("%6d ", result);
+		}
+		fflush (stdout);
+		usleep (100 * 1000);
+	}
+	adcClose();
+
+	return result;
+}
+
+
+static int adcMonitorFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	return adcMonitor();
+}
+static Command adcMonitorCmd =
+{
+	.name        = "adc-monitor",
+	.description = "Monitor all ADC channels",
+	.usage       = "usage: %s",
+	.function    = adcMonitorFn
+};
+
+
 static const Command* commands[] =
 {
 	&adcReadCmd,
+	&adcMonitorCmd,
 };
-
 
 static CommandGroup pixiAdcGroup =
 {
