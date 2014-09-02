@@ -73,6 +73,8 @@ int pixi_mpuReadRegister16 (int fd, uint address1)
 
 int pixi_mpuWriteRegister (int fd, uint address, uint value)
 {
+	LIBPIXI_PRECONDITION(address < 128);
+
 	byte buf[] = {address, value};
 	ssize_t count = pixi_write (fd, buf, sizeof (buf));
 	if (count < 0)
