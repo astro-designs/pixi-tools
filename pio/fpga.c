@@ -165,11 +165,51 @@ static Command fpgaGetBuildTimeCmd =
 	.usage       = "usage: %s",
 	.function    = fpgaGetBuildTimeFn
 };
+
+static int fpgaGetIdFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	int result = pixi_openPixi();
+	if (result < 0)
+	{
+		PIO_ERROR(-result, "Error opening PiXi SPI connection");
+		return result;
+	}
+
+	int64 id = pixi_fpgaGetId();
+	pixi_closePixi();
+	if (id < 0)
+	{
+		PIO_ERROR(-id, "Error getting FPGA ID");
+		return id;
+	}
+	if (id == 0)
+	{
+		PIO_LOG_ERROR("Error getting FPGA ID: value is zero");
+		return -EINVAL;
+	}
+
+	printf ("%14llX\n", (ulonglong) id);
+	return 0;
+}
+static Command fpgaGetIdCmd =
+{
+	.name        = "fpga-id",
+	.description = "print the PiXi FPGA's Xilinx ID",
+	.usage       = "usage: %s",
+	.function    = fpgaGetIdFn
+};
+
+
 static const Command* commands[] =
 {
 	&fpgaLoadCmd,
 	&fpgaGetVersionCmd,
-	&fpgaGetBuildTimeCmd
+	&fpgaGetBuildTimeCmd,
+	&fpgaGetIdCmd,
 };
 
 

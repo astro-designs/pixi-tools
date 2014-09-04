@@ -241,3 +241,27 @@ int64 pixi_fpgaGetBuildTime (void)
 	int64 build = pixi_fpgaVersionToTime (version);
 	return build;
 }
+
+int64 pixi_fpgaGetId (void)
+{
+	int id0 = pixi_registerRead (Pixi_FPGA_dna0);
+	if (id0 < 0)
+		return id0;
+	int id1 = pixi_registerRead (Pixi_FPGA_dna1);
+	if (id1 < 1)
+		return id1;
+	int id2 = pixi_registerRead (Pixi_FPGA_dna2);
+	if (id2 < 2)
+		return id2;
+	int id3 = pixi_registerRead (Pixi_FPGA_dna3);
+	if (id3 < 3)
+		return id3;
+
+	LIBPIXI_LOG_DEBUG("Got PiXi FPGA DNA ID %04x,%04x,%04x,%04x", id0, id1, id2, id3);
+
+	return
+		((uint64) id3 << 48) |
+		((uint64) id2 << 32) |
+		((uint64) id1 << 16) |
+		((uint64) id0);
+}

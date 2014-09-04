@@ -50,6 +50,10 @@ int64 pixi_fpgaVersionToTime (int64 version);
 ///	@return >=0 on success, -errno on error.
 int64 pixi_fpgaGetBuildTime (void);
 
+///	Return the Xilinx FPGA DNA serial number
+///	@return >=0 on success, else negative error code
+int64 pixi_fpgaGetId (void);
+
 ///@} defgroup
 
 LIBPIXI_END_DECLS

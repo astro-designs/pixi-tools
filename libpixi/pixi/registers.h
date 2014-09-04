@@ -103,6 +103,11 @@ typedef enum PixiRegisters
 	Pixi_PWM5_config                      = 0x4D,
 	Pixi_PWM6_config                      = 0x4E,
 	Pixi_PWM7_config                      = 0x4F,
+
+	Pixi_FPGA_dna0                        = 0xF4, ///< 16 bit read
+	Pixi_FPGA_dna1                        = 0xF5, ///< 16 bit read
+	Pixi_FPGA_dna2                        = 0xF6, ///< 16 bit read
+	Pixi_FPGA_dna3                        = 0xF7, ///< 16 bit read
 } PixiRegisters;
 
 ///@} defgroup
