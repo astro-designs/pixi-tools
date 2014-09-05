@@ -166,7 +166,7 @@ static Command fpgaGetBuildTimeCmd =
 	.function    = fpgaGetBuildTimeFn
 };
 
-static int fpgaGetIdFn (const Command* command, uint argc, char* argv[])
+static int fpgaGetDnaFn (const Command* command, uint argc, char* argv[])
 {
 	LIBPIXI_UNUSED(argv);
 	if (argc != 1)
@@ -179,28 +179,28 @@ static int fpgaGetIdFn (const Command* command, uint argc, char* argv[])
 		return result;
 	}
 
-	int64 id = pixi_fpgaGetId();
+	int64 id = pixi_fpgaGetDna();
 	pixi_closePixi();
 	if (id < 0)
 	{
-		PIO_ERROR(-id, "Error getting FPGA ID");
+		PIO_ERROR(-id, "Error getting FPGA DNA ID");
 		return id;
 	}
 	if (id == 0)
 	{
-		PIO_LOG_ERROR("Error getting FPGA ID: value is zero");
+		PIO_LOG_ERROR("Error getting FPGA DNA ID: value is zero");
 		return -EINVAL;
 	}
 
-	printf ("%14llX\n", (ulonglong) id);
+	printf ("%014llX\n", (ulonglong) id);
 	return 0;
 }
 static Command fpgaGetIdCmd =
 {
-	.name        = "fpga-id",
-	.description = "print the PiXi FPGA's Xilinx ID",
+	.name        = "fpga-dna",
+	.description = "print the PiXi FPGA's Xilinx DNA ID",
 	.usage       = "usage: %s",
-	.function    = fpgaGetIdFn
+	.function    = fpgaGetDnaFn
 };
 
 

@@ -52,7 +52,7 @@ int64 pixi_fpgaGetBuildTime (void);
 
 ///	Return the Xilinx FPGA DNA serial number
 ///	@return >=0 on success, else negative error code
-int64 pixi_fpgaGetId (void);
+int64 pixi_fpgaGetDna (void);
 
 ///@} defgroup
 

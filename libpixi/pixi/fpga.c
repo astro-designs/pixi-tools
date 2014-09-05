@@ -242,7 +242,7 @@ int64 pixi_fpgaGetBuildTime (void)
 	return build;
 }
 
-int64 pixi_fpgaGetId (void)
+int64 pixi_fpgaGetDna (void)
 {
 	int id0 = pixi_registerRead (Pixi_FPGA_dna0);
 	if (id0 < 0)
