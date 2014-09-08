@@ -42,7 +42,18 @@ enum PixiDacCommands
 	PixiDacMultiWrite      = 0x40, ///< + (channel < 1) + UDAC-bit, followed by 2 more bytes
 };
 
-int pixi_dacWriteValue (int fd, uint channel, uint value);
+///	Open the Pi i2c channel to the PiXi DAC. When finished,
+///	call pixi_closePixi().
+///	@return 0 on success, negative error code on error
+int pixi_dacOpen (void);
+
+///	Close the Pi i2c channel to the PiXi DAC.
+///	@return 0 on success, negative error code on error
+int pixi_dacClose (void);
+
+///	Write a value to a DAC channel.
+///	@return 0 on success, negative error code on error
+int pixi_dacWriteValue (uint channel, uint value);
 
 ///@} defgroup
 

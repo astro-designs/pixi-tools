@@ -19,12 +19,34 @@
 */
 
 #include <libpixi/pixi/dac.h>
+#include <libpixi/pi/i2c.h>
 #include <libpixi/util/file.h>
 #include <libpixi/util/log.h>
 #include <stdlib.h>
 
-int pixi_dacWriteValue (int fd, uint channel, uint value)
+static int dacI2c = -1;
+
+int pixi_dacOpen (void)
 {
+	// TODO: instead rejecting if previously open,
+	// do ref-counting of open count?
+	LIBPIXI_PRECONDITION(dacI2c < 0);
+	int result = pixi_i2cOpen (PixiDacChannel, PixiDacAddress);
+	if (result < 0)
+		LIBPIXI_ERROR(-result, "Cannot open i2c channel to PiXi DAC");
+	dacI2c = result;
+	return result;
+}
+
+int pixi_dacClose (void)
+{
+	LIBPIXI_PRECONDITION(dacI2c >= 0);
+	return pixi_close (dacI2c);
+}
+
+int pixi_dacWriteValue (uint channel, uint value)
+{
+	LIBPIXI_PRECONDITION(dacI2c >= 0);
 	LIBPIXI_PRECONDITION(channel < PixiDacChannels);
 	LIBPIXI_PRECONDITION(value < 4096);
 
@@ -35,7 +57,7 @@ int pixi_dacWriteValue (int fd, uint channel, uint value)
 	};
 	LIBPIXI_LOG_TRACE("Setting DAC channel %u=%u", channel, value);
 	LIBPIXI_LOG_DEBUG("Writing to DAC i2c: %02x %02x %02x", buf[0], buf[1], buf[2]);
-	ssize_t count = pixi_write (fd, buf, sizeof (buf));
+	ssize_t count = pixi_write (dacI2c, buf, sizeof (buf));
 	if (count < 0)
 	{
 		APP_ERROR(-count, "Failed to write DAC value");

@@ -18,9 +18,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <libpixi/pi/i2c.h>
 #include <libpixi/pixi/dac.h>
-#include <libpixi/util/file.h>
 #include <libpixi/util/string.h>
 #include <stdio.h>
 #include "common.h"
@@ -29,15 +27,13 @@
 
 static int dacWrite (uint channel, int value)
 {
-	int i2c = pixi_i2cOpen (PixiDacChannel, PixiDacAddress);
-	if (i2c < 0)
-	{
-		APP_ERROR(-i2c, "Failed to open DAC i2c device");
-		return i2c;
-	}
-	int result = pixi_dacWriteValue (i2c, channel, value);
+	int result = pixi_dacOpen();
+	if (result < 0)
+		return result;
 
-	pixi_close (i2c);
+	result = pixi_dacWriteValue (channel, value);
+
+	pixi_dacClose();
 
 	return result;
 }
