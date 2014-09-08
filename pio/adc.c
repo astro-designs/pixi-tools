@@ -35,13 +35,13 @@ static int adcReadFn (const Command* command, uint argc, char* argv[])
 	adcOpenOrDie();
 	int result = adcRead (adcChannel);
 	adcClose();
-	if (result < PixiAdcError)
+	if (result < 0)
 	{
 		PIO_ERROR(-result, "ADC SPI read failed");
-		return result - PixiAdcError;
+		return result;
 	}
 
-	printf ("%d\n", result);
+	printf ("%u\n", result);
 	return 0;
 }
 static Command adcReadCmd =
@@ -63,13 +63,12 @@ static int adcMonitor (void)
 		for (uint i = 0; i < PixiAdcMaxChannels; i++)
 		{
 			result = adcRead (i);
-			if (result < PixiAdcError)
+			if (result < 0)
 			{
 				PIO_ERROR(-result, "ADC SPI read failed");
-				result = result - PixiAdcError;
 				break;
 			}
-			printf ("%6d ", result);
+			printf ("%4u ", result);
 		}
 		fflush (stdout);
 		usleep (100 * 1000);

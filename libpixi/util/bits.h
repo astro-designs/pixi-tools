@@ -44,6 +44,24 @@ static inline int16 int16FromLE (const uint8* lo) {
 	return makeInt16 (lo[1], lo[0]);
 }
 
+///	Make unsigned 12 bit integer from signed high nibble / low byte
+static inline uint16 makeUint12 (uint8 hi, uint8 lo)
+{
+	return (((uint) hi & 0x0F) << 8) | lo;
+}
+
+///	Make signed 12 bit integer from signed high nibble / low byte
+static inline int16 makeInt12 (uint8 hi, uint8 lo)
+{
+	const int signExt[2] = {
+		0,
+		-1 & ~0xFFF
+	};
+	return signExt[1 && (hi & 0x08)]
+	            | ((hi & 0x0F) << 8)
+	            | lo;
+}
+
 ///@} defgroup
 
 LIBPIXI_END_DECLS

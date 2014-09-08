@@ -33,7 +33,6 @@ LIBPIXI_BEGIN_DECLS
 enum
 {
 	PixiAdcMaxChannels = 8,
-	PixiAdcError       = INT_MIN + 1000
 };
 
 ///	Open the Pi SPI channel to the PiXi ADC. When finished,
@@ -45,11 +44,8 @@ int pixi_adcOpen (void);
 ///	@return 0 on success, or -errno on error
 int pixi_adcClose (void);
 
-///	Read an ADC channel. Because the value is signed, this does not
-///	return -errno, on error, but (PixiAdcError -errno), so check for
-///	result < PixiAdcError. If pixi_adcOpen() has been successfully
-///	called, there won't be an error.
-///	@return the value on success, or (PixiAdcError -errno) on error
+///	Read an ADC channel. Return value is 12 bit unsigned integer
+///	@return >=0 on success, negative error code on error
 int pixi_adcRead (uint adcChannel);
 
 ///@} defgroup

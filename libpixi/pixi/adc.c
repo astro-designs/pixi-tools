@@ -20,6 +20,7 @@
 
 #include <libpixi/pixi/adc.h>
 #include <libpixi/pixi/spi.h>
+#include <libpixi/util/bits.h>
 #include <libpixi/util/log.h>
 #include <libpixi/util/string.h>
 #include <unistd.h>
@@ -50,18 +51,6 @@ int pixi_adcClose (void)
 	return pixi_spiClose (&adcSpi);
 }
 
-static inline int signed12Bit (uint8 hi, uint8 lo)
-{
-	// for 12 bit signed integer
-	const int signExt[2] = {
-		0,
-		-1 & ~0xFFF
-	};
-	return signExt[1 && (hi & 0x08)]
-	            | ((hi & 0x0F) << 8)
-	            | lo;
-}
-
 static int adcReadMCP3204 (uint adcChannel)
 {
 	uint8 tx[3] = {
@@ -72,9 +61,9 @@ static int adcReadMCP3204 (uint adcChannel)
 	uint8 rx[3] = {0,0,0};
 	int result = pixi_spiReadWrite (&adcSpi, tx, rx, sizeof (tx));
 	if (result < 0)
-		return PixiAdcError + result;
+		return result;
 
-	int value = signed12Bit (rx[1], rx[2]);
+	uint value = makeUint12 (rx[1], rx[2]);
 	if (pixi_isLogLevelEnabled (LogLevelError))
 	{
 		char txStr[10];
@@ -102,9 +91,9 @@ static int adcReadADC128S022 (uint adcChannel)
 	uint8 rx[4] = {0,0,0,0};
 	int result = pixi_spiReadWrite (&adcSpi, tx, rx, sizeof (tx));
 	if (result < 0)
-		return PixiAdcError + result;
+		return result;
 
-	int value = signed12Bit (rx[2], rx[3]);
+	uint value = makeUint12 (rx[2], rx[3]);
 	if (pixi_isLogLevelEnabled (LogLevelError))
 	{
 		char txStr[20];
@@ -121,7 +110,7 @@ int pixi_adcRead (uint adcChannel)
 	if (adcChannel >= adcChannels)
 	{
 		LIBPIXI_LOG_ERROR("ADC channel number %u is not less than %u", adcChannel, adcChannels);
-		return PixiAdcError -EINVAL;
+		return -EINVAL;
 	}
 
 	int result = adcReadImpl (adcChannel);
@@ -129,9 +118,9 @@ int pixi_adcRead (uint adcChannel)
 	char c;
 	read (adcSpi.fd, &c, 0);
 
-	if (result < PixiAdcError)
+	if (result < 0)
 	{
-		LIBPIXI_ERROR(PixiAdcError - result, "Error reading ADC channel");
+		LIBPIXI_ERROR(-result, "Error reading ADC channel");
 		return result;
 	}
 	return result;
