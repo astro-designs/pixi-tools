@@ -50,7 +50,7 @@ static int dacWriteFn (const Command* command, uint argc, char* argv[])
 		return commandUsageError (command);
 
 	uint channel = pixi_parseLong (argv[1]);
-	int  value   = pixi_parseLong (argv[2]);
+	uint value   = pixi_parseLong (argv[2]);
 
 	return dacWrite (channel, value);
 }

@@ -23,16 +23,17 @@
 #include <libpixi/util/log.h>
 #include <stdlib.h>
 
-int pixi_dacWriteValue (int fd, uint channel, int value)
+int pixi_dacWriteValue (int fd, uint channel, uint value)
 {
 	LIBPIXI_PRECONDITION(channel < PixiDacChannels);
+	LIBPIXI_PRECONDITION(value < 4096);
 
 	byte buf[] = {
 		PixiDacMultiWrite + (channel << 1),
 		(value >> 8) & 0x0F,
 		value
 	};
-	LIBPIXI_LOG_TRACE("Setting DAC channel %u=%d", channel, value);
+	LIBPIXI_LOG_TRACE("Setting DAC channel %u=%u", channel, value);
 	LIBPIXI_LOG_DEBUG("Writing to DAC i2c: %02x %02x %02x", buf[0], buf[1], buf[2]);
 	ssize_t count = pixi_write (fd, buf, sizeof (buf));
 	if (count < 0)

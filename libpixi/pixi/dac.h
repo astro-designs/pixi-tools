@@ -42,7 +42,7 @@ enum PixiDacCommands
 	PixiDacMultiWrite      = 0x40, ///< + (channel < 1) + UDAC-bit, followed by 2 more bytes
 };
 
-int pixi_dacWriteValue (int fd, uint channel, int value);
+int pixi_dacWriteValue (int fd, uint channel, uint value);
 
 ///@} defgroup
 
