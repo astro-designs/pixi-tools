@@ -26,34 +26,54 @@
 #include <stdlib.h>
 
 
-int pixi_mpuReadRegisters16 (int fd, uint address1, int16* values, uint count)
+static int mpuI2c = -1;
+
+int pixi_mpuOpen (void)
 {
-	APP_PRECONDITION(fd >= 0);
-	APP_PRECONDITION(count > 0);
-	APP_PRECONDITION_NOT_NULL(values);
+	// TODO: instead rejecting if previously open,
+	// do ref-counting of open count?
+	LIBPIXI_PRECONDITION(mpuI2c < 0);
+	int result = pixi_i2cOpen (MpuChannel, MpuAddress);
+	if (result < 0)
+		LIBPIXI_ERROR(-result, "Cannot open i2c channel to PiXi MPU");
+	mpuI2c = result;
+	return result;
+}
+
+int pixi_mpuClose (void)
+{
+	LIBPIXI_PRECONDITION(mpuI2c >= 0);
+	return pixi_close (mpuI2c);
+}
+
+int pixi_mpuReadRegisters16 (uint address1, int16* values, uint count)
+{
+	LIBPIXI_PRECONDITION(mpuI2c >= 0);
+	LIBPIXI_PRECONDITION(count > 0);
+	LIBPIXI_PRECONDITION_NOT_NULL(values);
 
 	byte request = address1;
-	ssize_t written = pixi_write (fd, &request, 1);
+	ssize_t written = pixi_write (mpuI2c, &request, 1);
 	if (written < 0)
 	{
-		APP_ERROR(-written, "Failed to write MPU register request");
+		LIBPIXI_ERROR(-written, "Failed to write MPU register request");
 		return written;
 	}
 	else if (written == 0)
 	{
-		APP_LOG_ERROR("Short write of MPU register request");
+		LIBPIXI_LOG_ERROR("Short write of MPU register request");
 		return -EIO;
 	}
 	byte buffer[2 * count];
-	written = pixi_read (fd, &buffer, count * 2);
+	written = pixi_read (mpuI2c, &buffer, count * 2);
 	if (written < 0)
 	{
-		APP_ERROR(-written, "Failed to read MPU register response");
+		LIBPIXI_ERROR(-written, "Failed to read MPU register response");
 		return written;
 	}
 	else if ((size_t) written < 2 * count)
 	{
-		APP_LOG_ERROR("Short read from MPU register response");
+		LIBPIXI_LOG_ERROR("Short read from MPU register response");
 		return -EIO;
 	}
 	for (uint i = 0; i < count; i++)
@@ -62,29 +82,30 @@ int pixi_mpuReadRegisters16 (int fd, uint address1, int16* values, uint count)
 	return 0;
 }
 
-int pixi_mpuReadRegister16 (int fd, uint address1)
+int pixi_mpuReadRegister16 (uint address1)
 {
 	int16 value = 0;
-	int result = pixi_mpuReadRegisters16 (fd, address1, &value, 1);
+	int result = pixi_mpuReadRegisters16 (address1, &value, 1);
 	if (result < 0)
 		return result;
 	return (uint16) value;
 }
 
-int pixi_mpuWriteRegister (int fd, uint address, uint value)
+int pixi_mpuWriteRegister (uint address, uint value)
 {
+	LIBPIXI_PRECONDITION(mpuI2c >= 0);
 	LIBPIXI_PRECONDITION(address < 128);
 
 	byte buf[] = {address, value};
-	ssize_t count = pixi_write (fd, buf, sizeof (buf));
+	ssize_t count = pixi_write (mpuI2c, buf, sizeof (buf));
 	if (count < 0)
 	{
-		APP_ERROR(-count, "Failed to write MPU register");
+		LIBPIXI_ERROR(-count, "Failed to write MPU register");
 		return count;
 	}
 	else if (count == 0)
 	{
-		APP_LOG_ERROR("Short write of MPU register");
+		LIBPIXI_LOG_ERROR("Short write of MPU register");
 		return -EIO;
 	}
 	return 0;

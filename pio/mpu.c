@@ -18,7 +18,6 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <libpixi/pi/i2c.h>
 #include <libpixi/pixi/mpu.h>
 #include <libpixi/util/file.h>
 #include <libpixi/util/string.h>
@@ -27,27 +26,25 @@
 #include "log.h"
 
 
-static int mpuInit (int fd)
+static int mpuInit (void)
 {
 	// FIXME: extend this, and move to libpixi
-	return pixi_mpuWriteRegister (fd, MpuPowerManagement1, 0);
+	return pixi_mpuWriteRegister (MpuPowerManagement1, 0);
 }
 
 
 static int mpuMonitorTemp (void)
 {
-	int i2c = pixi_i2cOpen (MpuChannel, MpuAddress);
-	if (i2c < 0)
-	{
-		APP_ERROR(-i2c, "Failed to open MPU i2c device");
-		return i2c;
-	}
-	mpuInit (i2c);
+	int result = pixi_mpuOpen();
+	if (result < 0)
+		return result;
 
-	int result = 0;
+	mpuInit();
+
+	result = 0;
 	while (true)
 	{
-		result = pixi_mpuReadRegister16 (i2c, MpuTemperatureHigh);
+		result = pixi_mpuReadRegister16 (MpuTemperatureHigh);
 		if (result < 0)
 			break;
 		int16 raw = result;
@@ -59,7 +56,7 @@ static int mpuMonitorTemp (void)
 	}
 	printf ("\n");
 
-	pixi_close (i2c);
+	pixi_mpuClose();
 
 	return result;
 }
@@ -84,24 +81,22 @@ static Command mpuMonitorTempCmd =
 
 static int mpuMonitorMotion (void)
 {
-	int i2c = pixi_i2cOpen (MpuChannel, MpuAddress);
-	if (i2c < 0)
-	{
-		APP_ERROR(-i2c, "Failed to open MPU i2c device");
-		return i2c;
-	}
-	mpuInit (i2c);
+	int result = pixi_mpuOpen();
+	if (result < 0)
+		return result;
+
+	mpuInit();
 
 	int16 accel[3] = {0,0,0};
 	int16 gyro[3] = {0,0,0};
-	int result = 0;
+	result = 0;
 	while (true)
 	{
 		// TODO: maybe merge into single read
-		result = pixi_mpuReadRegisters16 (i2c, MpuAccelXHigh, accel, 3);
+		result = pixi_mpuReadRegisters16 (MpuAccelXHigh, accel, 3);
 		if (result < 0)
 			break;
-		result = pixi_mpuReadRegisters16 (i2c, MpuGyroXHigh, gyro, 3);
+		result = pixi_mpuReadRegisters16 (MpuGyroXHigh, gyro, 3);
 		if (result < 0)
 			break;
 		printf ("\raccel [%6d %6d %6d] gyro [%6d %6d %6d]",
@@ -114,7 +109,7 @@ static int mpuMonitorMotion (void)
 	}
 	printf ("\n");
 
-	pixi_close (i2c);
+	pixi_mpuClose();
 
 	return result;
 }

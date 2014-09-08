@@ -60,12 +60,12 @@ int pixi_dacWriteValue (uint channel, uint value)
 	ssize_t count = pixi_write (dacI2c, buf, sizeof (buf));
 	if (count < 0)
 	{
-		APP_ERROR(-count, "Failed to write DAC value");
+		LIBPIXI_ERROR(-count, "Failed to write DAC value");
 		return count;
 	}
 	else if (count == 0)
 	{
-		APP_LOG_ERROR("Short write of DAC value");
+		LIBPIXI_LOG_ERROR("Short write of DAC value");
 		return -EIO;
 	}
 	return 0;
