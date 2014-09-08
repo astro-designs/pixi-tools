@@ -112,7 +112,7 @@ html_FILES   := $(addprefix $(build_htmldir)/,$(html_SOURCES))
 
 LIBS       = $(libpixi) $(pixisim)
 HEADERS    = $(libpixi_HEADERS)
-APPS       = $(pio) $(pixi-tty)
+APPS       = $(pio)
 PYTHON_EXTS = $(_pi) $(_pixi)
 PYTHON_MODS = $(build_pylibdir)/pi.py $(build_pylibdir)/pixi.py
 TARGETS    = $(LIBS) $(APPS) $(PYTHON_EXTS) $(html_FILES)
