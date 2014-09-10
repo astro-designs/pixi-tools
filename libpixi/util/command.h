@@ -24,6 +24,7 @@
 
 #include <libpixi/common.h>
 #include <libpixi/libpixi.h>
+#include <libpixi/util/app-log.h>
 #include <stdlib.h>
 
 LIBPIXI_BEGIN_DECLS

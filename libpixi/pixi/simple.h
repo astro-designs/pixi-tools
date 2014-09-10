@@ -26,7 +26,7 @@
 #include <libpixi/pixi/gpio.h>
 #include <libpixi/pixi/pwm.h>
 #include <libpixi/pixi/adc.h>
-#include <libpixi/util/log.h>
+#include <libpixi/util/app-log.h>
 #include <stdlib.h>
 
 ///@defgroup PiXiSimple PiXi simple interface
