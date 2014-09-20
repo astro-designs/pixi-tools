@@ -89,6 +89,7 @@ pio_SOURCES := $(shell cd $(topdir) && find pio/ -name \*.c)
 pio_OBJECTS := $(pio_SOURCES:.c=.o)
 pio_LIBS      = -Llib -lpixi
 
+# pixi-ext is built by default, to check the code, but not installed
 pixi-ext          = bin/pixi-ext
 pixi-ext_SOURCES := $(shell cd $(topdir) && find extensions/ -name \*.c)
 pixi-ext_OBJECTS := $(pixi-ext_SOURCES:.c=.o)
@@ -120,7 +121,7 @@ APPS       = $(pio)
 SCRIPTS    = pixi-cc pixi-c++
 PYTHON_EXTS = $(_pi) $(_pixi)
 PYTHON_MODS = $(build_pylibdir)/pi.py $(build_pylibdir)/pixi.py
-TARGETS    = $(LIBS) $(APPS) $(PYTHON_EXTS) $(html_FILES)
+TARGETS    = $(LIBS) $(APPS) $(pixi-ext) $(PYTHON_EXTS) $(html_FILES)
 MOST_TARGETS = $(LIBS) $(APPS)
 OBJECTS    = $(libpixi_OBJECTS) $(pio_OBJECTS) $(pixi-tty_OBJECTS) $(pixi-ext_OBJECTS) $(_pixi_OBJECTS) $(_pi_OBJECTS)
 
