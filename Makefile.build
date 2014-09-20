@@ -59,11 +59,13 @@ prefix    = /usr/local
 bindir    = $(prefix)/bin
 libdir    = $(prefix)/lib
 htmldir   = $(prefix)/$(build_htmldir)
+docdir    = $(prefix)/share/doc/pixi-tools
 pkgconfigdir = $(libdir)/pkgconfig
 
 # run packages-dir.py only on first expansion of $(pylibdir)
 get_pylibdir = $(shell $(PYTHON) $(toolsdir)/packages-dir.py $(libdir)/python$(PYTHON_VERSION))
 pylibdir     = $(eval pylibdir := $(get_pylibdir))$(pylibdir)
+python_manifest = $(docdir)/python$(PYTHON_VERSION)-files
 
 includedir = $(prefix)/include
 
@@ -115,6 +117,7 @@ html_FILES   := $(addprefix $(build_htmldir)/,$(html_SOURCES))
 LIBS       = $(libpixi) $(pixisim)
 HEADERS    = $(libpixi_HEADERS)
 APPS       = $(pio)
+SCRIPTS    = pixi-cc pixi-c++
 PYTHON_EXTS = $(_pi) $(_pixi)
 PYTHON_MODS = $(build_pylibdir)/pi.py $(build_pylibdir)/pixi.py
 TARGETS    = $(LIBS) $(APPS) $(PYTHON_EXTS) $(html_FILES)
@@ -254,14 +257,14 @@ install-exec: $(APPS)
 	$(CMD)for target in $(APPS); do \
 		$(INSTALL_EXEC) $$target $(DESTDIR)$(bindir)/ || exit 1 ; \
 	done
-	$(CMD)for target in pixi-cc pixi-c++; do \
+	$(CMD)for target in $(SCRIPTS); do \
 		sed $(substitutions) < $(topdir)/libpixi/$$target.in > $$target || exit 1 ; \
 		$(INSTALL_EXEC) $$target $(DESTDIR)$(bindir) || exit 1 ; \
 	done
 
 uninstall-exec:
 	$(ECHO) uninstalling executables
-	$(CMD)for target in $(notdir $(APPS)); do \
+	$(CMD)for target in $(notdir $(APPS)) $(notdir $(SCRIPTS)); do \
 		rm -f -v $(DESTDIR)$(bindir)/$$target ; \
 	done
 
@@ -290,7 +293,7 @@ uninstall-headers:
 	$(CMD)cd $(topdir) && for target in $(HEADERS); do \
 		targetinclude=$(DESTDIR)$(includedir)/$$(dirname $$target); \
 		rm -f -v $(DESTDIR)$(includedir)/$$target; \
-		rmdir -v --ignore-fail-on-non-empty $$targetinclude; \
+		if test -e $$targetinclude; then rmdir --ignore-fail-on-non-empty $$targetinclude; fi \
 	done
 
 .PHONY: pylibdir
@@ -312,22 +315,31 @@ install-python: $(PYTHON_EXTS) pylibdir
 
 uninstall-python: pylibdir
 	$(ECHO) uninstalling python modules
-	$(CMD)for target in $(notdir $(PYTHON_EXTS)); do \
-		rm -f -v $(DESTDIR)$(pylibdir)/$$target ; \
+	for target in $(notdir $(PYTHON_EXTS)) $(notdir $(PYTHON_MODS)); do \
+		rm -f -v $(DESTDIR)$(pylibdir)/$(pythonPackage)/$$target ; \
 	done
-	$(CMD)for target in $(notdir $(PYTHON_MODS)); do \
-		rm -f -v $(DESTDIR)$(pylibdir)/$$target ; \
-	done
+	rmdir --ignore-fail-on-non-empty $(DESTDIR)$(pylibdir)/$(pythonPackage) || true
 
 install-purepython:
 	$(ECHO) installing pure python modules
 	$(CMD)rm -rf $(topdir)/build/python-setup
-	$(CMD)cd $(topdir) && $(PYTHON) tools/setup.py install --prefix $(prefix) $(python_rootdir)
+	$(CMD)mkdir -p $(DESTDIR)$(docdir)
+	$(CMD)cd $(topdir) && $(PYTHON) tools/setup.py install --record $(DESTDIR)$(python_manifest) --prefix $(prefix) $(python_rootdir)
 
 uninstall-purepython:
-	$(ECHO) installing pure python modules [TODO]
+	$(ECHO) installing pure python modules
+	if test -f $(DESTDIR)$(python_manifest); then rm -vf $$(sed s,^,$(DESTDIR), < $(DESTDIR)$(python_manifest)); fi
+	rmdir --ignore-fail-on-non-empty $$(dirname $$(grep commands.py$$ $(DESTDIR)$(python_manifest))) || true
+	rm -vf $(DESTDIR)$(python_manifest)
+	rmdir --ignore-fail-on-non-empty $(DESTDIR)$(docdir) || true
+	rmdir --ignore-fail-on-non-empty $(DESTDIR)$(pylibdir)/$(pythonPackage) || true
 
 install-files: $(html_FILES)
 	$(ECHO) installing general files
 	$(CMD)mkdir -p $(DESTDIR)$(prefix)
 	$(CMD)$(CP) -a share $(DESTDIR)/$(prefix)/
+
+uninstall-files: $(html_FILES)
+	$(ECHO) uninstalling general files
+	$(CMD)find share -type f | sed s,^,$(DESTDIR)$(prefix)/, | xargs rm -f
+	$(CMD)find share -depth -type d | sed s,^,$(DESTDIR)$(prefix)/, | xargs rmdir --ignore-fail-on-non-empty
