@@ -62,6 +62,9 @@ htmldir   = $(prefix)/$(build_htmldir)
 docdir    = $(prefix)/share/doc/pixi-tools
 pkgconfigdir = $(libdir)/pkgconfig
 
+examples_FILES = $(shell cd $(topdir) && find examples -type f -and -not -name \*~)
+doc_FILES      = README
+
 # run packages-dir.py only on first expansion of $(pylibdir)
 get_pylibdir = $(shell $(PYTHON) $(toolsdir)/packages-dir.py $(libdir)/python$(PYTHON_VERSION))
 pylibdir     = $(eval pylibdir := $(get_pylibdir))$(pylibdir)
@@ -91,7 +94,7 @@ pio_LIBS      = -Llib -lpixi
 
 # pixi-ext is built by default, to check the code, but not installed
 pixi-ext          = bin/pixi-ext
-pixi-ext_SOURCES := $(shell cd $(topdir) && find extensions/ -name \*.c)
+pixi-ext_SOURCES := $(shell cd $(topdir) && find examples/ -name \*.c)
 pixi-ext_OBJECTS := $(pixi-ext_SOURCES:.c=.o)
 pixi-ext_LIBS      = -Llib -lpixi
 
@@ -339,8 +342,13 @@ install-files: $(html_FILES)
 	$(ECHO) installing general files
 	$(CMD)mkdir -p $(DESTDIR)$(prefix)
 	$(CMD)$(CP) -a share $(DESTDIR)/$(prefix)/
+	$(CMD)mkdir -p $(DESTDIR)$(docdir)/examples
+	$(CMD)cd $(topdir) && $(CP) -vp $(examples_FILES) $(DESTDIR)$(docdir)/examples
+	$(CMD)cd $(topdir) && $(CP) -vp $(doc_FILES) $(DESTDIR)$(docdir)
 
 uninstall-files: $(html_FILES)
 	$(ECHO) uninstalling general files
-	$(CMD)find share -type f | sed s,^,$(DESTDIR)$(prefix)/, | xargs rm -f
-	$(CMD)find share -depth -type d | sed s,^,$(DESTDIR)$(prefix)/, | xargs rmdir --ignore-fail-on-non-empty
+	$(CMD)find share -type f | sed s,^,$(DESTDIR)$(prefix)/, | xargs rm -f || true
+	$(CMD)find share -depth -type d | sed s,^,$(DESTDIR)$(prefix)/, | xargs rmdir --ignore-fail-on-non-empty || true
+	$(CMD)cd $(DESTDIR)$(docdir) && rm -fv $(examples_FILES) $(doc_FILES) || true
+	$(CMD)rmdir --ignore-fail-on-non-empty $(DESTDIR)$(docdir)/examples $(DESTDIR)$(docdir) || true
