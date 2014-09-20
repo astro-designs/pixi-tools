@@ -300,7 +300,7 @@ uninstall-headers:
 pylibdir:
 	@echo pylibdir is firstly $(pylibdir), then $(pylibdir)
 
-install-python: $(PYTHON_EXTS) $(PYTHON_MODS) pylibdir
+install-python: $(PYTHON_EXTS) pylibdir
 	$(ECHO) installing python modules
 	$(CMD)mkdir -p $(DESTDIR)$(pylibdir)/$(pythonPackage)
 	$(CMD)for target in $(PYTHON_EXTS); do \
@@ -327,7 +327,7 @@ install-purepython:
 uninstall-purepython:
 	$(ECHO) installing pure python modules [TODO]
 
-install-files:
+install-files: $(html_FILES)
 	$(ECHO) installing general files
 	$(CMD)mkdir -p $(DESTDIR)$(prefix)
 	$(CMD)$(CP) -a share $(DESTDIR)/$(prefix)/
