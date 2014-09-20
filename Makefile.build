@@ -31,6 +31,8 @@ common_CPPFLAGS = -I$(topdir) -I. -D_GNU_SOURCE
 
 toolsdir = $(topdir)/tools
 version_h = $(topdir)/libpixi/version.h
+build_version_h = build-version.h
+prebuild_files = $(version_h) $(build_version_h)
 
 project_info = $(topdir)/project-info
 include $(project_info)
@@ -129,12 +131,12 @@ build_CXXFLAGS = $(common_CXXFLAGS)
 .PHONY: all most check check-python check-header-syntax run-python run-python-demo run-server help-custom temp-install
 .SECONDARY: $(_pi_SOURCES) $(_pixi_SOURCES)
 
-all: build-version.h $(version_h) $(TARGETS)
+all: $(TARGETS)
 
 most: $(version_h) $(MOST_TARGETS)
 	echo $(BUILD_MODE) $(MOST_TARGETS)
 
-build-version.h: buildver-$(build_version)
+$(build_version_h): buildver-$(build_version)
 	echo '#define PIXI_TOOLS_BUILD_VERSION "$(build_version)"' > $@
 
 buildver-$(build_version):
@@ -142,18 +144,21 @@ buildver-$(build_version):
 	echo $(build_version) > $@
 
 $(libpixi): build_CFLAGS += -fPIC
-$(libpixi): build-version.h $(libpixi_OBJECTS)
+$(libpixi): $(libpixi_OBJECTS)
+$(libpixi_OBJECTS): | $(prebuild_files)
 
 $(pixisim): build_CFLAGS += -fPIC
 $(pixisim): $(libpixi) $(pixisim_OBJECTS)
 
-$(pio): build-version.h $(libpixi) $(pio_OBJECTS)
+$(pio): $(libpixi) $(pio_OBJECTS)
+$(pio_OBJECTS): | $(prebuild_files)
 
 $(pixi-ext): $(libpixi) $(pixi-ext_OBJECTS)
 
 $(pixi-tty): build_CPPFLAGS += -I/usr/include/fuse -D_FILE_OFFSET_BITS=64
 $(pixi-tty): LINK = $(LINKCXX)
 $(pixi-tty): $(libpixi) $(pixi-tty_OBJECTS)
+$(pixi-tty_OBJECTS): | $(prebuild_files)
 
 $(_pi): build_CFLAGS = $(common_CFLAGS) $(PYTHON_CFLAGS) -Wno-missing-prototypes -Wno-missing-declarations
 $(_pi): $(libpixi) $(_pi_OBJECTS)
