@@ -347,8 +347,10 @@ install-files: $(html_FILES)
 	$(CMD)cd $(topdir) && $(CP) -vp $(examples_FILES) $(DESTDIR)$(docdir)/examples
 	$(CMD)cd $(topdir) && $(CP) -vp $(doc_FILES) $(DESTDIR)$(docdir)
 
+# Depend on html files to know what to uninstall
 uninstall-files: $(html_FILES)
 	$(ECHO) uninstalling general files
+	$(CMD)rm -rf $(DESTDIR)$(htmldir)/api/
 	$(CMD)find share -type f | sed s,^,$(DESTDIR)$(prefix)/, | xargs rm -f || true
 	$(CMD)find share -depth -type d | sed s,^,$(DESTDIR)$(prefix)/, | xargs rmdir --ignore-fail-on-non-empty || true
 	$(CMD)cd $(DESTDIR)$(docdir) && rm -fv $(examples_FILES) $(doc_FILES) || true
