@@ -246,7 +246,8 @@ help-custom:
 	@echo "make run-python-demo           Run simple python pixi demo"
 	@echo "make run-server                Run the server - WARNING - probably a gaping security hole"
 
-all_install   := install-libraries install-headers install-exec install-python install-purepython install-files
+# install-purepython last so the correct python2.7-files is installed (not the one in build/)
+all_install   := install-libraries install-headers install-exec install-files install-python install-purepython
 all_uninstall := $(subst install,uninstall,$(all_install))
 
 .PHONY: install $(all_install)
