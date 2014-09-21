@@ -1,3 +1,62 @@
+pixi-tools (0.5) unstable; urgency=medium
+
+  * Many API additions and changes
+    - Some APIs (mostly GPIO related) have been renamed
+    - From this point, the aim is to retain API and ABI compatibility
+
+  * The default FPGA file is now /etc/pixi-tools/pixi.bin
+    - Nothing is installed there by default - the user should make a symlink
+
+  * Flash support has been added
+
+  * Some basic i2c support has been added
+
+  * Some basic MPU support has been added
+
+  * New pio commands:
+    - adc-monitor
+    - dac-write
+    - flash-rdp-res
+    - flash-read-id
+    - flash-read-status
+    - flash-read
+    - flash-write
+    - flash-write-no-erase
+    - flash-erase-sectors
+    - flash-erase
+    - fpga-dna
+    - i2c-read
+    - i2c-write
+    - monitor-pi-gpio
+    - mpu-monitor-temp
+    - mpu-monitor-motion
+    - spi-transfer
+
+  * SPI channel arguments have been removed from various pio SPI commands
+
+  * Improvements to logging
+    - Add macros in libpixi to provide application specific logging
+    - Application logging inherits log-level from libpixi (if not specified)
+
+  * pio command handling moved into libpixi
+    - Now available for other programs to use
+
+  * Add a pkg-config file
+    - /usr/lib/pkgconfig/libpixi.pc
+
+  * Add pixi-cc and pixi-c++ scripts
+    - These wrap the gcc and g++ commands with the arguments required for
+      using libpixi
+
+  * Some pio extensions are now installed as example code in doc/pixi-tools
+
+  * Improvements to libpixi version handling
+
+  * Improvements to gpio functions
+    - No longer implicitly use the wiringPi pin mapping
+
+ -- Simon Cantrill <simonjcantrill@gmail.com>  Sun, 21 Sep 2014 14:38:29 +0100
+
 pixi-tools (0.4preview2-1) unstable; urgency=medium
 
   * Fixes for reading ADC, setting LCD position
