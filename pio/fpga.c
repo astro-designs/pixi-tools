@@ -24,7 +24,7 @@
 #include "log.h"
 #include <stdio.h>
 
-static const char DefaultFpga[] = "/home/pixi-200/pixi.bin"; // TODO: belongs in ../share/pixi?
+static const char DefaultFpga[] = "/etc/pixi-tools/pixi.bin";
 
 static int64 getVersion (void)
 {

@@ -27,9 +27,17 @@ SCRIPTNAME=/etc/init.d/$NAME
 
 DAEMON=/usr/bin/pio
 pio=$DAEMON
-fpga=/usr/share/pixi-tools/fpga/pixi.bin
 noFpga="000000000000"
 customPixiInit=/etc/pixi-init
+
+# The user can make a symlink to one of
+# /usr/share/pixi-tools/fpga/pixi_1vx/pixi.bin
+# or
+# /usr/share/pixi-tools/fpga/pixi_2vx/pixi.bin
+# example:
+# mkdir /etc/pixi-tools
+# ln -v -s /usr/share/pixi-tools/fpga/pixi_2vx/pixi.bin /etc/pixi-tools
+fpga=/etc/pixi-tools/pixi.bin
 
 # Exit if the package is not installed
 #[ -x "$DAEMON" ] || exit 0
