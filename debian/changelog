@@ -1,3 +1,13 @@
+pixi-tools (0.5.1) unstable; urgency=medium
+
+  * Fix the init script to load FPGA when necessary
+
+  * Add modprobe of i2c-dev and i2c-bcm2708 to init script
+
+  * Don't gzip the example .c code
+
+ -- Simon Cantrill <simonjcantrill@gmail.com>  Tue, 23 Sep 2014 19:31:50 +0100
+
 pixi-tools (0.5) unstable; urgency=medium
 
   * Many API additions and changes
