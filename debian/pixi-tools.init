@@ -59,6 +59,8 @@ load_modules()
 		modprobe spi_bcm2708
 		sleep 2
 	fi
+	modprobe i2c-dev
+	modprobe i2c-bcm2708
 }
 
 #
