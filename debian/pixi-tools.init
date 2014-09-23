@@ -76,10 +76,7 @@ do_start()
 	load_modules
 
 	fpgaVer=$($pio fpga-version)
-	if [ $? != 0 ]; then
-		log_failure_msg "pio failed to get fpga-version"
-		return 2
-	fi
+	result=$?
 	if [ "$fpgaVer" = $noFpga ]; then
 #		echo "Attempting to load FPGA $fpga"
 		if ! $pio load-fpga $fpga; then
@@ -88,6 +85,9 @@ do_start()
 		fi
 		fpgaVer=$($pio fpga-version)
 		log_success_msg "Loaded FPGA version $fpgaVer"
+	elif [ $result != 0 ]; then
+		log_failure_msg "pio failed to get fpga-version"
+		return 2
 	else
 		log_success_msg "FPGA version $fpgaVer already loaded"
 	fi

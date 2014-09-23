@@ -44,8 +44,9 @@ static int64 getVersion (void)
 	}
 	if (version == 0)
 	{
+		// Indicates either no FPGA is loaded, or we're not talking
+		// to the PiXi
 		PIO_LOG_ERROR("Error getting FPGA version: value is zero");
-		return -EINVAL;
 	}
 	return version;
 }
@@ -87,10 +88,10 @@ static int fpgaLoadFn (const Command* command, uint argc, char* argv[])
 	printf ("FPGA loaded\n");
 	int64 version = getVersion();
 	if (version < 0)
-	{
-		PIO_ERROR(-result, "Could not get loaded FPGA version");
-		return result;
-	}
+		return version;
+	if (version == 0)
+		return -EINVAL;
+
 	printf ("FPGA Version: %012llx\n", (ulonglong) version);
 	char buildTime[80];
 	result = formatBuildTime (version, buildTime, sizeof (buildTime));
@@ -116,11 +117,12 @@ static int fpgaGetVersionFn (const Command* command, uint argc, char* argv[])
 
 	int64 version = getVersion();
 	if (version < 0)
-	{
-		PIO_ERROR(-version, "Error getting FPGA version");
 		return version;
-	}
+
+	// A zero version is printed, but an error is also indicated
 	printf ("%012llx\n", (ulonglong) version);
+	if (version == 0)
+		return -EINVAL;
 	return 0;
 }
 static Command fpgaGetVersionCmd =
@@ -139,16 +141,10 @@ static int fpgaGetBuildTimeFn (const Command* command, uint argc, char* argv[])
 		return commandUsageError (command);
 
 	int64 version = getVersion();
-	if (version == 0)
-	{
-		PIO_LOG_ERROR("Error getting FPGA version: value is zero");
-		return -EINVAL;
-	}
 	if (version < 0)
-	{
-		PIO_ERROR(-version, "Error getting FPGA version");
 		return version;
-	}
+	if (version == 0)
+		return -EINVAL;
 
 	char buildTime[80];
 	int result = formatBuildTime (version, buildTime, sizeof (buildTime));
