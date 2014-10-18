@@ -72,8 +72,8 @@ int pixi_mpuReadRegisters16 (uint address1, int16* values, uint count);
 ///	Return 0 success, negative error code on error
 int pixi_mpuWriteRegister (uint address, uint value);
 
-static inline int mpuTemperatureToDegrees (int16 rawValue) {
-	return (rawValue / 340.0) + 35;
+static inline double mpuTemperatureToDegrees (int16 rawValue) {
+	return (rawValue / 340.0) + 35.0;
 }
 
 ///@} defgroup
