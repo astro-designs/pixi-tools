@@ -26,58 +26,44 @@
 #include <stdlib.h>
 
 
-static int mpuI2c = -1;
+static I2cDevice mpuI2c = I2C_DEVICE_INIT;
 
 int pixi_mpuOpen (void)
 {
 	// TODO: instead rejecting if previously open,
 	// do ref-counting of open count?
-	LIBPIXI_PRECONDITION(mpuI2c < 0);
-	int result = pixi_i2cOpen (MpuChannel, MpuAddress);
+	LIBPIXI_PRECONDITION(mpuI2c.fd < 0);
+	int result = pixi_i2cOpen2 (MpuChannel, MpuAddress, &mpuI2c);
 	if (result < 0)
 		LIBPIXI_ERROR(-result, "Cannot open i2c channel to PiXi MPU");
-	mpuI2c = result;
 	return result;
 }
 
 int pixi_mpuClose (void)
 {
-	LIBPIXI_PRECONDITION(mpuI2c >= 0);
-	return pixi_close (mpuI2c);
+	LIBPIXI_PRECONDITION(mpuI2c.fd >= 0);
+	return pixi_i2cClose (&mpuI2c);
 }
 
 int pixi_mpuReadRegisters16 (uint address1, int16* values, uint count)
 {
-	LIBPIXI_PRECONDITION(mpuI2c >= 0);
+	LIBPIXI_PRECONDITION(mpuI2c.fd >= 0);
 	LIBPIXI_PRECONDITION(count > 0);
 	LIBPIXI_PRECONDITION_NOT_NULL(values);
 
 	byte request = address1;
-	ssize_t written = pixi_write (mpuI2c, &request, 1);
-	if (written < 0)
+	byte response[2 * count];
+	int result = pixi_i2cReadWrite (&mpuI2c,
+		&request, sizeof (request),
+		response, sizeof (response)
+		);
+	if (result < 0)
 	{
-		LIBPIXI_ERROR(-written, "Failed to write MPU register request");
-		return written;
-	}
-	else if (written == 0)
-	{
-		LIBPIXI_LOG_ERROR("Short write of MPU register request");
-		return -EIO;
-	}
-	byte buffer[2 * count];
-	written = pixi_read (mpuI2c, &buffer, count * 2);
-	if (written < 0)
-	{
-		LIBPIXI_ERROR(-written, "Failed to read MPU register response");
-		return written;
-	}
-	else if ((size_t) written < 2 * count)
-	{
-		LIBPIXI_LOG_ERROR("Short read from MPU register response");
-		return -EIO;
+		LIBPIXI_ERROR(-result, "pixi_i2cReadWrite failed (reading registers)");
+		return result;
 	}
 	for (uint i = 0; i < count; i++)
-		values[i] = int16FromBE (&buffer[i * 2]);
+		values[i] = int16FromBE (&response[i * 2]);
 
 	return 0;
 }
@@ -93,11 +79,11 @@ int pixi_mpuReadRegister16 (uint address1)
 
 int pixi_mpuWriteRegister (uint address, uint value)
 {
-	LIBPIXI_PRECONDITION(mpuI2c >= 0);
+	LIBPIXI_PRECONDITION(mpuI2c.fd >= 0);
 	LIBPIXI_PRECONDITION(address < 128);
 
 	byte buf[] = {address, value};
-	ssize_t count = pixi_write (mpuI2c, buf, sizeof (buf));
+	ssize_t count = pixi_write (mpuI2c.fd, buf, sizeof (buf));
 	if (count < 0)
 	{
 		LIBPIXI_ERROR(-count, "Failed to write MPU register");
