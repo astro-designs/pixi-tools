@@ -26,6 +26,73 @@
 #include "log.h"
 
 
+static int i2cTransfer (const Command* command, uint argc, char* argv[])
+{
+	if (argc < 4)
+		return commandUsageError (command);
+
+	const uint dataOffset = 4;
+	uint channel   = pixi_parseLong (argv[1]);
+	uint address   = pixi_parseLong (argv[2]);
+	uint rxSize    = pixi_parseLong (argv[3]);
+	uint txSize    = argc - dataOffset;
+	if (rxSize > 2048)
+	{
+		PIO_LOG_ERROR("Transfer size of %u is too large", rxSize);
+		return -EINVAL;
+	}
+	if (txSize > 2048)
+	{
+		PIO_LOG_ERROR("Transfer size of %u is too large", txSize);
+		return -EINVAL;
+	}
+
+	I2cDevice dev = I2C_DEVICE_INIT;
+	int result = pixi_i2cOpen2 (channel, address, &dev);
+	if (result < 0)
+	{
+		PIO_ERROR(-result, "Couldn't open flash I2C channel");
+		return result;
+	}
+	uint hexSize = 1 + (rxSize * 3);
+	char* hex = malloc (hexSize);
+	uint8* tx = malloc (txSize);
+	uint8* rx = malloc (rxSize);
+	if (hex && tx && rx)
+	{
+		for (uint i = 0; i < txSize; i++)
+			tx[i] = pixi_parseLong (argv[dataOffset + i]);
+
+		result = pixi_i2cReadWrite (&dev, tx, txSize, rx, rxSize);
+		if (result >= 0)
+		{
+			pixi_hexEncode (rx, rxSize, hex, hexSize, ' ', "");
+			printf ("result: [%s]\n", hex);
+			result = 0;
+		}
+		else
+			PIO_ERROR(-result, "I2C read/write failed");
+	}
+	else
+	{
+		PIO_LOG_FATAL("Failed to allocate buffers of size %u and %u", rxSize, txSize);
+		result = -ENOMEM;
+	}
+	pixi_i2cClose (&dev);
+
+	free (tx);
+	free (rx);
+	free (hex);
+	return result;
+}
+static Command i2cTransferCmd =
+{
+	.name        = "i2c-transfer",
+	.description = "Perform an I2C transfer",
+	.usage       = "usage: %s CHANNEL ADDRESS RX-SIZE TX-BYTES...",
+	.function    = i2cTransfer
+};
+
 static int i2cRead (const Command* command, uint argc, char* argv[])
 {
 	if (argc != 4)
@@ -150,6 +217,7 @@ static Command i2cWriteCmd =
 
 static const Command* commands[] =
 {
+	&i2cTransferCmd,
 	&i2cReadCmd,
 	&i2cWriteCmd,
 };
