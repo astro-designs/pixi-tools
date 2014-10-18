@@ -74,6 +74,7 @@ int pixi_spiOpen (uint channel, uint speed, SpiDevice* device)
 		pixi_close (fd);
 		return -err;
 	}
+	memset (device, 0, sizeof (*device));
 	device->fd = fd;
 	device->speed = speed;
 	device->delay = 0;
