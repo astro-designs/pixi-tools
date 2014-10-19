@@ -26,6 +26,8 @@
 #include "log.h"
 
 
+const int interval = 100 * 1000;
+
 static int mpuInit (void)
 {
 	// FIXME: extend this, and move to libpixi
@@ -52,7 +54,7 @@ static int mpuMonitorTemp (void)
 		printf ("\rhex=0x%04x dec=%6d temperature=%7.3f degrees C", (uint16) raw, raw, temp);
 		fflush (stdout);
 
-		usleep (100 * 1000);
+		usleep (interval);
 	}
 	printf ("\n");
 
@@ -87,25 +89,20 @@ static int mpuMonitorMotion (void)
 
 	mpuInit();
 
-	int16 accel[3] = {0,0,0};
-	int16 gyro[3] = {0,0,0};
+	MpuMotion motion;
 	result = 0;
 	while (true)
 	{
-		// TODO: maybe merge into single read
-		result = pixi_mpuReadRegisters16 (MpuAccelXHigh, accel, 3);
-		if (result < 0)
-			break;
-		result = pixi_mpuReadRegisters16 (MpuGyroXHigh, gyro, 3);
+		result = pixi_mpuReadMotion (&motion);
 		if (result < 0)
 			break;
 		printf ("\raccel [%6d %6d %6d] gyro [%6d %6d %6d]",
-			accel[0], accel[1], accel[2],
-     			gyro[0], gyro[1], gyro[2]
+			motion.accel.x, motion.accel.y, motion.accel.z,
+			motion.gyro.x, motion.gyro.y, motion.gyro.z
 		);
 		fflush (stdout);
 
-		usleep (100 * 1000);
+		usleep (interval);
 	}
 	printf ("\n");
 
