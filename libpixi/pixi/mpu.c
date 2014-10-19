@@ -23,6 +23,7 @@
 #include <libpixi/util/bits.h>
 #include <libpixi/util/file.h>
 #include <libpixi/util/log.h>
+#include <endian.h>
 #include <stdlib.h>
 
 
@@ -45,25 +46,40 @@ int pixi_mpuClose (void)
 	return pixi_i2cClose (&mpuI2c);
 }
 
+int pixi_mpuReadRegisters (uint address1, void* buffer, size_t size)
+{
+	LIBPIXI_PRECONDITION(mpuI2c.fd >= 0);
+	LIBPIXI_PRECONDITION(size > 0);
+	LIBPIXI_PRECONDITION(size <= 256);
+	LIBPIXI_PRECONDITION_NOT_NULL(buffer);
+
+	byte request = address1;
+	int result = pixi_i2cReadWrite (&mpuI2c,
+		&request, sizeof (request),
+		buffer, size
+		);
+	if (result < 0)
+	{
+		LIBPIXI_ERROR(-result, "pixi_i2cReadWrite failed for MPU");
+		return result;
+	}
+
+	return 0;
+
+}
+
 int pixi_mpuReadRegisters16 (uint address1, int16* values, uint count)
 {
 	LIBPIXI_PRECONDITION(mpuI2c.fd >= 0);
 	LIBPIXI_PRECONDITION(count > 0);
 	LIBPIXI_PRECONDITION_NOT_NULL(values);
 
-	byte request = address1;
-	byte response[2 * count];
-	int result = pixi_i2cReadWrite (&mpuI2c,
-		&request, sizeof (request),
-		response, sizeof (response)
-		);
+	int result = pixi_mpuReadRegisters (address1, values, count * sizeof (*values));
 	if (result < 0)
-	{
-		LIBPIXI_ERROR(-result, "pixi_i2cReadWrite failed (reading registers)");
 		return result;
-	}
+
 	for (uint i = 0; i < count; i++)
-		values[i] = int16FromBE (&response[i * 2]);
+		values[i] = be16toh (values[i]);
 
 	return 0;
 }
@@ -95,4 +111,22 @@ int pixi_mpuWriteRegister (uint address, uint value)
 		return -EIO;
 	}
 	return 0;
+}
+
+int pixi_mpuReadAccel (MpuAxes* axes)
+{
+	LIBPIXI_PRECONDITION_NOT_NULL(axes);
+	return pixi_mpuReadRegisters16 (MpuAccelXHigh, &axes->x, sizeof (*axes) / sizeof (int16));
+}
+
+int pixi_mpuReadGyro (MpuAxes* axes)
+{
+	LIBPIXI_PRECONDITION_NOT_NULL(axes);
+	return pixi_mpuReadRegisters16 (MpuGyroXHigh, &axes->x, sizeof (*axes) / sizeof (int16));
+}
+
+int pixi_mpuReadMotion (MpuMotion* motion)
+{
+	LIBPIXI_PRECONDITION_NOT_NULL(motion);
+	return pixi_mpuReadRegisters16 (MpuAccelXHigh, &motion->accel.x, sizeof (*motion) / sizeof (int16));
 }

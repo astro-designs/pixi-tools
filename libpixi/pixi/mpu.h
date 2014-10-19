@@ -24,6 +24,7 @@
 
 #include <libpixi/common.h>
 #include <limits.h>
+#include <stddef.h>
 
 LIBPIXI_BEGIN_DECLS
 
@@ -38,17 +39,41 @@ enum
 
 enum MpuRegister
 {
+	/// Big-endian signed 16 bit
 	MpuAccelXHigh          = 0x3B,
-	MpuAccelZLow           = 0x40,
+	MpuAccelXLow,
+	MpuAccelYHigh,
+	MpuAccelYLow,
+	MpuAccelZHigh,
+	MpuAccelZLow,
 
 	MpuTemperatureHigh     = 0x41,
-	MpuTemperatureLow      = 0x42,
+	MpuTemperatureLow,
 
 	MpuGyroXHigh           = 0x43,
-	MpuGyroZLow            = 0x48,
+	MpuGyroXLow,
+	MpuGyroYHigh,
+	MpuGyroYLow,
+	MpuGyroZHigh,
+	MpuGyroZLow,
 
 	MpuPowerManagement1    = 0x6b,
 };
+
+typedef struct MpuAxes
+{
+	int16   x;
+	int16   y;
+	int16   z;
+} MpuAxes;
+
+///	Directly maps to MPU gyroscope/temperature/accelerometer registers
+typedef struct MpuMotion
+{
+	struct MpuAxes   accel;
+	int16            temp;
+	struct MpuAxes   gyro;
+} MpuMotion;
 
 ///	Open the Pi i2c channel to the PiXi MPU. When finished,
 ///	call pixi_closePixi().
@@ -59,18 +84,35 @@ int pixi_mpuOpen (void);
 ///	@return 0 on success, negative error code on error
 int pixi_mpuClose (void);
 
-///	Read a 16 bit unsigned value by reading from registers
+///	Read a 16 bit little-endian unsigned value by reading from registers
 ///	@a address1 and @a address + 1.
 ///	Return non-negative value on success, negative error code on error
 int pixi_mpuReadRegister16 (uint address1);
 
-///	Read values from a sequence of 16 bit register pairs
-///	Return non-negative value on success, negative error code on error
+///	Read raw data from MPU registers starting at @a address1.
+///	Return 0 on success, negative error code on error
+int pixi_mpuReadRegisters (uint address1, void* buffer, size_t size);
+
+///	Read values from a sequence of 16 bit big-endian register pairs
+///	(as used by gyroscope, temperatue and accelerometer components).
+///	Return 0 on success, negative error code on error
 int pixi_mpuReadRegisters16 (uint address1, int16* values, uint count);
 
 ///	Write an 8 bit value to register @a address
 ///	Return 0 success, negative error code on error
 int pixi_mpuWriteRegister (uint address, uint value);
+
+///	Read current accelerometer values.
+///	Return 0 success, negative error code on error
+int pixi_mpuReadAccel (MpuAxes* axes);
+
+///	Read current gyroscope values.
+///	Return 0 success, negative error code on error
+int pixi_mpuReadGyro (MpuAxes* axes);
+
+///	Read current gyroscope, accelerometer and temperature values.
+///	Return 0 success, negative error code on error
+int pixi_mpuReadMotion (MpuMotion* motion);
 
 static inline double mpuTemperatureToDegrees (int16 rawValue) {
 	return (rawValue / 340.0) + 35.0;
