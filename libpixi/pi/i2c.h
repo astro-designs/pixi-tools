@@ -56,6 +56,25 @@ int pixi_i2cClose (I2cDevice* device);
 ///	@return 0 on success, or -errno on error
 int pixi_i2cReadWrite (I2cDevice* device, const void* txBuffer, size_t txSize, void* rxBuffer, size_t rxSize);
 
+enum
+{
+	I2cMsgWrite = 0,
+	I2cMsgRead  = 1
+};
+// Must match struct i2c_msg
+typedef struct I2cMessage
+{
+	uint16  address; ///< Set by pixi_i2cMultiOp()
+	ushort  flags; ///< I2cMsgWrite or I2cMsgRead
+	ushort  length;
+	void*   buffer;
+} I2cMessage;
+
+///	Perform a set of reads and/or writes
+///	@return 0 on success, or -errno on error
+int pixi_i2cMultiOp (I2cDevice* device, I2cMessage* messages, size_t count);
+
+
 ///@} defgroup
 
 LIBPIXI_END_DECLS

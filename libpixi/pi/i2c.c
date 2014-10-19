@@ -22,6 +22,7 @@
 #include <libpixi/util/file.h>
 #include <libpixi/util/log.h>
 #include <libpixi/util/string.h>
+#include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,17 +88,49 @@ int pixi_i2cReadWrite (I2cDevice* device, const void* txBuffer, size_t txSize, v
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 	LIBPIXI_PRECONDITION(device->fd >= 0);
 	LIBPIXI_PRECONDITION(device->address < 1024);
-	LIBPIXI_PRECONDITION_NOT_NULL(txBuffer);
-	LIBPIXI_PRECONDITION_NOT_NULL(rxBuffer);
 
-	struct i2c_msg msgs[2] = {
-		{.addr = device->address, .len = txSize, .buf = (void*) txBuffer, .flags = I2C_M_TEN},
-		{.addr = device->address, .len = rxSize, .buf =         rxBuffer, .flags = I2C_M_TEN | I2C_M_RD},
-	};
+	I2cMessage messages[2];
+	uint count = 0;
+	if (txBuffer)
+	{
+		messages[count].address = device->address;
+		messages[count].flags   = I2C_M_TEN;
+		messages[count].length  = txSize;
+		messages[count].buffer  = (void*) txBuffer;
+		count++;
+	}
+	if (rxBuffer)
+	{
+		messages[count].address = device->address;
+		messages[count].flags   = I2C_M_TEN | I2C_M_RD;
+		messages[count].length  = rxSize;
+		messages[count].buffer  = rxBuffer;
+		count++;
+	}
+
+	return pixi_i2cMultiOp (device, messages, count);
+}
+
+int pixi_i2cMultiOp (I2cDevice* device, I2cMessage* messages, size_t count)
+{
+	LIBPIXI_STATIC_ASSERT (sizeof (struct i2c_msg) == sizeof (I2cMessage), "struct i2c_msg must match I2cMessage");
+	LIBPIXI_STATIC_ASSERT (offsetof(struct i2c_msg, addr ) == offsetof(I2cMessage, address), "struct i2c_msg must match I2cMessage");
+	LIBPIXI_STATIC_ASSERT (offsetof(struct i2c_msg, flags) == offsetof(I2cMessage, flags  ), "struct i2c_msg must match I2cMessage");
+	LIBPIXI_STATIC_ASSERT (offsetof(struct i2c_msg, len  ) == offsetof(I2cMessage, length ), "struct i2c_msg must match I2cMessage");
+	LIBPIXI_STATIC_ASSERT (offsetof(struct i2c_msg, buf  ) == offsetof(I2cMessage, buffer ), "struct i2c_msg must match I2cMessage");
+	LIBPIXI_STATIC_ASSERT (I2C_M_RD == I2cMsgRead, "struct i2c_msg must match I2cMessage");
+
+	LIBPIXI_PRECONDITION_NOT_NULL(device);
+	LIBPIXI_PRECONDITION(device->fd >= 0);
+	LIBPIXI_PRECONDITION(device->address < 1024);
+	LIBPIXI_PRECONDITION_NOT_NULL(messages);
+
+	for (uint i = 0; i < count; i++)
+		messages[i].address = device->address;
 
 	struct i2c_rdwr_ioctl_data msgset = {
-		.msgs  = msgs,
-		.nmsgs = 2
+		.msgs  = (struct i2c_msg*) messages,
+		.nmsgs = count
 	};
 
 	int result = ioctl (device->fd, I2C_RDWR, &msgset);
@@ -109,3 +142,4 @@ int pixi_i2cReadWrite (I2cDevice* device, const void* txBuffer, size_t txSize, v
 	}
 	return 0;
 }
+
