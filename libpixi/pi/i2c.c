@@ -140,6 +140,18 @@ int pixi_i2cMultiOp (I2cDevice* device, I2cMessage* messages, size_t count)
 		LIBPIXI_ERROR(err, "ioctl I2C_RDWR failed");
 		return -err;
 	}
+	if (pixi_isLogLevelEnabled (LogLevelTrace))
+	{
+		char hex[4096];
+		LIBPIXI_LOG_TRACE("Completed %zu message i2c transfer", count);
+		for (uint i = 0; i < count; i++)
+		{
+			pixi_hexEncode (messages[i].buffer, messages[i].length, hex, sizeof(hex), ' ', "");
+			const char* type = (messages[i].flags & I2cMsgRead) ? "read" : "write";
+			LIBPIXI_LOG_TRACE("msg %u %-5s [%s]", i, type, hex);
+			messages[i].address = device->address;
+		}
+	}
 	return 0;
 }
 
