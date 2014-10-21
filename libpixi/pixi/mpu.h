@@ -39,6 +39,9 @@ enum
 
 enum MpuRegister
 {
+	MpuGyroConfig          = 0x1B,
+	MpuAccelConfig         = 0x1C,
+
 	/// Big-endian signed 16 bit
 	MpuAccelXHigh          = 0x3B,
 	MpuAccelXLow,
@@ -84,6 +87,11 @@ int pixi_mpuOpen (void);
 ///	@return 0 on success, negative error code on error
 int pixi_mpuClose (void);
 
+///	Read a 8 bit unsigned value by reading from register
+///	@a address1
+///	Return non-negative value on success, or negative error code
+int pixi_mpuReadRegister (uint address);
+
 ///	Read a 16 bit little-endian unsigned value by reading from registers
 ///	@a address1 and @a address + 1.
 ///	Return non-negative value on success, negative error code on error
@@ -99,19 +107,37 @@ int pixi_mpuReadRegisters (uint address1, void* buffer, size_t size);
 int pixi_mpuReadRegisters16 (uint address1, int16* values, uint count);
 
 ///	Write an 8 bit value to register @a address
-///	Return 0 success, negative error code on error
+///	@return 0 on success, negative error code on error
 int pixi_mpuWriteRegister (uint address, uint value);
 
+///	Get the accelerometer scale.
+///	@return 2,4,8,16 (g) on success, or negative error code
+int pixi_mpuGetAccelScale (void);
+
+///	Set the gyroscope scale
+///	@param scale 250,500,1000 or 2000 (dps)
+///	@return 0 on success, or negative error code
+int pixi_mpuSetGyroScale (uint scale);
+
 ///	Read current accelerometer values.
-///	Return 0 success, negative error code on error
+///	@return 0 on success, or negative error code
 int pixi_mpuReadAccel (MpuAxes* axes);
 
+///	Set the accelerometer scale
+///	@param scale 2,4,8 or 16 (g)
+///	@return 0 on success, or negative error code
+int pixi_mpuSetAccelScale (uint scale);
+
+///	Get the gyroscope scale.
+///	@return 250,500,1000 or 2000 (dps) on success, or negative error code
+int pixi_mpuGetGyroScale (void);
+
 ///	Read current gyroscope values.
-///	Return 0 success, negative error code on error
+///	@return 0 on success, or negative error code
 int pixi_mpuReadGyro (MpuAxes* axes);
 
 ///	Read current gyroscope, accelerometer and temperature values.
-///	Return 0 success, negative error code on error
+///	@return 0 on success, or negative error code
 int pixi_mpuReadMotion (MpuMotion* motion);
 
 static inline double mpuTemperatureToDegrees (int16 rawValue) {

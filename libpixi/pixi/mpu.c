@@ -84,6 +84,15 @@ int pixi_mpuReadRegisters16 (uint address1, int16* values, uint count)
 	return 0;
 }
 
+int pixi_mpuReadRegister (uint address)
+{
+	uint8 value = 0;
+	int result = pixi_mpuReadRegisters (address, &value, 1);
+	if (result < 0)
+		return result;
+	return value;
+}
+
 int pixi_mpuReadRegister16 (uint address1)
 {
 	int16 value = 0;
@@ -113,10 +122,60 @@ int pixi_mpuWriteRegister (uint address, uint value)
 	return 0;
 }
 
+int pixi_mpuGetAccelScale()
+{
+	int result = pixi_mpuReadRegister (MpuAccelConfig);
+	if (result < 0)
+		return result;
+	uint select = (result >> 3) & 0x3;
+	return 2 << select;
+}
+
+int pixi_mpuSetAccelScale (uint scale)
+{
+	uint select;
+	switch (scale)
+	{
+	case  2: select = 0; break;
+	case  4: select = 1; break;
+	case  8: select = 2; break;
+	case 16: select = 3; break;
+	default:
+		LIBPIXI_PRECONDITION_FAILURE("accelerometer scale should be 2,4,8 or 16");
+		return -EINVAL;
+	}
+	return pixi_mpuWriteRegister (MpuAccelConfig, select << 3);
+}
+
 int pixi_mpuReadAccel (MpuAxes* axes)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(axes);
 	return pixi_mpuReadRegisters16 (MpuAccelXHigh, &axes->x, sizeof (*axes) / sizeof (int16));
+}
+
+int pixi_mpuGetGyroScale()
+{
+	int result = pixi_mpuReadRegister (MpuGyroConfig);
+	if (result < 0)
+		return result;
+	uint select = (result >> 3) & 0x3;
+	return 250 << select;
+}
+
+int pixi_mpuSetGyroScale (uint scale)
+{
+	uint select;
+	switch (scale)
+	{
+	case  250: select = 0; break;
+	case  500: select = 1; break;
+	case 1000: select = 2; break;
+	case 2000: select = 3; break;
+	default:
+		LIBPIXI_PRECONDITION_FAILURE("gyroscope scale should be 250,500,1000 or 2000");
+		return -EINVAL;
+	}
+	return pixi_mpuWriteRegister (MpuGyroConfig, select << 3);
 }
 
 int pixi_mpuReadGyro (MpuAxes* axes)
