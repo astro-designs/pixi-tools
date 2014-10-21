@@ -34,14 +34,144 @@ static int mpuInit (void)
 	return pixi_mpuWriteRegister (MpuPowerManagement1, 0);
 }
 
-
-static int mpuMonitorTemp (void)
+static int mpuOpenInit (void)
 {
 	int result = pixi_mpuOpen();
 	if (result < 0)
 		return result;
+	return mpuInit();
+}
 
-	mpuInit();
+
+static int mpuGetAccelScale (void)
+{
+	int result = mpuOpenInit();
+	if (result < 0)
+		return result;
+
+	result = pixi_mpuGetAccelScale();
+	if (result >= 0)
+		printf ("%d g\n", result);
+
+	pixi_mpuClose();
+
+	return result;
+}
+static int mpuGetAccelScaleFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	return mpuGetAccelScale();
+}
+static Command mpuGetAccelScaleCmd =
+{
+	.name        = "mpu-get-accel-scale",
+	.description = "Get the accelerometer scale",
+	.usage       = "usage: %s",
+	.function    = mpuGetAccelScaleFn
+};
+
+
+static int mpuSetAccelScale (uint scale)
+{
+	int result = mpuOpenInit();
+	if (result < 0)
+		return result;
+
+	result = pixi_mpuSetAccelScale (scale);
+
+	pixi_mpuClose();
+
+	return result;
+}
+static int mpuSetAccelScaleFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 2)
+		return commandUsageError (command);
+
+	uint scale = pixi_parseLong (argv[1]);
+
+	return mpuSetAccelScale (scale);
+}
+static Command mpuSetAccelScaleCmd =
+{
+	.name        = "mpu-set-accel-scale",
+	.description = "Set the accelerometer scale",
+	.usage       = "usage: %s 2|4|8|16",
+	.function    = mpuSetAccelScaleFn
+};
+
+
+static int mpuGetGyroScale (void)
+{
+	int result = mpuOpenInit();
+	if (result < 0)
+		return result;
+
+	result = pixi_mpuGetGyroScale();
+	if (result >= 0)
+		printf ("%d dps\n", result);
+
+	pixi_mpuClose();
+
+	return result;
+}
+static int mpuGetGyroScaleFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	return mpuGetGyroScale();
+}
+static Command mpuGetGyroScaleCmd =
+{
+	.name        = "mpu-get-gyro-scale",
+	.description = "Get the gyroscope scale",
+	.usage       = "usage: %s",
+	.function    = mpuGetGyroScaleFn
+};
+
+
+static int mpuSetGyroScale (uint scale)
+{
+	int result = mpuOpenInit();
+	if (result < 0)
+		return result;
+
+	result = pixi_mpuSetGyroScale (scale);
+
+	pixi_mpuClose();
+
+	return result;
+}
+static int mpuSetGyroScaleFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 2)
+		return commandUsageError (command);
+
+	uint scale = pixi_parseLong (argv[1]);
+
+	return mpuSetGyroScale (scale);
+}
+static Command mpuSetGyroScaleCmd =
+{
+	.name        = "mpu-set-gyro-scale",
+	.description = "Set the gyroscope scale",
+	.usage       = "usage: %s 250|500|1000|2000",
+	.function    = mpuSetGyroScaleFn
+};
+
+
+static int mpuMonitorTemp (void)
+{
+	int result = mpuOpenInit();
+	if (result < 0)
+		return result;
 
 	result = 0;
 	while (true)
@@ -83,11 +213,9 @@ static Command mpuMonitorTempCmd =
 
 static int mpuMonitorMotion (void)
 {
-	int result = pixi_mpuOpen();
+	int result = mpuOpenInit();
 	if (result < 0)
 		return result;
-
-	mpuInit();
 
 	MpuMotion motion;
 	result = 0;
@@ -131,6 +259,10 @@ static Command mpuMonitorMotionCmd =
 
 static const Command* commands[] =
 {
+	&mpuGetAccelScaleCmd,
+	&mpuSetAccelScaleCmd,
+	&mpuGetGyroScaleCmd,
+	&mpuSetGyroScaleCmd,
 	&mpuMonitorTempCmd,
 	&mpuMonitorMotionCmd,
 };
