@@ -67,7 +67,7 @@ static int mpuGetAccelScaleFn (const Command* command, uint argc, char* argv[])
 }
 static Command mpuGetAccelScaleCmd =
 {
-	.name        = "mpu-get-accel-scale",
+	.name        = "mpu-get-acc-scale",
 	.description = "Get the accelerometer range (g)",
 	.usage       = "usage: %s",
 	.function    = mpuGetAccelScaleFn
@@ -98,7 +98,7 @@ static int mpuSetAccelScaleFn (const Command* command, uint argc, char* argv[])
 }
 static Command mpuSetAccelScaleCmd =
 {
-	.name        = "mpu-set-accel-scale",
+	.name        = "mpu-set-acc-scale",
 	.description = "Set the accelerometer range (g)",
 	.usage       = "usage: %s 2|4|8|16",
 	.function    = mpuSetAccelScaleFn
@@ -211,6 +211,42 @@ static Command mpuMonitorTempCmd =
 };
 
 
+static int mpuReadTemp (void)
+{
+	int result = mpuOpenInit();
+	if (result < 0)
+		return result;
+
+	result = pixi_mpuReadRegister16 (MpuTemperatureHigh);
+	if (result < 0)
+		return result;
+
+	int16 raw = result;
+	double temp = mpuTemperatureToDegrees (raw);
+	printf ("%.3f\n", temp);
+
+	pixi_mpuClose();
+
+	return result;
+}
+
+static int mpuReadTempFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	return mpuReadTemp();
+}
+static Command mpuReadTempCmd =
+{
+	.name        = "mpu-read-temp",
+	.description = "Read MPU temperature (degrees C)",
+	.usage       = "usage: %s",
+	.function    = mpuReadTempFn
+};
+
+
 static int mpuMonitorMotion (void)
 {
 	int result = mpuOpenInit();
@@ -273,6 +309,224 @@ static Command mpuMonitorMotionCmd =
 };
 
 
+static int mpuReadAcc (void)
+{
+	int result = mpuOpenInit();
+	if (result < 0)
+		return result;
+
+	result = pixi_mpuGetAccelScale();
+	if (result < 0)
+	{
+		pixi_mpuClose();
+		return result;
+	}
+	const double scale = result / 32768.0;
+
+	MpuAxes ax;
+	result = pixi_mpuReadAccel (&ax);
+	if (result >= 0)
+		printf ("%8.4f %8.4f %8.4f\n", scale * ax.x, scale * ax.y, scale * ax.z);
+
+	pixi_mpuClose();
+
+	return result;
+}
+
+
+static int mpuReadAccFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	return mpuReadAcc();
+}
+static Command mpuReadAccCmd =
+{
+	.name        = "mpu-read-acc",
+	.description = "Read accelerometer (g)",
+	.usage       = "usage: %s",
+	.function    = mpuReadAccFn
+};
+
+
+static int mpuReadAccX (uint address, const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	int result = mpuOpenInit();
+	if (result < 0)
+		return result;
+
+	result = pixi_mpuGetAccelScale();
+	if (result < 0)
+	{
+		pixi_mpuClose();
+		return result;
+	}
+	const double scale = result / 32768.0;
+
+	result = pixi_mpuReadRegister16 (address);
+	if (result >= 0)
+		printf ("%.4f\n", scale * (int16) result);
+
+	pixi_mpuClose();
+
+	return result;
+}
+
+
+static int mpuReadAccXFn (const Command* command, uint argc, char* argv[])
+{
+	return mpuReadAccX (MpuAccelXHigh, command, argc, argv);
+}
+static Command mpuReadAccXCmd =
+{
+	.name        = "mpu-read-acc-x",
+	.description = "Read accelerometer x value (g)",
+	.usage       = "usage: %s",
+	.function    = mpuReadAccXFn
+};
+
+
+static int mpuReadAccYFn (const Command* command, uint argc, char* argv[])
+{
+	return mpuReadAccX (MpuAccelYHigh, command, argc, argv);
+}
+static Command mpuReadAccYCmd =
+{
+	.name        = "mpu-read-acc-y",
+	.description = "Read accelerometer y value (g)",
+	.usage       = "usage: %s",
+	.function    = mpuReadAccYFn
+};
+
+
+static int mpuReadAccZFn (const Command* command, uint argc, char* argv[])
+{
+	return mpuReadAccX (MpuAccelZHigh, command, argc, argv);
+}
+static Command mpuReadAccZCmd =
+{
+	.name        = "mpu-read-acc-z",
+	.description = "Read accelerometer z value (g)",
+	.usage       = "usage: %s",
+	.function    = mpuReadAccZFn
+};
+
+
+static int mpuReadGyro (void)
+{
+	int result = mpuOpenInit();
+	if (result < 0)
+		return result;
+
+	result = pixi_mpuGetGyroScale();
+	if (result < 0)
+	{
+		pixi_mpuClose();
+		return result;
+	}
+	const double scale = result / 32768.0;
+
+	MpuAxes ax;
+	result = pixi_mpuReadGyro (&ax);
+	if (result >= 0)
+		printf ("%8.3f %8.3f %8.3f\n", scale * ax.x, scale * ax.y, scale * ax.z);
+
+	pixi_mpuClose();
+
+	return result;
+}
+
+
+static int mpuReadGyroFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	return mpuReadGyro();
+}
+static Command mpuReadGyroCmd =
+{
+	.name        = "mpu-read-gyro",
+	.description = "Read gyroscope (dps)",
+	.usage       = "usage: %s",
+	.function    = mpuReadGyroFn
+};
+
+
+static int mpuReadGyroX (uint address, const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	int result = mpuOpenInit();
+	if (result < 0)
+		return result;
+
+	result = pixi_mpuGetGyroScale();
+	if (result < 0)
+	{
+		pixi_mpuClose();
+		return result;
+	}
+	const double scale = result / 32768.0;
+
+	result = pixi_mpuReadRegister16 (address);
+	if (result >= 0)
+		printf ("%.3f\n", scale * (int16) result);
+
+	pixi_mpuClose();
+
+	return result;
+}
+
+
+static int mpuReadGyroXFn (const Command* command, uint argc, char* argv[])
+{
+	return mpuReadGyroX (MpuGyroXHigh, command, argc, argv);
+}
+static Command mpuReadGyroXCmd =
+{
+	.name        = "mpu-read-gyro-x",
+	.description = "Read gyroscope x value (dps)",
+	.usage       = "usage: %s",
+	.function    = mpuReadGyroXFn
+};
+
+
+static int mpuReadGyroYFn (const Command* command, uint argc, char* argv[])
+{
+	return mpuReadGyroX (MpuGyroYHigh, command, argc, argv);
+}
+static Command mpuReadGyroYCmd =
+{
+	.name        = "mpu-read-gyro-y",
+	.description = "Read gyroscope y value (dps)",
+	.usage       = "usage: %s",
+	.function    = mpuReadGyroYFn
+};
+
+
+static int mpuReadGyroZFn (const Command* command, uint argc, char* argv[])
+{
+	return mpuReadGyroX (MpuGyroZHigh, command, argc, argv);
+}
+static Command mpuReadGyroZCmd =
+{
+	.name        = "mpu-read-gyro-z",
+	.description = "Read gyroscope z value (dps)",
+	.usage       = "usage: %s",
+	.function    = mpuReadGyroZFn
+};
+
+
 static const Command* commands[] =
 {
 	&mpuGetAccelScaleCmd,
@@ -281,6 +535,15 @@ static const Command* commands[] =
 	&mpuSetGyroScaleCmd,
 	&mpuMonitorTempCmd,
 	&mpuMonitorMotionCmd,
+	&mpuReadTempCmd,
+	&mpuReadAccCmd,
+	&mpuReadAccXCmd,
+	&mpuReadAccYCmd,
+	&mpuReadAccZCmd,
+	&mpuReadGyroCmd,
+	&mpuReadGyroXCmd,
+	&mpuReadGyroYCmd,
+	&mpuReadGyroZCmd,
 };
 
 
