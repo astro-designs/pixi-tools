@@ -51,7 +51,7 @@ static int mpuGetAccelScale (void)
 
 	result = pixi_mpuGetAccelScale();
 	if (result >= 0)
-		printf ("%d g\n", result);
+		printf ("%d\n", result);
 
 	pixi_mpuClose();
 
@@ -68,7 +68,7 @@ static int mpuGetAccelScaleFn (const Command* command, uint argc, char* argv[])
 static Command mpuGetAccelScaleCmd =
 {
 	.name        = "mpu-get-accel-scale",
-	.description = "Get the accelerometer scale",
+	.description = "Get the accelerometer range (g)",
 	.usage       = "usage: %s",
 	.function    = mpuGetAccelScaleFn
 };
@@ -99,7 +99,7 @@ static int mpuSetAccelScaleFn (const Command* command, uint argc, char* argv[])
 static Command mpuSetAccelScaleCmd =
 {
 	.name        = "mpu-set-accel-scale",
-	.description = "Set the accelerometer scale",
+	.description = "Set the accelerometer range (g)",
 	.usage       = "usage: %s 2|4|8|16",
 	.function    = mpuSetAccelScaleFn
 };
@@ -113,7 +113,7 @@ static int mpuGetGyroScale (void)
 
 	result = pixi_mpuGetGyroScale();
 	if (result >= 0)
-		printf ("%d dps\n", result);
+		printf ("%d\n", result);
 
 	pixi_mpuClose();
 
@@ -130,7 +130,7 @@ static int mpuGetGyroScaleFn (const Command* command, uint argc, char* argv[])
 static Command mpuGetGyroScaleCmd =
 {
 	.name        = "mpu-get-gyro-scale",
-	.description = "Get the gyroscope scale",
+	.description = "Get the gyroscope range (degrees/sec)",
 	.usage       = "usage: %s",
 	.function    = mpuGetGyroScaleFn
 };
@@ -161,7 +161,7 @@ static int mpuSetGyroScaleFn (const Command* command, uint argc, char* argv[])
 static Command mpuSetGyroScaleCmd =
 {
 	.name        = "mpu-set-gyro-scale",
-	.description = "Set the gyroscope scale",
+	.description = "Set the gyroscope range (degrees/sec)",
 	.usage       = "usage: %s 250|500|1000|2000",
 	.function    = mpuSetGyroScaleFn
 };
@@ -217,6 +217,22 @@ static int mpuMonitorMotion (void)
 	if (result < 0)
 		return result;
 
+	result = pixi_mpuGetAccelScale();
+	if (result < 0)
+	{
+		pixi_mpuClose();
+		return result;
+	}
+	const double accelScale = result / 32768.0;
+
+	result = pixi_mpuGetGyroScale();
+	if (result < 0)
+	{
+		pixi_mpuClose();
+		return result;
+	}
+	const double gyroScale = result / 32768.0;
+
 	MpuMotion motion;
 	result = 0;
 	while (true)
@@ -224,9 +240,9 @@ static int mpuMonitorMotion (void)
 		result = pixi_mpuReadMotion (&motion);
 		if (result < 0)
 			break;
-		printf ("\raccel [%6d %6d %6d] gyro [%6d %6d %6d]",
-			motion.accel.x, motion.accel.y, motion.accel.z,
-			motion.gyro.x, motion.gyro.y, motion.gyro.z
+		printf ("\r[%8.4f %8.4f %8.4f]g [%8.3f %8.3f %8.3f]dps",
+			accelScale * motion.accel.x, accelScale * motion.accel.y, accelScale * motion.accel.z,
+			gyroScale * motion.gyro.x, gyroScale * motion.gyro.y, gyroScale * motion.gyro.z
 		);
 		fflush (stdout);
 
