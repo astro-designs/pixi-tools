@@ -20,6 +20,7 @@
 
 #include <libpixi/pixi/mpu.h>
 #include <libpixi/util/file.h>
+#include <libpixi/util/io.h>
 #include <libpixi/util/string.h>
 #include <stdio.h>
 #include "common.h"
@@ -40,6 +41,17 @@ static int mpuOpenInit (void)
 	if (result < 0)
 		return result;
 	return mpuInit();
+}
+
+static int mpuMagOpenInit (void)
+{
+	int result = mpuOpenInit();
+	if (result < 0)
+		return result;
+	result = pixi_mpuMagOpen();
+	if (result < 0)
+		pixi_mpuClose();
+	return result;
 }
 
 
@@ -309,6 +321,62 @@ static Command mpuMonitorMotionCmd =
 };
 
 
+static int mpuMonitorMag (void)
+{
+	int result = mpuMagOpenInit();
+	if (result < 0)
+		return result;
+
+	result = 0;
+	MpuAxes adjust = {0,0,0};
+	result = pixi_mpuReadMagAdjust (&adjust);
+	if (result < 0)
+		APP_ERROR(-result, "Failed to read magnetometer adjustment values");
+
+	double x = mpuMagGetScale (adjust.x);
+	double y = mpuMagGetScale (adjust.y);
+	double z = mpuMagGetScale (adjust.z);
+
+	const char* format = "\r[%8.3f %8.3f %8.3f]uT";
+	if (pixi_isLocaleEncodingUtf8())
+		format = "\r[%8.3f %8.3f %8.3f]μT";
+
+	while (true)
+	{
+		MpuAxes axes;
+		result = pixi_mpuReadMag (&axes);
+		if (result < 0)
+			break;
+		printf (format, x * axes.x, y * axes.y, z * axes.z);
+		fflush (stdout);
+
+		usleep (interval);
+	}
+	printf ("\n");
+
+	pixi_mpuClose();
+
+	return result;
+}
+
+
+static int mpuMonitorMagFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	return mpuMonitorMag();
+}
+static Command mpuMonitorMagCmd =
+{
+	.name        = "mpu-monitor-mag",
+	.description = "Monitor MPU magnetometer",
+	.usage       = "usage: %s",
+	.function    = mpuMonitorMagFn
+};
+
+
 static int mpuReadAcc (void)
 {
 	int result = mpuOpenInit();
@@ -326,7 +394,7 @@ static int mpuReadAcc (void)
 	MpuAxes ax;
 	result = pixi_mpuReadAccel (&ax);
 	if (result >= 0)
-		printf ("%8.4f %8.4f %8.4f\n", scale * ax.x, scale * ax.y, scale * ax.z);
+		printf ("%.4f %.4f %.4f\n", scale * ax.x, scale * ax.y, scale * ax.z);
 
 	pixi_mpuClose();
 
@@ -435,7 +503,7 @@ static int mpuReadGyro (void)
 	MpuAxes ax;
 	result = pixi_mpuReadGyro (&ax);
 	if (result >= 0)
-		printf ("%8.3f %8.3f %8.3f\n", scale * ax.x, scale * ax.y, scale * ax.z);
+		printf ("%.3f %.3f %.3f\n", scale * ax.x, scale * ax.y, scale * ax.z);
 
 	pixi_mpuClose();
 
@@ -527,6 +595,147 @@ static Command mpuReadGyroZCmd =
 };
 
 
+static int mpuReadMagAdjusted (double values[])
+{
+	int result = mpuMagOpenInit();
+	if (result < 0)
+		return result;
+
+	result = 0;
+	MpuAxes adjust = {0,0,0};
+	result = pixi_mpuReadMagAdjust (&adjust);
+	if (result < 0)
+		APP_ERROR(-result, "Failed to read magnetometer adjustment values");
+
+	MpuAxes axes;
+	result = pixi_mpuReadMag (&axes);
+	if (result >= 0)
+	{
+		values[0] = mpuMagAdjust (adjust.x, axes.x);
+		values[1] = mpuMagAdjust (adjust.y, axes.y);
+		values[2] = mpuMagAdjust (adjust.z, axes.z);
+	}
+	else
+		APP_ERROR(-result, "Failed to read magnetometer values");
+
+	pixi_mpuClose();
+
+	return result;
+}
+
+static int mpuReadMagFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	double axes[3];
+	int result = mpuReadMagAdjusted (axes);
+	if (result < 0)
+		return result;
+
+	printf ("%.3f %.3f %.3f\n", axes[0], axes[1], axes[2]);
+
+	return result;
+}
+static Command mpuReadMagCmd =
+{
+	.name        = "mpu-read-mag",
+	.description = "Read magnetometer",
+	.usage       = "usage: %s",
+	.function    = mpuReadMagFn
+};
+
+static int mpuReadMagAxis (uint axis, const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	double axes[3];
+	int result = mpuReadMagAdjusted (axes);
+	if (result < 0)
+		return result;
+
+	printf ("%.3f\n", axes[axis]);
+
+	return result;
+}
+
+
+static int mpuReadMagXFn (const Command* command, uint argc, char* argv[])
+{
+	return mpuReadMagAxis (0, command, argc, argv);
+}
+static Command mpuReadMagXCmd =
+{
+	.name        = "mpu-read-mag-x",
+	.description = "Read magnetometer x value",
+	.usage       = "usage: %s",
+	.function    = mpuReadMagXFn
+};
+
+
+static int mpuReadMagYFn (const Command* command, uint argc, char* argv[])
+{
+	return mpuReadMagAxis (1, command, argc, argv);
+}
+static Command mpuReadMagYCmd =
+{
+	.name        = "mpu-read-mag-y",
+	.description = "Read magnetometer y value ",
+	.usage       = "usage: %s",
+	.function    = mpuReadMagYFn
+};
+
+
+static int mpuReadMagZFn (const Command* command, uint argc, char* argv[])
+{
+	return mpuReadMagAxis (2, command, argc, argv);
+}
+static Command mpuReadMagZCmd =
+{
+	.name        = "mpu-read-mag-z",
+	.description = "Read magnetometer z value",
+	.usage       = "usage: %s",
+	.function    = mpuReadMagZFn
+};
+
+
+static int mpuMagId (void)
+{
+	int result = mpuMagOpenInit();
+	if (result < 0)
+		return result;
+
+	result = pixi_mpuMagReadRegister (0);
+	if (result < 0)
+		return result;
+
+	printf ("%02x\n", result);
+
+	pixi_mpuClose();
+
+	return result;
+}
+
+static int mpuMagIdFn (const Command* command, uint argc, char* argv[])
+{
+	LIBPIXI_UNUSED(argv);
+	if (argc != 1)
+		return commandUsageError (command);
+
+	return mpuMagId();
+}
+static Command mpuMagIdCmd =
+{
+	.name        = "mpu-read-mag-id",
+	.description = "Read MPU magnetometer ID",
+	.usage       = "usage: %s",
+	.function    = mpuMagIdFn
+};
+
+
 static const Command* commands[] =
 {
 	&mpuGetAccelScaleCmd,
@@ -535,6 +744,7 @@ static const Command* commands[] =
 	&mpuSetGyroScaleCmd,
 	&mpuMonitorTempCmd,
 	&mpuMonitorMotionCmd,
+	&mpuMonitorMagCmd,
 	&mpuReadTempCmd,
 	&mpuReadAccCmd,
 	&mpuReadAccXCmd,
@@ -544,6 +754,11 @@ static const Command* commands[] =
 	&mpuReadGyroXCmd,
 	&mpuReadGyroYCmd,
 	&mpuReadGyroZCmd,
+	&mpuReadMagCmd,
+	&mpuReadMagXCmd,
+	&mpuReadMagYCmd,
+	&mpuReadMagZCmd,
+	&mpuMagIdCmd,
 };
 
 
