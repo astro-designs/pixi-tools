@@ -70,10 +70,14 @@ static void displayHelp (const ProgramInfo* info, const char* program, bool verb
 		);
 	for (const CommandGroup* group = groups; group != NULL; group = group->nextGroup)
 	{
+		if (group->flags & CmdHidden)
+			continue;
 		printf ("%s commands:\n", group->name);
 		for (uint i = 0; i < group->count; i++)
 		{
 			const Command* cmd = group->commands[i];
+			if (cmd->flags & CmdHidden)
+				continue;
 			printf ("  %s%-20s%s  %s\n", pixi_stdoutBold, cmd->name, pixi_stdoutReset, cmd->description);
 			if (verbose && cmd->usage)
 			{

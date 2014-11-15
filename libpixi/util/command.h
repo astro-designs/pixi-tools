@@ -32,6 +32,11 @@ LIBPIXI_BEGIN_DECLS
 ///@defgroup util_command libpixi command line utilities
 ///@{
 
+enum CommandFlags
+{
+	CmdHidden = 0x01 ///< Don't display the command/group in help
+};
+
 typedef struct Command Command;
 /// @return >=0 on success, -errno on error
 typedef int (*CommandFn) (const Command* command, uint, char* []);
@@ -43,7 +48,8 @@ struct Command
 	const char*  description; ///< one line description of command
 	const char*  usage;       ///< detailed usage message
 	CommandFn    function;    ///< implementation
-	intptr       _reserved[4];
+	int          flags;
+	intptr       _reserved[3];
 };
 
 ///	Display command usage error for @a command
@@ -60,7 +66,8 @@ typedef struct CommandGroup
 	uint                        count;    ///< size of @c commands array
 	const Command**             commands; ///< array of commands
 	const struct CommandGroup*  nextGroup;///< internal pointer to next command group
-	intptr                      _reserved[4];
+	int                         flags;
+	intptr                      _reserved[3];
 } CommandGroup;
 
 ///	Add a command group to the global list
