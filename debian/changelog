@@ -1,3 +1,32 @@
+pixi-tools (0.6) unstable; urgency=medium
+
+  * More i2c functions
+
+  * More MPU functions, with fix for temperature representation
+
+  * New pio commands:
+    - i2c-transfer
+    - mpu-read-temp
+    - mpu-read-acc
+    - mpu-read-acc-x
+    - mpu-read-acc-y
+    - mpu-read-acc-z
+    - mpu-read-gyro
+    - mpu-read-gyro-x
+    - mpu-read-gyro-y
+    - mpu-read-gyro-z
+    - mpu-monitor-mag
+    - mpu-read-mag
+    - mpu-read-mag-x
+    - mpu-read-mag-y
+    - mpu-read-mag-z
+    - mpu-get-acc-scale
+    - mpu-set-acc-scale
+    - mpu-get-gyro-scale
+    - mpu-set-gyro-scale
+
+ -- Simon Cantrill <simonjcantrill@gmail.com>  Sat, 15 Nov 2014 14:44:16 +0000
+
 pixi-tools (0.5.1) unstable; urgency=medium
 
   * Fix the init script to load FPGA when necessary
