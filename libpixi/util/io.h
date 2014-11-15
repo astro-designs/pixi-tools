@@ -38,6 +38,9 @@ int pixi_ttyInputRaw (int fd);
 /// @param fd tty file descriptor
 int pixi_ttyInputNormal (int fd);
 
+/// Check if locale text encoding is set to UTF-8.
+bool pixi_isLocaleEncodingUtf8 (void);
+
 ///@} defgroup
 
 LIBPIXI_END_DECLS

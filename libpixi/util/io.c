@@ -20,6 +20,8 @@
 
 #include <libpixi/util/io.h>
 #include <libpixi/util/log.h>
+#include <langinfo.h>
+#include <strings.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -58,4 +60,10 @@ int pixi_ttyInputNormal (int fd)
 	if (result < 0)
 		LIBPIXI_ERRNO_ERROR("tcsetattr failed when trying to enable line-buffering");
 	return result;
+}
+
+bool pixi_isLocaleEncodingUtf8 (void)
+{
+	const char* value = nl_langinfo (CODESET);
+	return (value && 0 == strcasecmp (value, "UTF-8"));
 }
