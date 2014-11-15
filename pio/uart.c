@@ -235,7 +235,8 @@ static CommandGroup pixiUartGroup =
 	.name      = "pixi-uart",
 	.count     = ARRAY_COUNT(commands),
 	.commands  = commands,
-	.nextGroup = NULL
+	.nextGroup = NULL,
+	.flags     = CmdHidden
 };
 
 static void PIO_CONSTRUCTOR (1900) initGroup (void)

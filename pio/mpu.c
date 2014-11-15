@@ -732,7 +732,8 @@ static Command mpuMagIdCmd =
 	.name        = "mpu-read-mag-id",
 	.description = "Read MPU magnetometer ID",
 	.usage       = "usage: %s",
-	.function    = mpuMagIdFn
+	.function    = mpuMagIdFn,
+	.flags       = CmdHidden
 };
 
 
