@@ -127,6 +127,13 @@ static inline bool pixi_isLogLevelEnabled (LogLevel level) {
 		return -EINVAL; \
 	} while (0)
 
+/// Test @c condition. If @c condition is false, log an error message and return -EINVAL.
+#define LIBPIXI_PRECONDITION_MSG(condition, message) \
+	do if (LIBPIXI_UNLIKELY(!(condition))) { \
+		LIBPIXI_PRECONDITION_FAILURE(#condition ": " message); \
+		return -EINVAL; \
+	} while (0)
+
 /// Test @c pointer. If @c pointer is NULL, log an error and return -EINVAL.
 #define LIBPIXI_PRECONDITION_NOT_NULL(pointer) \
 	do if (LIBPIXI_UNLIKELY(pointer == NULL)) { \
