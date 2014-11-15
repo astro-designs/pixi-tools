@@ -35,12 +35,15 @@ enum
 {
 	MpuChannel    = 1,
 	MpuAddress    = 0x68,
+	MpuMagAddress = 0x0C,
 };
 
 enum MpuRegister
 {
 	MpuGyroConfig          = 0x1B,
 	MpuAccelConfig         = 0x1C,
+
+	MpuIntBypassConfig     = 0x37,
 
 	/// Big-endian signed 16 bit
 	MpuAccelXHigh          = 0x3B,
@@ -63,6 +66,51 @@ enum MpuRegister
 	MpuPowerManagement1    = 0x6b,
 };
 
+enum MpuMagRegister
+{
+	MpuMagDeviceId       = 0x00,
+	MpuMagInformation    = 0x01,
+	MpuMagStatus1        = 0x02,
+
+	/// Little-endian signed 16 bit
+	MpuMagXLow           = 0x03,
+	MpuMagXHigh,
+	MpuMagYLow,
+	MpuMagYHigh,
+	MpuMagZLow,
+	MpuMagZHigh,
+
+	MpuMagControl        = 0x0a,
+
+	MpuMagXAdjust        = 0x10,
+	MpuMagYAdjust        = 0x11,
+	MpuMagZAdjust        = 0x12,
+};
+
+enum MpuIntBypass
+{
+	MpuIntCfgBypassEn   = 0x02,
+	MpuIntCfgFsyncEn    = 0x04,
+	MpuIntCfgFsyncLevel = 0x08,
+	MpuIntCfgReadClear  = 0x10,
+	MpuIntCfgLatchEn    = 0x20,
+	MpuIntCfgOpen       = 0x40,
+	MpuIntCfgLevel      = 0x80,
+};
+
+enum MpuMagOperationMode
+{
+	MpuMagPowerDownMode         = 0x00,
+	MpuMagSingleMeasurementMode = 0x01,
+	MpuMagSelfTestMode          = 0x08,
+	MpuMagFuseRomAccessMode     = 0x0F,
+};
+
+enum MpuMagStatus1Bits
+{
+	MpuMagDataReady = 0x01
+};
+
 typedef struct MpuAxes
 {
 	int16   x;
@@ -79,7 +127,7 @@ typedef struct MpuMotion
 } MpuMotion;
 
 ///	Open the Pi i2c channel to the PiXi MPU. When finished,
-///	call pixi_closePixi().
+///	call pixi_mpuClose().
 ///	@return 0 on success, negative error code on error
 int pixi_mpuOpen (void);
 
@@ -87,8 +135,18 @@ int pixi_mpuOpen (void);
 ///	@return 0 on success, negative error code on error
 int pixi_mpuClose (void);
 
+///	Open the Pi i2c channel to the PiXi MPU Magnetometer slave.
+///	When finished, call pixi_mpuMagClose().
+///	The MPU must itself be already open.
+///	@return 0 on success, negative error code on error
+int pixi_mpuMagOpen (void);
+
+///	Close the Pi i2c channel to the PiXi MPU Magnetometer slave.
+///	@return 0 on success, negative error code on error
+int pixi_mpuMagClose (void);
+
 ///	Read a 8 bit unsigned value by reading from register
-///	@a address1
+///	@a address
 ///	Return non-negative value on success, or negative error code
 int pixi_mpuReadRegister (uint address);
 
@@ -102,13 +160,31 @@ int pixi_mpuReadRegister16 (uint address1);
 int pixi_mpuReadRegisters (uint address1, void* buffer, size_t size);
 
 ///	Read values from a sequence of 16 bit big-endian register pairs
-///	(as used by gyroscope, temperatue and accelerometer components).
+///	(as used by gyroscope, temperature and accelerometer components).
 ///	Return 0 on success, negative error code on error
 int pixi_mpuReadRegisters16 (uint address1, int16* values, uint count);
 
 ///	Write an 8 bit value to register @a address
 ///	@return 0 on success, negative error code on error
 int pixi_mpuWriteRegister (uint address, uint value);
+
+///	Perform a read/write to set the part of a register specified by @c mask to @c value.
+///	@return the previous register value, or -errno on error
+int pixi_mpuWriteRegisterMasked (uint address, uint value, uint mask);
+
+///	Read a 8 bit unsigned value by reading from register
+///	@a address of MPU magnetometer
+///	Return non-negative value on success, or negative error code
+int pixi_mpuMagReadRegister (uint address);
+
+///	Read a 16 bit little-endian unsigned value by reading from registers
+///	@a address1 and @a address + 1.
+///	Return non-negative value on success, negative error code on error
+int pixi_mpuMagReadRegister16 (uint address1);
+
+///	Read raw data from MPU magnetometer registers starting at @a address1.
+///	Return 0 on success, negative error code on error
+int pixi_mpuMagReadRegisters (uint address1, void* buffer, size_t size);
 
 ///	Get the accelerometer scale.
 ///	@return 2,4,8,16 (g) on success, or negative error code
@@ -142,6 +218,32 @@ int pixi_mpuReadMotion (MpuMotion* motion);
 
 static inline double mpuTemperatureToDegrees (int16 rawValue) {
 	return (rawValue / 340.0) + 35.0;
+}
+
+///	Read magnetometer sensitivity adjustment. The magnetometer must
+///	have been opened (@ref pixi_mpuMagOpen).
+///	These values are constant for a particular unit - they are set
+///	in the factory.
+///	@return 0 on success, or negative error code
+int pixi_mpuReadMagAdjust (MpuAxes* axes);
+
+///	Read current magnetometer values. The magnetometer must
+///	have been opened (@ref pixi_mpuMagOpen).
+///	This reads the raw values, which must be adjusted
+///	@return 0 on success, or negative error code
+int pixi_mpuReadMag (MpuAxes* axes);
+
+///	Get the scale factor for a magnetometer value
+///	@param adjustment an adjustment obtained from @ref pixi_mpuReadMagAdjust
+static inline double mpuMagGetScale (int adjustment) {
+	return (((adjustment-128) / 256.0) + 1.0);
+}
+
+///	Scales a magnetometer value
+///	@param adjustment an adjustment obtained from @ref pixi_mpuReadMagAdjust
+///	@param value obtained from @ref pixi_mpuReadMag
+static inline double mpuMagAdjust (int adjustment, int value) {
+	return value * mpuMagGetScale (adjustment);
 }
 
 ///@} defgroup

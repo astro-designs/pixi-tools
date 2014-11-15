@@ -47,7 +47,7 @@ static const I2cDevice I2cDeviceInit = I2C_DEVICE_INIT;
 ///	Open the i2c device on @c channel, at @c address.
 ///	On success, the fields of @c device are filled out, and
 ///	you will need to subsequently call @ref pixi_i2cClose().
-///	@return 0 on success, or -errno on error
+///	@return >=0 on success, or -errno on error
 int pixi_i2cOpen2 (uint channel, uint address, I2cDevice* device);
 
 int pixi_i2cClose (I2cDevice* device);
