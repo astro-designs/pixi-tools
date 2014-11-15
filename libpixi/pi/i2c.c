@@ -83,7 +83,7 @@ int pixi_i2cClose (I2cDevice* device)
 }
 
 
-int pixi_i2cReadWrite (I2cDevice* device, const void* txBuffer, size_t txSize, void* rxBuffer, size_t rxSize)
+int pixi_i2cWriteRead (I2cDevice* device, const void* txBuffer, size_t txSize, void* rxBuffer, size_t rxSize)
 {
 	LIBPIXI_PRECONDITION_NOT_NULL(device);
 	LIBPIXI_PRECONDITION(device->fd >= 0);

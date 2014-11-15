@@ -63,7 +63,7 @@ static int i2cTransfer (const Command* command, uint argc, char* argv[])
 		for (uint i = 0; i < txSize; i++)
 			tx[i] = pixi_parseLong (argv[dataOffset + i]);
 
-		result = pixi_i2cReadWrite (&dev, tx, txSize, rx, rxSize);
+		result = pixi_i2cWriteRead (&dev, tx, txSize, rx, rxSize);
 		if (result >= 0)
 		{
 			pixi_hexEncode (rx, rxSize, hex, hexSize, ' ', "");

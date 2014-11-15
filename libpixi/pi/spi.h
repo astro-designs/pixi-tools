@@ -52,7 +52,7 @@ int pixi_spiOpen (uint channel, uint speed, SpiDevice* device);
 ///	@return 0 on success, or -errno on error
 int pixi_spiClose (SpiDevice* device);
 
-///	Perform a read/write on an SPI device opened via pixi_spiOpen()
+///	Perform a simultaneous read/write on an SPI device opened via pixi_spiOpen()
 ///	@return 0 on success, or -errno on error
 int pixi_spiReadWrite (SpiDevice* device, const void* txBuffer, void* rxBuffer, size_t bufferSize);
 

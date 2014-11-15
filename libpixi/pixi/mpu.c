@@ -54,13 +54,13 @@ int pixi_mpuReadRegisters (uint address1, void* buffer, size_t size)
 	LIBPIXI_PRECONDITION_NOT_NULL(buffer);
 
 	byte request = address1;
-	int result = pixi_i2cReadWrite (&mpuI2c,
+	int result = pixi_i2cWriteRead (&mpuI2c,
 		&request, sizeof (request),
 		buffer, size
 		);
 	if (result < 0)
 	{
-		LIBPIXI_ERROR(-result, "pixi_i2cReadWrite failed for MPU");
+		LIBPIXI_ERROR(-result, "pixi_i2cWriteRead failed for MPU");
 		return result;
 	}
 

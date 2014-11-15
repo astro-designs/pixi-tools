@@ -52,9 +52,9 @@ int pixi_i2cOpen2 (uint channel, uint address, I2cDevice* device);
 
 int pixi_i2cClose (I2cDevice* device);
 
-///	Perform a read/write on a i2c device opened via pixi_spiOpen()
+///	Perform a sequential write/read on a i2c device opened via pixi_i2cOpen()
 ///	@return 0 on success, or -errno on error
-int pixi_i2cReadWrite (I2cDevice* device, const void* txBuffer, size_t txSize, void* rxBuffer, size_t rxSize);
+int pixi_i2cWriteRead (I2cDevice* device, const void* txBuffer, size_t txSize, void* rxBuffer, size_t rxSize);
 
 enum
 {
