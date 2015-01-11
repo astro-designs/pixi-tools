@@ -59,11 +59,24 @@ clean: clean-source
 clean-all-builds: clean-source
 	rm -rf $(basebuilddir)
 
+make_source_tar = . $(topdir)/project-info && git archive -o ../$${PROJECT_NAME}_$${PROJECT_VERSION}.orig.tar.gz HEAD
+# ignore build, .git, directories, etc.
+buildpackage_options = -i'build|\.git|\.project|\.cproject|\.settings'
+debuild_options = --preserve-envvar=TEST_HARDWARE
+
 .PHONY: deb deb-clean
 deb:
 	make clean-all-builds
-	.  $(topdir)/project-info && git archive -o ../$${PROJECT_NAME}_$${PROJECT_VERSION}.orig.tar.gz HEAD
-	debuild --preserve-envvar TEST_HARDWARE -i'build|\.git|\.project|\.cproject|\.settings'
+	$(make_source_tar)
+	debuild $(debuild_options) $(buildpackage_options)
+
+# -us: don't sign source package
+# -uc: don't sign changes file
+# See: man dpkg-buildpackage
+deb-simple:
+	make clean
+	$(make_source_tar)
+	debuild $(debuild_options) --set-envvar=RUN_TESTS=no $(buildpackage_options) -us -uc
 
 deb-clean:
 	debuild clean

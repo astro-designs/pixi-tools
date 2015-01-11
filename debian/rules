@@ -9,7 +9,9 @@ override_dh_auto_build:
 	$(MAKE) -j4 all doc
 
 override_dh_auto_test:
-	$(MAKE) check
+	if test "$$RUN_TESTS" != no; then \
+	    $(MAKE) check; \
+	fi
 
 override_dh_usrlocal:
 	true
