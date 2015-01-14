@@ -27,6 +27,35 @@
 LIBPIXI_BEGIN_DECLS
 
 ///@defgroup util_log libpixi logging interface
+/// The logging macros should be used to provide controllable error, warning
+/// and other messages, while ordinary program output should use @c printf.
+///
+/// There are two sets of logging macros. Those with the @c LIBPIXI_ prefix
+/// are intended for use in libpixi code.  Those with the APP_ prefix are
+/// intended for application code. The macros should be sufficient for all
+/// logging use and the @c _LOG_DEBUG, @c _LOG_INFO, @c _LOG_WARN and @c
+/// _LOG_ERROR variants are the most extensively used. The macros work such
+/// that if the current log level inhibits the message, no other work will have
+/// been done except for testing the log level.
+///
+/// @c LIBPIXI_LOG_LEVEL environment variable controls how much of the
+/// libpixi logging that you actually see, i.e. set @c LIBPIXI_LOG_LEVEL=warn
+/// to see only warnings, errors and fatal errors, or
+/// @c LIBPIXI_LOG_LEVEL=debug to also see debug and info logging.
+///
+/// The @c APP_ prefix macros inherit the log level defined by
+/// @c LIBPIXI_LOG_LEVEL unless, but that can be overridden by an environment
+/// variable @c <uppercase-app-name>_LOG_LEVEL. So if your application is
+/// called @c pixi-ext, @c PIXI_EXT_LOG_LEVEL=error will set the log level of the
+/// @c APP_ macros.
+///
+/// Setting the environment variable @c LIBPIXI_LOG_CODE_CONTEXT=yes will
+/// cause each log line to be prefixed with source file and line number.
+///
+/// The @c LIBPIXI_LOG_FILE environment variable can be used to enable logging
+/// to file, e.g. @c LIBPIXI_LOG_FILE=/tmp/pt.log. Log file lines additionally
+/// have a date-time prefix.
+///
 ///@{
 
 typedef enum LogLevel
