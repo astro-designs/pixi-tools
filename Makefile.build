@@ -227,17 +227,17 @@ temp-install: all
 help: help-custom
 
 help-custom:
-	@echo "make clean                     Clean the source dir and remove a build dir"
-	@echo "make clean-all-builds          Clean the source dir and remove all build dirs"
-	@echo "make clean                     Clean the source dir"
-	@echo "make check                     Run the tests"
-	@echo "make multi-check               Run the tests for all common build configurations"
 	@echo
 	@echo "The build configuration is dependent on BUILD_MODE and python version"
+	@echo "BUILD_MODE defaults to release, python version defaults to system python version"
 	@echo "make                           Runs a standard build"
 	@echo "make BUILD_MODE=debug          Runs a debug build"
 	@echo "make PYTHON_VERSION=3          Build against python3"
 	@echo "make doc                       Run doxygen to generate the API reference html"
+	@echo "make clean                     Clean the source dir and remove a build dir"
+	@echo "make check                     Run the tests"
+	@echo "make check-python              Run the python tests only"
+	@echo "make check-headers             Run the header syntax checks only"
 	@echo
 	@echo "make install                   Install files to 'prefix' [$(prefix)] (DESTDIR is honoured)"
 	@echo "make uninstall                 Remove installed files from 'prefix' [$(prefix)] (DESTDIR is honoured)"
@@ -245,6 +245,15 @@ help-custom:
 	@echo "make run-python                Run an interactive python prompt, with a suitable PYTHONPATH"
 	@echo "make run-python-demo           Run simple python pixi demo"
 	@echo "make run-server                Run the server - WARNING - probably a gaping security hole"
+	@echo
+	@echo "Additional commands to be run from the source directory"
+	@echo "make deb                       Build a .deb package"
+	@echo "make deb-simple                Build a .deb package with running tests or signing the package files"
+	@echo "make deb-clean                 Clean up after a .deb build"
+	@echo "make clean-all-builds          Removes the build sub-directory from the source tree"
+	@echo "make multi-check               Run the tests for all common build configurations"
+	@echo "make multi-check-python        Run the python tests only for all common build configurations"
+	@echo "make print-python-version      Run the python version of the build"
 
 # install-purepython last so the correct python2.7-files is installed (not the one in build/)
 all_install   := install-libraries install-headers install-exec install-files install-python install-purepython
