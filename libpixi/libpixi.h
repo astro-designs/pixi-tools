@@ -27,6 +27,36 @@
 
 LIBPIXI_BEGIN_DECLS
 
+///@mainpage libpixi documentation
+///
+/// libpixi is a library providing access to PiXi-200 and Raspberry Pi
+/// hardware. @par
+///
+/// The library is divided into three main sections - util, pi and pixi -
+/// the code/headers each found in the respective sub-directory of libpixi.
+/// @par
+///
+/// The util section includes @ref util_log, @ref util_file and @ref
+/// util_string modules. @par
+///
+/// The pi section includes @ref PiGpio, @ref PiSpi and @ref PiI2C modules.
+///
+/// The pixi section includes many modules, particularly including @ref
+/// PixiFpga, @ref PixiGpio and @ref PiXiSpi modules. @par
+///
+/// Function names that are part of the ABI (public symbols in the shared
+/// library) are all prefixed with pixi_, generally followed by the module
+/// name, for example @ref pixi_fpgaLoadFile, @ref pixi_gpioWritePin. Names
+/// that are not part of the ABI, such as inline functions, structs and
+/// enums, omit the pixi_ prefix (the layout of a struct is usually part of
+/// the ABI, but the name is not). @par
+///
+/// The code is written in C99. The header files are C89 compatible, except
+/// for the logging macros, which are GNU89 compatible (the default for the
+/// gcc compiler), so an application does *not* have to use C99 mode to use
+/// the library. @par
+///
+
 ///@defgroup libpixi libpixi core interface
 ///@{
 
