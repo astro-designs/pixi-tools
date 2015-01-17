@@ -1,0 +1,532 @@
+////
+
+This file is in AsciiDoc format. See:
+http://www.methods.co.nz/asciidoc/userguide.html
+http://powerman.name/doc/asciidoc
+The asciidoc package is required to build the html.
+To generate the html:
+asciidoc FILENAME.TXT
+
+////
+
+
+
+pixi-tools development
+======================
+
+I recommend doing most development on a PC. The software compiles and runs
+fine on a Linux PC (although obviously there's no PiXi or Pi hardware to
+talk to). The compile/edit cycle is much faster on a faster machine. If you
+don't have Linux installed on a PC, I suggest installing on a virtual
+machine. A VirtualBox Debian installation would be ideal since it will most
+closely match the Pi Raspbian installation. If not Debian, Ubuntu would be
+a fairly close match.
+
+
+
+Configuring ssh
+---------------
+
+It's easier to use the Pi remotely if ssh is configured for login without
+password login. There are various guides available on how to achieve that,
+but here's a brief guide. The following commands are run from the PC/VM.
+
+If you haven't already done so, generate a ssh key, pressing [Enter] to
+accept default settings:
+
+`ssh-keygen`
+
+Now copy the public key to remote-host:
+
+`ssh-copy-id -i pi@192.168.2.6`
+
+Type yes if it asks:
+------------
+The authenticity of host '192.168.2.6 (192.168.2.6)' can't be established.
+ECDSA key fingerprint is xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx.
+Are you sure you want to continue connecting (yes/no)? yes
+------------
+
+Type the password when prompted. You should now be able to ssh without a password:
+
+`ssh pi@192.168.2.6`
+
+
+
+Quick start
+-----------
+
+The following apt commands will need to be run as root.
+
+First, update package lists:
+
+`apt-get update`
+
+
+
+Build the software
+~~~~~~~~~~~~~~~~~~
+The following raspbian packages are required:
+
+i2c-dev;; contains a replacement for the existing
+/usr/include/linux/i2c-dev.h. This is needed for real i2c development.
+
+python-dev;; required for building python extensions.
+
+swig;; used to generate python extensions based on c-language declarations.
+
+libfuse-dev;; required for the user-space UART implementation (which doesn't work).
+
+
+Install the packages:
+
+`apt-get install libi2c-dev python-dev swig libfuse-dev`
+
+Can now build the software, This takes about 2 minutes 30 seconds:
+
+`make`
+
+For comparison, on a desktop PC, with 4 CPU cores, `make -j4` takes less
+than 3 seconds.
+
+
+
+Build the source documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+More packages are required:
+
+`apt-get install --no-install-recommends doxygen graphviz`
+
+To build the source documentation (takes about 80 seconds):
+
+`make doc`
+
+The documentation will be found in
+'build/release/share/pixi-tools/html/api/html/index.html'. It also packaged
+in the .deb and is available at
+'/usr/share/pixi-tools/html/api/html/index.html'. Those files are also
+available remotely if you run the pixi-server web UI, but be aware that
+pixi-server _cannot be considered secure_, although it should be safe enough
+on a private home network.
+
+New developers should pay particular attention to the logging interface
+module, since making good use of the logging infrastructure can save
+substantial time in the long run.
+
+
+
+Run the unit tests
+~~~~~~~~~~~~~~~~~~
+There's a limited set of unit tests. There are currently a small set of
+python based tests (which also test parts of libpixi), plus checks on the
+public headers. Unfortunately, the unit tests require access to the pixi
+hardware, which currently requires running the tests as the root user.
+
+Issue the following command. This takes around 22 seconds.
+
+`make check`
+
+
+
+Build the .deb package
+~~~~~~~~~~~~~~~~~~~~~~
+
+More raspbian packages are required. The following command will install
+`devscripts` and many dependent packages:
+
+`apt-get install devscripts`
+
+To build deb, the git tree must be clean. Run the `git status` command.
+Any changed files must be committed or reverted.
+Any untracked files must be added and committed, or removed.
+
+The package build process runs a self contained build, then runs the unit
+tests. Unfortunately, because the unit tests require running as root, the
+package build currently must also run as root.
+
+The `make deb` command is used to build _official_ packages for
+distribution. It runs the tests and creates signed packages. There is an
+alternative which will build without tests (so does not need to run as root)
+and without signing:
+
+`make deb-simple`
+
+This can takes around 9 minutes (on a PC it takes a tiny fraction of
+that). This will create the package files in the _parent_ directory:
+
+------------
+-rw-r--r--  1 pi pi   19709 Jan 11 20:05 pixi-tools_0.6-1_armhf.build
+-rw-r--r--  1 pi pi    2007 Jan 11 20:02 pixi-tools_0.6-1_armhf.changes
+-rw-r--r--  1 pi pi 3033436 Jan 11 20:02 pixi-tools_0.6-1_armhf.deb
+-rw-r--r--  1 pi pi    4570 Jan 11 19:56 pixi-tools_0.6-1.debian.tar.gz
+-rw-r--r--  1 pi pi     785 Jan 11 19:56 pixi-tools_0.6-1.dsc
+-rw-r--r--  1 pi pi  196028 Jan 11 19:56 pixi-tools_0.6.orig.tar.gz
+------------
+
+
+
+Releasing packages
+------------------
+
+Key signing
+~~~~~~~~~~~
+
+To release a package requires being able to sign the package. For details
+refer to online guides, such as
+https://wiki.debian.org/SettingUpSignedAptRepositoryWithReprepro and
+https://wiki.debian.org/Keysigning
+
+I recommend performing this procedure on a Linux PC or VM, then copying the
+necessary files to the Pi. http://keyring.debian.org/creating-key.html
+provides a good guide to follow for generating the key. In summary, generate
+the key:
+
+`gpg --gen-key`
+
+Choose _RSA and RSA_, 4096 bit length, _key does not expire_. Enter your
+name and email address as it will appear in the package changelog etc. Enter
+a memorable passphrase - the passphrase will be asked for when signing
+packages. Follow the suggestions to generate some entropy (which can take a
+fairly long time. Generating disk activity helps, by running something like
+`find /usr/ -type f -print0 | xargs -0 cat > /dev/null` in another
+terminal, I was able to generate the key in about 5 minutes).
+
+Now to export the public key. You need the eight character hex ID. You can
+list the keys with `gpg --list-keys`:
+
+
+.......
+pixiuser@debianbox:~$ gpg --list-keys
+/home/pixiuser/.gnupg/pubring.gpg
+---------------------------------
+pub   4096R/A12EDC9F 2015-01-12
+uid                  Pixi User <pixiuser@astro-designs.net>
+sub   4096R/38CE9CEB 2015-01-12
+.......
+
+`gpg --output pixiuser-key.gpg --armor --export A12EDC9F`
+
+This creates the file pixiuser-key.gpg. This file can be imported by users
+with the following command:
+
+`apt-key add pixiuser-key.gpg`
+
+but although hosting that key file somewhere is viable, it provides no
+security if you host the key file in the same place as the apt
+repository. There are suggestions detailed at
+https://wiki.debian.org/Keysigning for using public keyservers. This should
+be investigated.
+
+If the key generation was not run on the Pi, the simplest way to make the
+keys available for signing packages generated on the Pi is to copy your
+user's .gnupg directory to the (root) user on the Pi.
+
+
+
+gpg-agent
+~~~~~~~~~
+
+Every time you sign a file you have to enter the passphrase. Alternatively
+you can run gpg-agent to reduce the number of times you have the enter the
+passphrase. Install gpg-agent using `apt-get install gnupg-agent`. See `man
+gpg-agent` for further instructions, but briefly, run this in the shell:
+
+`eval $(gpg-agent --daemon)`
+
+Now that shell has environment variables which tell child programs how to
+access gpg-agent.
+
+
+
+Preparing the package
+~~~~~~~~~~~~~~~~~~~~~
+
+It's generally worth running the tests using `make check` before attempting
+to build the package.  After that, a new changelog entry must be created:
+
+`dch`
+
+This will generate a new changelog entry at the top of 'debian/changelog'
+and launch an editor for you to update it:
+
+------------
+pixi-tools (0.6-1.1) UNRELEASED; urgency=low
+
+  * Non-maintainer upload.
+  *
+
+ -- root <root@raspberrypi>  Mon, 12 Jan 2015 19:13:39 +0000
+
+pixi-tools (0.6-1) unstable; urgency=medium
+
+  * More i2c functions
+
+  * More MPU functions, with fix for temperature representation
+------------
+
+Edit the new entry: ensure the version is correct. The version number is in
+two halves - software version and debian package version. In this case the
+software version is 0.6 and needs to change to 0.6.1. The package version is
+1.1 and needs to change to 1 (for a new software version package versions
+always reset to 1), so change 0.6-1.1 to 0.6.1-1. Change _UNRELEASED_ to
+_unstable_. Change the user and email address to match that used in the GPG
+key, then edit the changelog description:
+
+------------
+pixi-tools (0.6.1-1) unstable; urgency=low
+
+  * Example release for documentation.
+    - No real changes
+    - Just a bunch of text
+
+ -- Pixi User <pixiuser@astro-designs.net>  Mon, 12 Jan 2015 19:13:39 +0000
+------------
+
+Edit the version details in the project-info file. For this release, it
+should look like this:
+------------
+PROJECT_NAME="pixi-tools"
+PROJECT_VERSION="0.6.1"
+LIBPIXI_VERSION_INT=0x000601
+------------
+
+Run `make` to update the 'libpixi/version.h' file. Use `git status` to
+verify the changes:
+------------
+root@raspberrypi:/home/pi/pixi-tools# git status
+# On branch pixi-tools
+# Changes not staged for commit:
+#   (use "git add <file>..." to update what will be committed)
+#   (use "git checkout -- <file>..." to discard changes in working directory)
+#
+#       modified:   debian/changelog
+#       modified:   libpixi/version.h
+#       modified:   project-info
+#
+------------
+Commit these changes with a message that reflects the version update:
+`git commit -a -m 'pixi-tools-0.6.1'`
+
+It's also necessary to tag the revision. github uses tags to signify source
+releases. The build process uses the latest tag as the basis for the build
+version. Without updating the tag, you get this result:
+------------
+root@raspberrypi:/home/pi/pixi-tools# make
+make[1]: Entering directory '/home/pi/pixi-tools/build/release'
+rm -f buildver-*
+echo 0.6-3-g0fa1b40 > buildver-0.6-3-g0fa1b40
+echo '#define PIXI_TOOLS_BUILD_VERSION "0.6-3-g0fa1b40"' > build-version.h
+  CC      libpixi/pi/i2c.o
+------------
+0.6-3-g0fa1b40 is the wrong version. Create an object tag with a message:
+
+`git tag -m pixi-tools-0.6.1 pixi-tools-0.6.1`
+
+(yes, the _pixi-tools-0.6.1_ text appears twice in the command). Now the
+build system will generate the correct version:
+
+------------
+make[1]: Entering directory '/home/pi/pixi-tools/build/release'
+rm -f buildver-*
+echo 0.6.1 > buildver-0.6.1
+echo '#define PIXI_TOOLS_BUILD_VERSION "0.6.1"' > build-version.h
+  CC      libpixi/pi/i2c.o
+------------
+
+It's now possible to build the package:
+
+`make deb`
+
+Near the end of the process you will be asked twice for the signing key
+passphrase. Expect the process to take around 9 minutes. The result is a few
+files in the parent directory:
+
+------------
+-rw-r--r--  1 root root   40851 Jan 12 19:41 pixi-tools_0.6.1-1_armhf.build
+-rw-r--r--  1 root root    2458 Jan 12 19:41 pixi-tools_0.6.1-1_armhf.changes
+-rw-r--r--  1 root root 3033562 Jan 12 19:38 pixi-tools_0.6.1-1_armhf.deb
+-rw-r--r--  1 root root    4656 Jan 12 19:33 pixi-tools_0.6.1-1.debian.tar.gz
+-rw-r--r--  1 root root    1683 Jan 12 19:41 pixi-tools_0.6.1-1.dsc
+-rw-r--r--  1 root root  196089 Jan 12 19:32 pixi-tools_0.6.1.orig.tar.gz
+------------
+
+If you're happy with packaging, you can `git push` the latest changes to
+github.
+
+
+
+Preparing the repository
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Unlike package generation, this process does not need to be performed on the
+Pi. I recommend ensuring you run gpg-agent first. There are scripts in the
+pixi-tools source 'tools' directory to aid creating the repository
+files. `create-repo` creates the configuration and `update-repo` updates the
+packages.
+
+`create-repo` takes two arguments. The first is the ID of your gpg public
+key. The second is the name of the repository you are creating. It creates
+configuration files in 'conf/'. An example:
+
+------------
+pixiuser@debianbox:~/raspbian$ gpg --list-keys
+/home/pixiuser/.gnupg/pubring.gpg
+ ---------------------------------
+pub   4096R/4B76B9DB 2015-01-12
+uid                  Pixi User <pixiuser@astro-designs.net>
+sub   4096R/D19AC571 2015-01-12
+
+pixiuser@debianbox:~/raspbian$ ./create-repo 4B76B9DB "Astro Designs"
+
+using 4B76B9DB as your gpg public key
+
+
+Created conf/distributions:
+
+Origin: Astro Designs
+Label: Astro Designs
+Codename: wheezy
+Architectures: armhf source
+Components: main
+Description: Apt repository for Astro Designs
+SignWith: 4B76B9DB
+
+
+Created conf/options:
+
+verbose
+basedir /home/pixiuser/raspbian
+ask-passphrase
+
+------------
+
+`update-repo` takes a single argument - the directory containing the
+packages to add to the repository. When initially creating the repository on
+your machine you need to include any existing packages in addition to new
+packages, so alongside the new pixi-tools 0.6.1 .deb, we need the existing
+pixi-fpga package. An example:
+
+------------
+pixiuser@debianbox:~/raspbian$ ./update-repo ../incoming
+Processing files:
+-rw-r--r-- 1 pixiuser pixiuser   98516 Jul  8  2014 ../incoming/pixi-fpga_0.2.1-1_all.deb
+-rw-r--r-- 1 pixiuser pixiuser    1313 Jul  8  2014 ../incoming/pixi-fpga_0.2.1-1.dsc
+-rw-r--r-- 1 pixiuser pixiuser 3033562 Jan 12 19:38 ../incoming/pixi-tools_0.6.1-1_armhf.deb
+-rw-r--r-- 1 pixiuser pixiuser    1683 Jan 12 19:41 ../incoming/pixi-tools_0.6.1-1.dsc
+Created directory "/home/pixiuser/raspbian/db"
+../incoming/pixi-fpga_0.2.1-1_all.deb: component guessed as 'main'
+Created directory "/home/pixiuser/raspbian/pool"
+Created directory "/home/pixiuser/raspbian/pool/main"
+Created directory "/home/pixiuser/raspbian/pool/main/p"
+Created directory "/home/pixiuser/raspbian/pool/main/p/pixi-fpga"
+Exporting indices...
+Created directory "/home/pixiuser/raspbian/dists"
+Created directory "/home/pixiuser/raspbian/dists/wheezy"
+Created directory "/home/pixiuser/raspbian/dists/wheezy/main"
+Created directory "/home/pixiuser/raspbian/dists/wheezy/main/binary-armhf"
+Created directory "/home/pixiuser/raspbian/dists/wheezy/main/source"
+Successfully created '/home/pixiuser/raspbian/dists/wheezy/Release.gpg.new'
+Successfully created '/home/pixiuser/raspbian/dists/wheezy/InRelease.new'
+../incoming/pixi-tools_0.6.1-1_armhf.deb: component guessed as 'main'
+Created directory "/home/pixiuser/raspbian/pool/main/p/pixi-tools"
+Exporting indices...
+Successfully created '/home/pixiuser/raspbian/dists/wheezy/Release.gpg.new'
+Successfully created '/home/pixiuser/raspbian/dists/wheezy/InRelease.new'
+  100 %             636 B / 1,003 B = 0.634                                    
+  100 %                  32 B / 0 B > 9.999                                    
+Local repository:
+drwxr-xr-x 3 pixiuser pixiuser    4096 Jan 13 19:51 dists
+drwxr-xr-x 3 pixiuser pixiuser    4096 Jan 13 19:51 dists/wheezy
+-rw-r--r-- 1 pixiuser pixiuser    2424 Jan 13 19:51 dists/wheezy/InRelease
+drwxr-xr-x 4 pixiuser pixiuser    4096 Jan 13 19:51 dists/wheezy/main
+drwxr-xr-x 2 pixiuser pixiuser    4096 Jan 13 19:51 dists/wheezy/main/binary-armhf
+-rw-r--r-- 1 pixiuser pixiuser    1003 Jan 13 19:51 dists/wheezy/main/binary-armhf/Packages
+-rw-r--r-- 1 pixiuser pixiuser     554 Jan 13 19:51 dists/wheezy/main/binary-armhf/Packages.gz
+-rw-r--r-- 1 pixiuser pixiuser     636 Jan 13 19:51 dists/wheezy/main/binary-armhf/Packages.xz
+-rw-r--r-- 1 pixiuser pixiuser     125 Jan 13 19:51 dists/wheezy/main/binary-armhf/Release
+drwxr-xr-x 2 pixiuser pixiuser    4096 Jan 13 19:51 dists/wheezy/main/source
+-rw-r--r-- 1 pixiuser pixiuser     126 Jan 13 19:51 dists/wheezy/main/source/Release
+-rw-r--r-- 1 pixiuser pixiuser      20 Jan 13 19:51 dists/wheezy/main/source/Sources.gz
+-rw-r--r-- 1 pixiuser pixiuser      32 Jan 13 19:51 dists/wheezy/main/source/Sources.xz
+-rw-r--r-- 1 pixiuser pixiuser    1558 Jan 13 19:51 dists/wheezy/Release
+-rw-r--r-- 1 pixiuser pixiuser     819 Jan 13 19:51 dists/wheezy/Release.gpg
+drwxr-xr-x 3 pixiuser pixiuser    4096 Jan 13 19:51 pool
+drwxr-xr-x 3 pixiuser pixiuser    4096 Jan 13 19:51 pool/main
+drwxr-xr-x 4 pixiuser pixiuser    4096 Jan 13 19:51 pool/main/p
+drwxr-xr-x 2 pixiuser pixiuser    4096 Jan 13 19:51 pool/main/p/pixi-fpga
+-rw-r--r-- 1 pixiuser pixiuser   98516 Jan 13 19:51 pool/main/p/pixi-fpga/pixi-fpga_0.2.1-1_all.deb
+drwxr-xr-x 2 pixiuser pixiuser    4096 Jan 13 19:51 pool/main/p/pixi-tools
+-rw-r--r-- 1 pixiuser pixiuser 3033562 Jan 13 19:51 pool/main/p/pixi-tools/pixi-tools_0.6.1-1_armhf.deb
+------------
+
+
+
+Uploading the repository
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The 'pool' and 'dists' directories need to be uploaded to the server.
+
+`ncftpput` can be use to upload the repository (`apt-get install ncftp`):
+
+`ncftpput -R -m -u <username> ftp.astro-designs.net raspian dists pool`
+
+but this will upload all files, whether or not they are new/changed. Some
+more convenient procedure for synchronising with the server needs to be
+found.
+
+
+
+Build structure
+---------------
+
+The build system is makefile based and requires GNU make. When starting a
+build from the main source directory, the build actually runs from a
+sub-directory of 'build/'. For help type `make help`.
+
+Typing `make` for the first time creates a 'build/release' sub-directory,
+generates 'build/release/Makefile', then runs the main build from that
+directory using that Makefile.
+
+Use `make BUILD_MODE=debug` to run a debug mode build in 'build/debug'.
+
+Select a python version to build against by adding `PYTHON_VERSION=n`. When
+a python version is specified, that will be added to the build sub-directory
+name.
+
+Add `V=1` to make the build verbose.
+
+Putting it all together:
+
+`make PYTHON_VERSION=3.3 BUILD_MODE=debug V=1`
+
+This will run a verbose build in the 'build/debug3.3/' sub-directory.
+
+The build structure is distributed across three makefiles:
+
+Makefile;; The top level - generates the build configuration and manages
+packaging of builds.
+
+Makefile.rules;; Contains generic pattern rules.
+
+Makefile.build;; Contains the main pixi-tools specific rules and
+definitions.
+
+In addition to the typical build structure reflecting the source tree
+(i.e. 'build/release/libpixi/pixi/gpio.o' is built from
+'libpixi/pixi/gpio.c'), an approximation of the installation structure is
+also built. 'build/release/bin/pio' is generated, and also
+'build/release/lib/libpixi.so' and 'build/release/lib/libpixi.so.0'.
+
+Note that source/object files are not listed in the target definitions in
+'Makefile.build'. Instead, all source files found in particular directories
+are used for that particular target. For example, the 'libpixi' related
+declarations in 'Makefile.build' do not list the libpixi source files, but
+instead a search is done for all '.c' files found in 'libpixi/'.
+
+Note also that Makefile.build contains the variable +libpixi_ABI+. This
+variable defines the library major version number, and *needs to be
+incremented* whenever the libpixi library ABI is changed in a way that
+breaks compatibility with previously compiled applications. Otherwise you
+may get silent breakage of third-party programs and (possibly) irate
+users. Ideally the debian packages would be split up to allow previous ABI
+versions to remain installed when newer ABI versions are released.
