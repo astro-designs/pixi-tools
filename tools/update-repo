@@ -1,0 +1,41 @@
+#!/bin/sh
+
+set -e
+
+incomingdir=$1
+
+if test $# != 1 || test ! -d $incomingdir; then
+	echo "Usage: $0 DIR-CONTAINING-NEW-PACKAGES" >&2
+	exit 2
+fi
+
+debs=$(echo $incomingdir/*.deb)
+dscs=$(echo $incomingdir/*.dsc)
+
+echo Processing files:
+ls -l --color=auto $debs $dscs
+
+bin=$(dirname "$0")
+
+codename=wheezy
+args="--morguedir ./morgue -v"
+
+# Tip: to avoid re-entering the GPG passphrase, in your shell, run this:
+# eval $(gpg-agent --daemon)
+
+for file in $debs; do
+	reprepro $args includedeb $codename $file
+done
+
+for file in $dsc; do
+	reprepro $args includedsc $codename $file
+done
+
+# Re-compress indexes as .xz
+for file in $(find dists/ -name Packages.gz -or -name Sources.gz); do
+	dest=$(echo $file | sed s,gz$,xz,)
+	gzip -cd $file | xz -v > $dest
+done
+
+echo "Local repository:"
+find dists pool | xargs ls -l -d --color=auto

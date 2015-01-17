@@ -1,0 +1,46 @@
+#!/bin/sh
+
+if test $# != 2; then
+    echo "Usage $0 KEY_ID NAME" >&2
+    echo "KEY_ID is the eight character hex code identifying your gpg public key" >&2
+    echo "list keys with 'gpg --list-keys:'" >&2
+    echo "NAME is the repository name" >&2
+    exit 1
+fi
+
+key_id=$1
+name=$2
+
+echo
+echo using "$key_id" as your gpg public key
+echo
+
+set -e
+
+dist=conf/distributions
+opt=conf/options
+
+mkdir -p conf
+echo "Origin: $name
+Label: $name
+Codename: wheezy
+Architectures: armhf source
+Components: main
+Description: Apt repository for $name
+SignWith: $key_id
+" > $dist
+
+echo "verbose
+basedir $(pwd)
+ask-passphrase
+" > $opt
+
+echo
+echo Created $dist:
+echo
+cat $dist
+
+echo
+echo Created $opt:
+echo
+cat $opt
