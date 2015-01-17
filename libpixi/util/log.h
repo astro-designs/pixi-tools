@@ -44,7 +44,7 @@ LIBPIXI_BEGIN_DECLS
 /// @c LIBPIXI_LOG_LEVEL=debug to also see debug and info logging.
 ///
 /// The @c APP_ prefix macros inherit the log level defined by
-/// @c LIBPIXI_LOG_LEVEL unless, but that can be overridden by an environment
+/// @c LIBPIXI_LOG_LEVEL, but that can be overridden by an environment
 /// variable @c <uppercase-app-name>_LOG_LEVEL. So if your application is
 /// called @c pixi-ext, @c PIXI_EXT_LOG_LEVEL=error will set the log level of the
 /// @c APP_ macros.

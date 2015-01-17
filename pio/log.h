@@ -24,6 +24,8 @@
 
 #include <libpixi/util/app-log.h>
 
+// TODO: remove all this code and just used what's provided by app-log.h
+
 /// Check if logging at @a level should be output.
 static inline bool pio_isLogLevelEnabled (LogLevel level) {
 	return pixi_isAppLogLevelEnabled (level);
