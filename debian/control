@@ -3,7 +3,7 @@ Maintainer: Simon Cantrill <simonjcantrill@gmail.com>
 Section: misc
 Priority: optional
 Standards-Version: 3.9.2
-Build-Depends: debhelper (>= 8)
+Build-Depends: debhelper (>= 8), libi2c-dev, python-dev, swig, doxygen, graphviz
 
 Package: pixi-tools
 Architecture: any
