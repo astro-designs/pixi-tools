@@ -68,7 +68,7 @@ Build the software
 ~~~~~~~~~~~~~~~~~~
 The following raspbian packages are required:
 
-i2c-dev;; contains a replacement for the existing
+libi2c-dev;; contains a replacement for the existing
 /usr/include/linux/i2c-dev.h. This is needed for real i2c development.
 
 python-dev;; required for building python extensions.
