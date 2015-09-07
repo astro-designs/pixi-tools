@@ -21,6 +21,7 @@
 #include <libpixi/pixi/spi.h>
 #include <libpixi/util/log.h>
 #include <linux/spi/spidev.h>
+#include <string.h>
 #include <sys/ioctl.h>
 
 static SpiDevice pixiSpi = SPI_DEVICE_INIT;
@@ -89,6 +90,7 @@ int pixi_multiRegisterOp (RegisterOp* operations, uint opCount)
 	LIBPIXI_PRECONDITION(opCount <= 256);
 
 	struct spi_ioc_transfer transfers[opCount];
+	memset (transfers, 0, sizeof (transfers));
 	for (uint i = 0; i < opCount; i++)
 	{
 		operations[i]._valueHi = operations[i].value >> 8;
