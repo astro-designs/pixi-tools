@@ -27,7 +27,7 @@ for file in $debs; do
 	reprepro $args includedeb $codename $file
 done
 
-for file in $dsc; do
+for file in $dscs; do
 	reprepro $args includedsc $codename $file
 done
 
