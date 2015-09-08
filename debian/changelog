@@ -1,3 +1,10 @@
+pixi-tools (0.6.1-1) unstable; urgency=medium
+
+  * Fix uninitialised struct spi_ioc_transfer in multiRegisterOp
+    - The pad value was uninitialised, which may break things on later kernels.
+
+ -- Simon Cantrill <simonjcantrill@gmail.com>  Tue, 08 Sep 2015 18:54:57 +0100
+
 pixi-tools (0.6-1) unstable; urgency=medium
 
   * More i2c functions
