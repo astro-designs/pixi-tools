@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <linux/i2c-dev.h>
 
-const char spiDevice[] = "/dev/i2c-%d";
+const char i2cDevice[] = "/dev/i2c-%d";
 
 int pixi_i2cOpen (uint channel, uint address)
 {
@@ -47,7 +47,7 @@ int pixi_i2cOpen2 (uint channel, uint address, I2cDevice* device)
 	LIBPIXI_PRECONDITION(address < 1024);
 
 	char filename[40];
-	snprintf (filename, sizeof (filename), spiDevice, channel);
+	snprintf (filename, sizeof (filename), i2cDevice, channel);
 	int fd = pixi_open (filename, O_RDWR, 0);
 	if (fd < 0)
 	{
