@@ -468,7 +468,7 @@ The 'pool' and 'dists' directories need to be uploaded to the server.
 
 `ncftpput` can be use to upload the repository (`apt-get install ncftp`):
 
-`ncftpput -R -m -u <username> ftp.astro-designs.net raspian dists pool`
+`ncftpput -R -m -u <username> ftp.astro-designs.net raspbian dists pool`
 
 but this will upload all files, whether or not they are new/changed. Some
 more convenient procedure for synchronising with the server needs to be

@@ -1140,7 +1140,7 @@ drwxr-xr-x 2 pixiuser pixiuser    4096 Jan 13 19:51 pool/main/p/pixi-tools
 <h3 id="_uploading_the_repository">Uploading the repository</h3>
 <div class="paragraph"><p>The <em>pool</em> and <em>dists</em> directories need to be uploaded to the server.</p></div>
 <div class="paragraph"><p><code>ncftpput</code> can be use to upload the repository (<code>apt-get install ncftp</code>):</p></div>
-<div class="paragraph"><p><code>ncftpput -R -m -u &lt;username&gt; ftp.astro-designs.net raspian dists pool</code></p></div>
+<div class="paragraph"><p><code>ncftpput -R -m -u &lt;username&gt; ftp.astro-designs.net raspbian dists pool</code></p></div>
 <div class="paragraph"><p>but this will upload all files, whether or not they are new/changed. Some
 more convenient procedure for synchronising with the server needs to be
 found.</p></div>
