@@ -65,7 +65,7 @@ static inline bool pixi_isAppLogLevelEnabled (LogLevel level) {
 #define APP_ERRNO_ERROR( ...) APP_STRERROR_LOG(LogLevelError, errno, __VA_ARGS__)
 #define APP_ERRNO_FATAL( ...) APP_STRERROR_LOG(LogLevelFatal, errno, __VA_ARGS__)
 
-#define APP_PRECONDITION_FAILURE(message) APP_LOG_ERROR("%s(): precondition failure: " message, __PRETTY_FUNCTION__)
+#define APP_PRECONDITION_FAILURE(message) APP_LOG_ERROR("%s(): precondition failure: " message, LIBPIXI_FUNCTION)
 
 /// Test @c condition. If @c condition is false, log an error and return -EINVAL.
 #define APP_PRECONDITION(condition) \

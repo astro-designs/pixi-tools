@@ -147,7 +147,13 @@ static inline bool pixi_isLogLevelEnabled (LogLevel level) {
 #define LIBPIXI_ERRNO_ERROR( ...) LIBPIXI_STRERROR_LOG(LogLevelError, errno, __VA_ARGS__)
 #define LIBPIXI_ERRNO_FATAL( ...) LIBPIXI_STRERROR_LOG(LogLevelFatal, errno, __VA_ARGS__)
 
-#define LIBPIXI_PRECONDITION_FAILURE(message) LIBPIXI_LOG_ERROR("%s(): precondition failure: " message, __PRETTY_FUNCTION__)
+#if defined __cplusplus
+#	define LIBPIXI_FUNCTION __PRETTY_FUNCTION__
+#else
+#	define LIBPIXI_FUNCTION __func__
+#endif
+
+#define LIBPIXI_PRECONDITION_FAILURE(message) LIBPIXI_LOG_ERROR("%s(): precondition failure: " message, LIBPIXI_FUNCTION)
 
 /// Test @c condition. If @c condition is false, log an error and return -EINVAL.
 #define LIBPIXI_PRECONDITION(condition) \
