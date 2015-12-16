@@ -22,7 +22,7 @@
 from __future__ import print_function
 from pixitools import pixix
 from pixitools.pi import getLibVersion
-from pixitools.pixi import openPixi
+from pixitools.pixi import openPixi, registerWrite
 from time import sleep
 
 openPixi()
@@ -63,7 +63,7 @@ class Servo (object):
 
 def servos():
 	# setter, toggle, low, high
-	a1 = Servo (pixix.ServoA1, 50, 70)
+	a1 = Servo (pixix.ServoA1, [50, 70])
 	a2 = Servo (pixix.ServoA2)
 	b1 = Servo (pixix.ServoB1)
 	b2 = Servo (pixix.ServoB2)
